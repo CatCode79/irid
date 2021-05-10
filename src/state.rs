@@ -83,18 +83,19 @@ impl State {
 				entry_point: "main",
 				targets: &[wgpu::ColorTargetState {
 					format: swap_chain_desc.format,
-					alpha_blend: wgpu::BlendState::REPLACE,
-					color_blend: wgpu::BlendState::REPLACE,
 					write_mask: wgpu::ColorWrite::ALL,
+					blend: Option::from(wgpu::BlendState::REPLACE)
 				}],
 			}),
 			primitive: wgpu::PrimitiveState {
 				topology: wgpu::PrimitiveTopology::TriangleList,
 				strip_index_format: None,
 				front_face: wgpu::FrontFace::Ccw,
-				cull_mode: wgpu::CullMode::Back,
+				cull_mode: Option::from(wgpu::Face::Back),
 				// Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
+				clamp_depth: false,
 				polygon_mode: wgpu::PolygonMode::Fill,
+				conservative: false
 			},
 			depth_stencil: None, // 1.
 			multisample: wgpu::MultisampleState {
@@ -157,8 +158,8 @@ impl State {
 		{
 			let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
 				label: Some("Render Pass"),
-				color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
-					attachment: &frame.view,
+				color_attachments: &[wgpu::RenderPassColorAttachment {
+					view: &frame.view,
 					resolve_target: None,
 					ops: wgpu::Operations {
 						load: wgpu::LoadOp::Clear(self.clear_color),
