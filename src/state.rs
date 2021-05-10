@@ -8,6 +8,7 @@ use winit::{
 	window::Window,
 	event::WindowEvent,
 };
+use winit::event::{ElementState, VirtualKeyCode, KeyboardInput};
 
 
 //= STATE STRUCT AND IMPL ==========================================================================
@@ -21,6 +22,8 @@ pub struct State {
 	size: winit::dpi::PhysicalSize<u32>,
 	clear_color: wgpu::Color,
 	render_pipeline: wgpu::RenderPipeline,
+	challenge_render_pipeline: wgpu::RenderPipeline,
+	use_color: bool,
 }
 
 
@@ -52,7 +55,7 @@ impl State {
 
 		let swap_chain_desc = wgpu::SwapChainDescriptor {
 			usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
-			format: wgpu::TextureFormat::Bgra8UnormSrgb,
+			format: adapter.get_swap_chain_preferred_format(&surface).unwrap(),  // Was: format: wgpu::TextureFormat::Bgra8UnormSrgb,  TODO: meglio evitare l'unwrap
 			width: size.width,
 			height: size.height,
 			present_mode: wgpu::PresentMode::Fifo,
@@ -61,8 +64,8 @@ impl State {
 
 		let clear_color = wgpu::Color::BLACK;
 
-		let vs_module = device.create_shader_module(&wgpu::include_spirv!("shader.vert.spv"));
-		let fs_module = device.create_shader_module(&wgpu::include_spirv!("shader.frag.spv"));
+		let vs_module = device.create_shader_module(&wgpu::include_spirv!("irid/shaders/shader.vert.spv"));  // TODO folder costante, anche sotto
+		let fs_module = device.create_shader_module(&wgpu::include_spirv!("irid/shaders/shader.frag.spv"));
 
 		let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
 			label: Some("Render Pipeline Layout"),
@@ -84,7 +87,7 @@ impl State {
 				targets: &[wgpu::ColorTargetState {
 					format: swap_chain_desc.format,
 					write_mask: wgpu::ColorWrite::ALL,
-					blend: Option::from(wgpu::BlendState::REPLACE)
+					blend: Option::from(wgpu::BlendState::REPLACE),
 				}],
 			}),
 			primitive: wgpu::PrimitiveState {
@@ -95,15 +98,56 @@ impl State {
 				// Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
 				clamp_depth: false,
 				polygon_mode: wgpu::PolygonMode::Fill,
-				conservative: false
+				conservative: false,
 			},
-			depth_stencil: None, // 1.
+			depth_stencil: None,
 			multisample: wgpu::MultisampleState {
-				count: 1, // 2.
-				mask: !0, // 3.
-				alpha_to_coverage_enabled: false, // 4.
+				count: 1,
+				mask: !0,
+				alpha_to_coverage_enabled: false,
 			},
 		});
+
+		let vs_module = device.create_shader_module(&wgpu::include_spirv!("irid/shaders/challenge.vert.spv"));
+		let fs_module = device.create_shader_module(&wgpu::include_spirv!("irid/shaders/challenge.frag.spv"));
+
+		let challenge_render_pipeline =
+			device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+				label: Some("Render Pipeline"),
+				layout: Some(&render_pipeline_layout),
+				vertex: wgpu::VertexState {
+					module: &vs_module,
+					entry_point: "main",
+					buffers: &[],
+				},
+				fragment: Some(wgpu::FragmentState {
+					module: &fs_module,
+					entry_point: "main",
+					targets: &[wgpu::ColorTargetState {
+						format: swap_chain_desc.format,
+						write_mask: wgpu::ColorWrite::ALL,
+						blend: Option::from(wgpu::BlendState::REPLACE),
+					}]
+				}),
+				primitive: wgpu::PrimitiveState {
+					topology: wgpu::PrimitiveTopology::TriangleList,
+					strip_index_format: None,
+					front_face: wgpu::FrontFace::Ccw,
+					cull_mode: Option::from(wgpu::Face::Back),
+					clamp_depth: false,
+					// Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
+					polygon_mode: wgpu::PolygonMode::Fill,
+					conservative: false
+				},
+				depth_stencil: None,
+				multisample: wgpu::MultisampleState {
+					count: 1,
+					mask: !0,
+					alpha_to_coverage_enabled: false,
+				},
+			});
+
+		let use_color = true;
 
 		Self {
 			surface,
@@ -111,9 +155,11 @@ impl State {
 			queue,
 			swap_chain_desc,
 			swap_chain,
-			size,
 			clear_color,
+			size,
 			render_pipeline,
+			challenge_render_pipeline,
+			use_color,
 		}
 	}
 
@@ -138,6 +184,18 @@ impl State {
 					b: 1.0,
 					a: 1.0,
 				};
+				true
+			}
+			WindowEvent::KeyboardInput {
+				input:
+				KeyboardInput {
+					state,
+					virtual_keycode: Some(VirtualKeyCode::Space),
+					..
+				},
+				..
+			} => {
+				self.use_color = *state == ElementState::Released;
 				true
 			}
 			_ => false,
@@ -169,7 +227,11 @@ impl State {
 				depth_stencil_attachment: None,
 			});
 
-			render_pass.set_pipeline(&self.render_pipeline);
+			render_pass.set_pipeline(if self.use_color {
+				&self.render_pipeline
+			} else {
+				&self.challenge_render_pipeline
+			});
 			render_pass.draw(0..3, 0..1);
 		}
 

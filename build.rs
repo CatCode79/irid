@@ -1,7 +1,12 @@
+//= USES ===========================================================================================
+
 use anyhow::*;
 use glob::glob;
 use std::fs::{read_to_string, write};
 use std::path::PathBuf;
+
+
+//= STRUCTS ========================================================================================
 
 struct ShaderData {
     src: String,
@@ -9,6 +14,9 @@ struct ShaderData {
     spv_path: PathBuf,
     kind: shaderc::ShaderKind,
 }
+
+
+//= IMPLS ==========================================================================================
 
 impl ShaderData {
     pub fn load(src_path: PathBuf) -> Result<Self> {
@@ -35,6 +43,9 @@ impl ShaderData {
         })
     }
 }
+
+
+//= FNS ============================================================================================
 
 fn main() -> Result<()> {
     // Collect all shaders recursively within /src/
