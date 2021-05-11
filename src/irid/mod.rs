@@ -1,2 +1,2 @@
-mod shader;
+pub mod shader;
 pub mod vertex;

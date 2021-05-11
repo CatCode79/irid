@@ -20,7 +20,7 @@ fn main() {
 	env_logger::init();
 	let event_loop = EventLoop::new();
 	let window = WindowBuilder::new()
-		.with_title(&[env!("CARGO_PKG_DESCRIPTION"), " v", env!("CARGO_PKG_VERSION")].join(""))  // TODO sistema di concat più "umano" (profilare)
+		.with_title(&[env!("CARGO_PKG_DESCRIPTION"), " v", env!("CARGO_PKG_VERSION")].join(""))
 		.build(&event_loop)
 		.unwrap();
 

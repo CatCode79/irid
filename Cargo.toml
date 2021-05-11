@@ -1,20 +1,23 @@
 [package]
 name = "bad"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["CatCode <andrea.postal@gmail.com>"]
 edition = "2018"
 description = "Black Abyss Dungeon"
 publish = false
 
+
 [dependencies]
 bytemuck = { version = "1.5", features = ["derive"] }
 cgmath = "0.18"
+#const_format = { version = "0.2", features = ["const_generics"]}  # It's a no_std cargo
 env_logger = "0.8"
 futures = "0.3"
 image = "0.23"
 log = "0.4"
 wgpu = "0.8"
 winit = "0.24"
+
 
 [build-dependencies]
 anyhow = "1.0"

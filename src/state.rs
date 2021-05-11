@@ -3,16 +3,15 @@
 use std::iter;
 
 use futures::executor::block_on;
-
 use winit::{
 	window::Window,
-	event::WindowEvent,
+	event::{ElementState, KeyboardInput, VirtualKeyCode, WindowEvent},
 };
-use winit::event::{ElementState, VirtualKeyCode, KeyboardInput};
-
 use wgpu::util::DeviceExt;
 
-use crate::irid::vertex::{INDICES, VERTICES, Vertex};
+use crate::irid::{
+	vertex::{INDICES, VERTICES, Vertex},
+};
 
 
 //= STATE STRUCT AND IMPL ==========================================================================
@@ -25,10 +24,7 @@ pub struct State {
 	swap_chain: wgpu::SwapChain,
 	size: winit::dpi::PhysicalSize<u32>,
 	clear_color: wgpu::Color,
-
 	render_pipeline: wgpu::RenderPipeline,
-	//challenge_render_pipeline: wgpu::RenderPipeline,
-	//use_color: bool,
 
 	vertex_buffer: wgpu::Buffer,
 	index_buffer: wgpu::Buffer,
@@ -68,7 +64,7 @@ impl State {
 
 		let swap_chain_desc = wgpu::SwapChainDescriptor {
 			usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
-			format: adapter.get_swap_chain_preferred_format(&surface).unwrap(),  // Was: format: wgpu::TextureFormat::Bgra8UnormSrgb,  TODO: meglio evitare l'unwrap
+			format: adapter.get_swap_chain_preferred_format(&surface).unwrap_or(wgpu::TextureFormat::Bgra8UnormSrgb),
 			width: size.width,
 			height: size.height,
 			present_mode: wgpu::PresentMode::Fifo,
@@ -77,7 +73,7 @@ impl State {
 
 		let clear_color = wgpu::Color::BLACK;
 
-		let vs_module = device.create_shader_module(&wgpu::include_spirv!("irid/shaders/shader.vert.spv"));  // TODO folder costante, anche sotto
+		let vs_module = device.create_shader_module(&wgpu::include_spirv!("irid/shaders/shader.vert.spv"));
 		let fs_module = device.create_shader_module(&wgpu::include_spirv!("irid/shaders/shader.frag.spv"));
 
 		let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
@@ -120,47 +116,6 @@ impl State {
 				alpha_to_coverage_enabled: false,
 			},
 		});
-
-		/*let vs_module = device.create_shader_module(&wgpu::include_spirv!("irid/shaders/challenge.vert.spv"));
-		let fs_module = device.create_shader_module(&wgpu::include_spirv!("irid/shaders/challenge.frag.spv"));
-
-		let challenge_render_pipeline =
-			device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-				label: Some("Render Pipeline"),
-				layout: Some(&render_pipeline_layout),
-				vertex: wgpu::VertexState {
-					module: &vs_module,
-					entry_point: "main",
-					buffers: &[],
-				},
-				fragment: Some(wgpu::FragmentState {
-					module: &fs_module,
-					entry_point: "main",
-					targets: &[wgpu::ColorTargetState {
-						format: swap_chain_desc.format,
-						write_mask: wgpu::ColorWrite::ALL,
-						blend: Option::from(wgpu::BlendState::REPLACE),
-					}]
-				}),
-				primitive: wgpu::PrimitiveState {
-					topology: wgpu::PrimitiveTopology::TriangleList,
-					strip_index_format: None,
-					front_face: wgpu::FrontFace::Ccw,
-					cull_mode: Option::from(wgpu::Face::Back),
-					clamp_depth: false,
-					// Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
-					polygon_mode: wgpu::PolygonMode::Fill,
-					conservative: false
-				},
-				depth_stencil: None,
-				multisample: wgpu::MultisampleState {
-					count: 1,
-					mask: !0,
-					alpha_to_coverage_enabled: false,
-				},
-			});
-
-		let use_color = true;*/
 
 		let vertex_buffer = device.create_buffer_init(
 			&wgpu::util::BufferInitDescriptor {
@@ -223,8 +178,6 @@ impl State {
 			clear_color,
 			size,
 			render_pipeline,
-			//challenge_render_pipeline,
-			//use_color,
 			vertex_buffer,
 			index_buffer,
 			num_indices,
@@ -267,7 +220,6 @@ impl State {
 				},
 				..
 			} => {
-				//self.use_color = *state == ElementState::Released;  <- old code for triangle (to remove on next version)
 				self.use_complex = *state == ElementState::Pressed;
 				true
 			}
