@@ -10,6 +10,10 @@ use winit::{
 };
 use winit::event::{ElementState, VirtualKeyCode, KeyboardInput};
 
+use wgpu::util::DeviceExt;
+
+use crate::vertex::{INDICES, VERTICES, Vertex};
+
 
 //= STATE STRUCT AND IMPL ==========================================================================
 
@@ -21,9 +25,14 @@ pub struct State {
 	swap_chain: wgpu::SwapChain,
 	size: winit::dpi::PhysicalSize<u32>,
 	clear_color: wgpu::Color,
+
 	render_pipeline: wgpu::RenderPipeline,
 	challenge_render_pipeline: wgpu::RenderPipeline,
 	use_color: bool,
+
+	vertex_buffer: wgpu::Buffer,
+	index_buffer: wgpu::Buffer,
+	num_indices: u32,
 }
 
 
@@ -79,7 +88,7 @@ impl State {
 			vertex: wgpu::VertexState {
 				module: &vs_module,
 				entry_point: "main",
-				buffers: &[],
+				buffers: &[Vertex::desc()],
 			},
 			fragment: Some(wgpu::FragmentState {
 				module: &fs_module,
@@ -149,6 +158,24 @@ impl State {
 
 		let use_color = true;
 
+		let vertex_buffer = device.create_buffer_init(
+			&wgpu::util::BufferInitDescriptor {
+				label: Some("Vertex Buffer"),
+				contents: bytemuck::cast_slice(VERTICES),
+				usage: wgpu::BufferUsage::VERTEX,
+			}
+		);
+
+		let index_buffer = device.create_buffer_init(
+			&wgpu::util::BufferInitDescriptor {
+				label: Some("Index Buffer"),
+				contents: bytemuck::cast_slice(INDICES),
+				usage: wgpu::BufferUsage::INDEX,
+			}
+		);
+
+		let num_indices = INDICES.len() as u32;
+
 		Self {
 			surface,
 			device,
@@ -160,6 +187,9 @@ impl State {
 			render_pipeline,
 			challenge_render_pipeline,
 			use_color,
+			vertex_buffer,
+			index_buffer,
+			num_indices,
 		}
 	}
 
@@ -232,7 +262,9 @@ impl State {
 			} else {
 				&self.challenge_render_pipeline
 			});
-			render_pass.draw(0..3, 0..1);
+			render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+			render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+			render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
 		}
 
 		self.queue.submit(iter::once(encoder.finish()));

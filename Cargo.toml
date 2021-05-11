@@ -1,12 +1,13 @@
 [package]
 name = "bad"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["CatCode <andrea.postal@gmail.com>"]
 edition = "2018"
 description = "Black Abyss Dungeon"
 publish = false
 
 [dependencies]
+bytemuck = { version = "1.5", features = ["derive"] }
 cgmath = "0.18"
 env_logger = "0.8"
 futures = "0.3"
