@@ -10,7 +10,7 @@ use winit::{
 use wgpu::util::DeviceExt;
 
 use crate::irid::{
-	vertex::{INDICES, VERTICES, Vertex},
+	vertex::{INDICES, VERTICES, Vertex, create_polygon},
 };
 
 
@@ -135,37 +135,21 @@ impl State {
 
 		let num_indices = INDICES.len() as u32;
 
-		let num_vertices = 16;
-		let angle = std::f32::consts::PI * 2.0 / num_vertices as f32;
-		let challenge_verts = (0..num_vertices)
-			.map(|i| {
-				let theta = angle * i as f32;
-				Vertex {
-					position: [0.5 * theta.cos(), -0.5 * theta.sin(), 0.0],
-					color: [(1.0 + theta.cos()) / 2.0, (1.0 + theta.sin()) / 2.0, 1.0],
-				}
-			})
-			.collect::<Vec<_>>();
+		let (challenge_verts, challenge_indices) = create_polygon(16);
 
-		let num_triangles = num_vertices - 2;
-		let challenge_indices = (1u16..num_triangles + 1)
-			.into_iter()
-			.flat_map(|i| vec![i + 1, i, 0])
-			.collect::<Vec<_>>();
-		let num_challenge_indices = challenge_indices.len() as u32;
-
-		let challenge_vertex_buffer =
-			device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-				label: Some("Challenge Vertex Buffer"),
-				contents: bytemuck::cast_slice(&challenge_verts),
-				usage: wgpu::BufferUsage::VERTEX,
-			});
+		let challenge_vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+			label: Some("Challenge Vertex Buffer"),
+			contents: bytemuck::cast_slice(&challenge_verts),
+			usage: wgpu::BufferUsage::VERTEX,
+		});
 
 		let challenge_index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
 			label: Some("Challenge Index Buffer"),
 			contents: bytemuck::cast_slice(&challenge_indices),
 			usage: wgpu::BufferUsage::INDEX,
 		});
+
+		let num_challenge_indices = challenge_indices.len() as u32;
 
 		let use_complex = false;
 

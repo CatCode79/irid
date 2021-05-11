@@ -59,3 +59,23 @@ pub const INDICES: &[u16] = &[
     1, 2, 4,
     2, 3, 4,
 ];
+
+
+pub fn create_polygon(num_vertices: u16) -> (Vec<Vertex>, Vec<u16>) {
+    let angle = std::f32::consts::PI * 2.0 / num_vertices as f32;
+    let vertices = (0..num_vertices).map(|i| {
+        let theta = angle * i as f32;
+        Vertex {
+            position: [0.5 * theta.cos(), -0.5 * theta.sin(), 0.0],
+            color: [(1.0 + theta.cos()) / 2.0, (1.0 + theta.sin()) / 2.0, 1.0],
+        }
+    })
+    .collect::<Vec<_>>();
+
+    let indices = (1u16..num_vertices + 2 - 1)
+        .into_iter()
+        .flat_map(|i| vec![i + 1, i, 0])
+        .collect::<Vec<_>>();
+
+    (vertices, indices)
+}
