@@ -12,7 +12,7 @@ use winit::event::{ElementState, VirtualKeyCode, KeyboardInput};
 
 use wgpu::util::DeviceExt;
 
-use crate::vertex::{INDICES, VERTICES, Vertex};
+use crate::irid::vertex::{INDICES, VERTICES, Vertex};
 
 
 //= STATE STRUCT AND IMPL ==========================================================================
@@ -27,12 +27,16 @@ pub struct State {
 	clear_color: wgpu::Color,
 
 	render_pipeline: wgpu::RenderPipeline,
-	challenge_render_pipeline: wgpu::RenderPipeline,
-	use_color: bool,
+	//challenge_render_pipeline: wgpu::RenderPipeline,
+	//use_color: bool,
 
 	vertex_buffer: wgpu::Buffer,
 	index_buffer: wgpu::Buffer,
 	num_indices: u32,
+	challenge_vertex_buffer: wgpu::Buffer,
+	challenge_index_buffer: wgpu::Buffer,
+	num_challenge_indices: u32,
+	use_complex: bool,
 }
 
 
@@ -117,7 +121,7 @@ impl State {
 			},
 		});
 
-		let vs_module = device.create_shader_module(&wgpu::include_spirv!("irid/shaders/challenge.vert.spv"));
+		/*let vs_module = device.create_shader_module(&wgpu::include_spirv!("irid/shaders/challenge.vert.spv"));
 		let fs_module = device.create_shader_module(&wgpu::include_spirv!("irid/shaders/challenge.frag.spv"));
 
 		let challenge_render_pipeline =
@@ -156,7 +160,7 @@ impl State {
 				},
 			});
 
-		let use_color = true;
+		let use_color = true;*/
 
 		let vertex_buffer = device.create_buffer_init(
 			&wgpu::util::BufferInitDescriptor {
@@ -176,6 +180,40 @@ impl State {
 
 		let num_indices = INDICES.len() as u32;
 
+		let num_vertices = 16;
+		let angle = std::f32::consts::PI * 2.0 / num_vertices as f32;
+		let challenge_verts = (0..num_vertices)
+			.map(|i| {
+				let theta = angle * i as f32;
+				Vertex {
+					position: [0.5 * theta.cos(), -0.5 * theta.sin(), 0.0],
+					color: [(1.0 + theta.cos()) / 2.0, (1.0 + theta.sin()) / 2.0, 1.0],
+				}
+			})
+			.collect::<Vec<_>>();
+
+		let num_triangles = num_vertices - 2;
+		let challenge_indices = (1u16..num_triangles + 1)
+			.into_iter()
+			.flat_map(|i| vec![i + 1, i, 0])
+			.collect::<Vec<_>>();
+		let num_challenge_indices = challenge_indices.len() as u32;
+
+		let challenge_vertex_buffer =
+			device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+				label: Some("Challenge Vertex Buffer"),
+				contents: bytemuck::cast_slice(&challenge_verts),
+				usage: wgpu::BufferUsage::VERTEX,
+			});
+
+		let challenge_index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+			label: Some("Challenge Index Buffer"),
+			contents: bytemuck::cast_slice(&challenge_indices),
+			usage: wgpu::BufferUsage::INDEX,
+		});
+
+		let use_complex = false;
+
 		Self {
 			surface,
 			device,
@@ -185,11 +223,15 @@ impl State {
 			clear_color,
 			size,
 			render_pipeline,
-			challenge_render_pipeline,
-			use_color,
+			//challenge_render_pipeline,
+			//use_color,
 			vertex_buffer,
 			index_buffer,
 			num_indices,
+			challenge_vertex_buffer,
+			challenge_index_buffer,
+			num_challenge_indices,
+			use_complex,
 		}
 	}
 
@@ -225,7 +267,8 @@ impl State {
 				},
 				..
 			} => {
-				self.use_color = *state == ElementState::Released;
+				//self.use_color = *state == ElementState::Released;  <- old code for triangle (to remove on next version)
+				self.use_complex = *state == ElementState::Pressed;
 				true
 			}
 			_ => false,
@@ -257,14 +300,17 @@ impl State {
 				depth_stencil_attachment: None,
 			});
 
-			render_pass.set_pipeline(if self.use_color {
-				&self.render_pipeline
+			render_pass.set_pipeline(&self.render_pipeline);
+
+			let data = if self.use_complex {
+				(&self.challenge_vertex_buffer, &self.challenge_index_buffer, self.num_challenge_indices)
 			} else {
-				&self.challenge_render_pipeline
-			});
-			render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-			render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-			render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
+				(&self.vertex_buffer, &self.index_buffer, self.num_indices)
+			};
+			render_pass.set_vertex_buffer(0, data.0.slice(..));
+			render_pass.set_index_buffer(data.1.slice(..), wgpu::IndexFormat::Uint16);
+
+			render_pass.draw_indexed(0..data.2, 0, 0..1);
 		}
 
 		self.queue.submit(iter::once(encoder.finish()));

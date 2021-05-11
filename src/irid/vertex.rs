@@ -7,8 +7,8 @@
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
-    position: [f32; 3],
-    color: [f32; 3],
+    pub(crate) position: [f32; 3],
+    pub(crate) color: [f32; 3],
 }
 
 
@@ -46,12 +46,6 @@ impl Vertex {
  This means that any triangle that should be facing us should have its vertices
  in counter clockwise order.
  */
-/*pub const VERTICES: &[Vertex] = &[
-    Vertex { position: [ 0.0,  0.5, 0.0], color: [1.0, 0.0, 0.0] },
-    Vertex { position: [-0.5, -0.5, 0.0], color: [0.0, 1.0, 0.0] },
-    Vertex { position: [ 0.5, -0.5, 0.0], color: [0.0, 0.0, 1.0] },
-];*/
-
 pub const VERTICES: &[Vertex] = &[
     Vertex { position: [-0.08682410,  0.49240386, 0.0], color: [0.10, 0.0, 0.50] },  // 0
     Vertex { position: [-0.49513406,  0.06958647, 0.0], color: [0.20, 0.0, 0.40] },  // 1

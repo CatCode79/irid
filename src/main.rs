@@ -1,12 +1,5 @@
 //= MODS ===========================================================================================
 
-mod irid;
-mod state;
-mod vertex;
-
-
-//= USES ===========================================================================================
-
 use winit::{
 	event::*,
 	event_loop::{ControlFlow, EventLoop},
@@ -15,6 +8,11 @@ use winit::{
 
 use self::state::State;
 
+mod irid;
+mod state;
+
+
+//= USES ===========================================================================================
 
 //= MAIN ===========================================================================================
 
@@ -22,7 +20,7 @@ fn main() {
 	env_logger::init();
 	let event_loop = EventLoop::new();
 	let window = WindowBuilder::new()
-		.with_title(&[env!("CARGO_PKG_DESCRIPTION"), " v", env!("CARGO_PKG_VERSION")].join(""))  // TODO sistema di concat più "umano"
+		.with_title(&[env!("CARGO_PKG_DESCRIPTION"), " v", env!("CARGO_PKG_VERSION")].join(""))  // TODO sistema di concat più "umano" (profilare)
 		.build(&event_loop)
 		.unwrap();
 
