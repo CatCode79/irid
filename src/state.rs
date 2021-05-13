@@ -10,6 +10,9 @@ use winit::{
 use wgpu::util::DeviceExt;
 
 use crate::irid::{
+	bind::create_bind_group_layout_desc,
+	sampler::create_sampler_desc,
+	texture::{PREFERRED_TEXTURE_FORMAT, create_texture_desc, create_texture_view_desc},
 	vertex::{INDICES, VERTICES, Vertex, create_polygon},
 };
 
@@ -33,6 +36,8 @@ pub struct State {
 	challenge_index_buffer: wgpu::Buffer,
 	num_challenge_indices: u32,
 	use_complex: bool,
+
+	diffuse_bind_group: wgpu::BindGroup,
 }
 
 
@@ -64,7 +69,7 @@ impl State {
 
 		let swap_chain_desc = wgpu::SwapChainDescriptor {
 			usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
-			format: adapter.get_swap_chain_preferred_format(&surface).unwrap_or(wgpu::TextureFormat::Bgra8UnormSrgb),
+			format: PREFERRED_TEXTURE_FORMAT,
 			width: size.width,
 			height: size.height,
 			present_mode: wgpu::PresentMode::Fifo,
@@ -73,49 +78,130 @@ impl State {
 
 		let clear_color = wgpu::Color::BLACK;
 
+		//- Texture Section ------------------------------------------------------------------------
+
+		let diffuse_bytes = include_bytes!("happy-tree.png");
+		let diffuse_image = image::load_from_memory_with_format(
+			diffuse_bytes,
+			image::ImageFormat::Png
+		).unwrap();
+		let diffuse_rgba = diffuse_image.as_rgba8().unwrap();
+
+		let dimensions = {
+			use image::GenericImageView;
+			diffuse_image.dimensions()
+		};
+
+		let texture_size = wgpu::Extent3d {
+			width: dimensions.0,
+			height: dimensions.1,
+			// All textures are stored as 3D, we represent our 2D texture by setting depth to 1
+			depth_or_array_layers: 1,
+		};
+
+		let diffuse_texture = device.create_texture(
+			&create_texture_desc(texture_size, "diffuse_texture")
+		);
+
+		queue.write_texture(
+			// Tells wgpu where to copy the pixel data
+			wgpu::ImageCopyTextureBase {
+				texture: &diffuse_texture,
+				mip_level: 0,
+				origin: wgpu::Origin3d::ZERO,
+			},
+			// The actual pixel data
+			diffuse_rgba,
+			// The layout of the texture
+			wgpu::ImageDataLayout {
+				offset: 0,
+				bytes_per_row: std::num::NonZeroU32::new(4 * dimensions.0),
+				rows_per_image: std::num::NonZeroU32::new(dimensions.1),
+			},
+			texture_size,
+		);
+
+		// We don't need to configure the texture view much, so let's let wgpu define it
+		let diffuse_texture_view = diffuse_texture.create_view(
+			&create_texture_view_desc("diffuse_texture_view")
+		);
+
+		let diffuse_sampler = device.create_sampler(
+			&create_sampler_desc("diffuse_sampler")
+		);
+
+		let texture_bind_group_layout = device.create_bind_group_layout(
+			&create_bind_group_layout_desc("texture_bind_group_layout")
+		);
+
+		let diffuse_bind_group = device.create_bind_group(
+			&wgpu::BindGroupDescriptor {
+				layout: &texture_bind_group_layout,
+				entries: &[
+					wgpu::BindGroupEntry {
+						binding: 0,
+						resource: wgpu::BindingResource::TextureView(&diffuse_texture_view),
+					},
+					wgpu::BindGroupEntry {
+						binding: 1,
+						resource: wgpu::BindingResource::Sampler(&diffuse_sampler),
+					}
+				],
+				label: Some("diffuse_bind_group"),
+			}
+		);
+
+		//- Shader Section -------------------------------------------------------------------------
+
 		let vs_module = device.create_shader_module(&wgpu::include_spirv!("irid/shaders/shader.vert.spv"));
 		let fs_module = device.create_shader_module(&wgpu::include_spirv!("irid/shaders/shader.frag.spv"));
 
-		let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-			label: Some("Render Pipeline Layout"),
-			bind_group_layouts: &[],
-			push_constant_ranges: &[],
-		});
+		let render_pipeline_layout = device.create_pipeline_layout(
+			&wgpu::PipelineLayoutDescriptor {
+				label: Some("Render Pipeline Layout"),
+				bind_group_layouts: &[&texture_bind_group_layout],
+				push_constant_ranges: &[],
+			}
+		);
 
-		let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-			label: Some("Render Pipeline"),
-			layout: Some(&render_pipeline_layout),
-			vertex: wgpu::VertexState {
-				module: &vs_module,
-				entry_point: "main",
-				buffers: &[Vertex::desc()],
-			},
-			fragment: Some(wgpu::FragmentState {
-				module: &fs_module,
-				entry_point: "main",
-				targets: &[wgpu::ColorTargetState {
-					format: swap_chain_desc.format,
-					write_mask: wgpu::ColorWrite::ALL,
-					blend: Option::from(wgpu::BlendState::REPLACE),
-				}],
-			}),
-			primitive: wgpu::PrimitiveState {
-				topology: wgpu::PrimitiveTopology::TriangleList,
-				strip_index_format: None,
-				front_face: wgpu::FrontFace::Ccw,
-				cull_mode: Option::from(wgpu::Face::Back),
-				// Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
-				clamp_depth: false,
-				polygon_mode: wgpu::PolygonMode::Fill,
-				conservative: false,
-			},
-			depth_stencil: None,
-			multisample: wgpu::MultisampleState {
-				count: 1,
-				mask: !0,
-				alpha_to_coverage_enabled: false,
-			},
-		});
+		let render_pipeline = device.create_render_pipeline(
+			&wgpu::RenderPipelineDescriptor {
+				label: Some("Render Pipeline"),
+				layout: Some(&render_pipeline_layout),
+				vertex: wgpu::VertexState {
+					module: &vs_module,
+					entry_point: "main",
+					buffers: &[Vertex::desc()],
+				},
+				fragment: Some(wgpu::FragmentState {
+					module: &fs_module,
+					entry_point: "main",
+					targets: &[wgpu::ColorTargetState {
+						format: swap_chain_desc.format,
+						write_mask: wgpu::ColorWrite::ALL,
+						blend: Option::from(wgpu::BlendState::REPLACE),
+					}],
+				}),
+				primitive: wgpu::PrimitiveState {
+					topology: wgpu::PrimitiveTopology::TriangleList,
+					strip_index_format: None,
+					front_face: wgpu::FrontFace::Ccw,
+					cull_mode: Option::from(wgpu::Face::Back),
+					clamp_depth: false,
+					// Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
+					polygon_mode: wgpu::PolygonMode::Fill,
+					conservative: false,
+				},
+				depth_stencil: None,
+				multisample: wgpu::MultisampleState {
+					count: 1,
+					mask: !0,
+					alpha_to_coverage_enabled: false,
+				},
+			}
+		);
+
+		//- Vertex And Indices Section -------------------------------------------------------------
 
 		let vertex_buffer = device.create_buffer_init(
 			&wgpu::util::BufferInitDescriptor {
@@ -135,23 +221,31 @@ impl State {
 
 		let num_indices = INDICES.len() as u32;
 
+		//- Vertex and Indices Challenge Section ---------------------------------------------------
+
 		let (challenge_verts, challenge_indices) = create_polygon(16);
 
-		let challenge_vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-			label: Some("Challenge Vertex Buffer"),
-			contents: bytemuck::cast_slice(&challenge_verts),
-			usage: wgpu::BufferUsage::VERTEX,
-		});
+		let challenge_vertex_buffer = device.create_buffer_init(
+			&wgpu::util::BufferInitDescriptor {
+				label: Some("Challenge Vertex Buffer"),
+				contents: bytemuck::cast_slice(&challenge_verts),
+				usage: wgpu::BufferUsage::VERTEX,
+			}
+		);
 
-		let challenge_index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-			label: Some("Challenge Index Buffer"),
-			contents: bytemuck::cast_slice(&challenge_indices),
-			usage: wgpu::BufferUsage::INDEX,
-		});
+		let challenge_index_buffer = device.create_buffer_init(
+			&wgpu::util::BufferInitDescriptor {
+				label: Some("Challenge Index Buffer"),
+				contents: bytemuck::cast_slice(&challenge_indices),
+				usage: wgpu::BufferUsage::INDEX,
+			}
+		);
 
 		let num_challenge_indices = challenge_indices.len() as u32;
 
 		let use_complex = false;
+
+		//- State Struct Instantiation -------------------------------------------------------------
 
 		Self {
 			surface,
@@ -169,6 +263,8 @@ impl State {
 			challenge_index_buffer,
 			num_challenge_indices,
 			use_complex,
+
+			diffuse_bind_group,
 		}
 	}
 
@@ -237,6 +333,7 @@ impl State {
 			});
 
 			render_pass.set_pipeline(&self.render_pipeline);
+			render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
 
 			let data = if self.use_complex {
 				(&self.challenge_vertex_buffer, &self.challenge_index_buffer, self.num_challenge_indices)
