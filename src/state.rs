@@ -11,10 +11,9 @@ use wgpu::util::DeviceExt;
 
 use crate::irid::{
 	bind::create_bind_group_layout_desc,
-	texture::{PREFERRED_TEXTURE_FORMAT},
+	texture::{PREFERRED_TEXTURE_FORMAT, Texture},
 	vertex::{INDICES, VERTICES, Vertex, create_polygon},
 };
-use crate::irid::texture::Texture;
 
 
 //= STATE STRUCT AND IMPL ==========================================================================
@@ -80,12 +79,12 @@ impl State {
 
 		//- Texture Section ------------------------------------------------------------------------
 
-		let diffuse_bytes = include_bytes!("happy-tree.png");
-		let diffuse_texture = Texture::from_bytes(&device, &queue, diffuse_bytes, "happy-tree.png").unwrap();
-
 		let texture_bind_group_layout = device.create_bind_group_layout(
 			&create_bind_group_layout_desc("texture_bind_group_layout")
 		);
+
+		let diffuse_bytes = include_bytes!("happy-tree.png");
+		let diffuse_texture = Texture::from_bytes(&device, &queue, diffuse_bytes, "happy-tree.png").unwrap();
 
 		let diffuse_bind_group = device.create_bind_group(
 			&wgpu::BindGroupDescriptor {
