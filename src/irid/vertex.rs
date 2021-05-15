@@ -71,7 +71,7 @@ pub const INDICES: &[u16] = &[
 
 //= FNS ============================================================================================
 
-pub fn create_polygon(num_vertices: u16) -> (Vec<Vertex>, Vec<u16>) {
+pub fn create_polygon(_num_vertices: u16) -> (Vec<Vertex>, Vec<u16>) {
     /*let angle = std::f32::consts::PI * 2.0 / num_vertices as f32;
     let vertices = (0..num_vertices).map(|i| {
         let theta = angle * i as f32;

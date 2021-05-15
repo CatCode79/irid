@@ -11,10 +11,10 @@ use wgpu::util::DeviceExt;
 
 use crate::irid::{
 	bind::create_bind_group_layout_desc,
-	sampler::create_sampler_desc,
-	texture::{PREFERRED_TEXTURE_FORMAT, create_texture_desc, create_texture_view_desc},
+	texture::{PREFERRED_TEXTURE_FORMAT},
 	vertex::{INDICES, VERTICES, Vertex, create_polygon},
 };
+use crate::irid::texture::Texture;
 
 
 //= STATE STRUCT AND IMPL ==========================================================================
@@ -81,54 +81,7 @@ impl State {
 		//- Texture Section ------------------------------------------------------------------------
 
 		let diffuse_bytes = include_bytes!("happy-tree.png");
-		let diffuse_image = image::load_from_memory_with_format(
-			diffuse_bytes,
-			image::ImageFormat::Png
-		).unwrap();
-		let diffuse_rgba = diffuse_image.as_rgba8().unwrap();
-
-		let dimensions = {
-			use image::GenericImageView;
-			diffuse_image.dimensions()
-		};
-
-		let texture_size = wgpu::Extent3d {
-			width: dimensions.0,
-			height: dimensions.1,
-			// All textures are stored as 3D, we represent our 2D texture by setting depth to 1
-			depth_or_array_layers: 1,
-		};
-
-		let diffuse_texture = device.create_texture(
-			&create_texture_desc(texture_size, "diffuse_texture")
-		);
-
-		queue.write_texture(
-			// Tells wgpu where to copy the pixel data
-			wgpu::ImageCopyTextureBase {
-				texture: &diffuse_texture,
-				mip_level: 0,
-				origin: wgpu::Origin3d::ZERO,
-			},
-			// The actual pixel data
-			diffuse_rgba,
-			// The layout of the texture
-			wgpu::ImageDataLayout {
-				offset: 0,
-				bytes_per_row: std::num::NonZeroU32::new(4 * dimensions.0),
-				rows_per_image: std::num::NonZeroU32::new(dimensions.1),
-			},
-			texture_size,
-		);
-
-		// We don't need to configure the texture view much, so let's let wgpu define it
-		let diffuse_texture_view = diffuse_texture.create_view(
-			&create_texture_view_desc("diffuse_texture_view")
-		);
-
-		let diffuse_sampler = device.create_sampler(
-			&create_sampler_desc("diffuse_sampler")
-		);
+		let diffuse_texture = Texture::from_bytes(&device, &queue, diffuse_bytes, "happy-tree.png").unwrap();
 
 		let texture_bind_group_layout = device.create_bind_group_layout(
 			&create_bind_group_layout_desc("texture_bind_group_layout")
@@ -140,11 +93,11 @@ impl State {
 				entries: &[
 					wgpu::BindGroupEntry {
 						binding: 0,
-						resource: wgpu::BindingResource::TextureView(&diffuse_texture_view),
+						resource: wgpu::BindingResource::TextureView(&diffuse_texture.view),
 					},
 					wgpu::BindGroupEntry {
 						binding: 1,
-						resource: wgpu::BindingResource::Sampler(&diffuse_sampler),
+						resource: wgpu::BindingResource::Sampler(&diffuse_texture.sampler),
 					}
 				],
 				label: Some("diffuse_bind_group"),
