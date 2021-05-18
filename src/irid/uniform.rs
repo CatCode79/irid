@@ -1,7 +1,7 @@
 
 //= USES ===========================================================================================
 
-use crate::irid::camera::Camera;
+use crate::irid::camera::{Camera, OPENGL_TO_WGPU_MATRIX};
 
 
 //= UNIFORMS =======================================================================================
@@ -13,27 +13,55 @@ use crate::irid::camera::Camera;
 pub struct Uniforms {
     // We can't use cgmath with bytemuck directly so we'll have
     // to convert the Matrix4 into a 4x4 f32 array
-    view_proj: [[f32; 4]; 4],
+    model_view_proj: [[f32; 4]; 4],
 }
 
 
 impl Uniforms {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         use cgmath::SquareMatrix;
         Self {
-            view_proj: cgmath::Matrix4::identity().into(),
+            model_view_proj: cgmath::Matrix4::identity().into(),
+        }
+    }
+}
+
+//= UNIFORM STAGING ================================================================================
+
+/**
+ * We can create a separate buffer and copy it's contents to our uniform_buffer.
+ * The new buffer is known as a staging buffer.
+ * This method is usually how it's done as it allows the contents of the main buffer
+ * (in this case uniform_buffer) to only be accessible by the gpu.
+ * The gpu can do some speed optimizations which it couldn't if we could access the buffer
+ * via the cpu.
+ */
+pub struct UniformStaging {
+    pub(crate) camera: Camera,
+    pub(crate) model_rotation: cgmath::Deg<f32>,
+}
+
+
+impl UniformStaging {
+    pub(crate) fn new(camera: Camera) -> Self {
+        Self {
+            camera,
+            model_rotation: cgmath::Deg(0.0),
         }
     }
 
-    pub(crate) fn update_view_proj(&mut self, camera: &Camera) {
-        self.view_proj = camera.build_view_projection_matrix().into();
+    pub(crate) fn update_uniforms(&self, uniforms: &mut Uniforms) {
+        uniforms.model_view_proj = (OPENGL_TO_WGPU_MATRIX
+            * self.camera.build_view_projection_matrix()
+            * cgmath::Matrix4::from_angle_z(self.model_rotation))
+            .into();
     }
 }
 
 
 //= FNS ============================================================================================
 
-pub(crate) fn create_bind_group_layout_desc_for_uniforms(label_text: &str) -> wgpu::BindGroupLayoutDescriptor {
+pub fn create_bind_group_layout_desc_for_uniforms(label_text: &str) -> wgpu::BindGroupLayoutDescriptor {
     wgpu::BindGroupLayoutDescriptor {
         label: Some(label_text),
         entries: &[

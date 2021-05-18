@@ -5,7 +5,7 @@ use std::iter;
 use futures::executor::block_on;
 use winit::{
 	window::Window,
-	event::{ElementState, KeyboardInput, VirtualKeyCode, WindowEvent},
+	event::WindowEvent,
 };
 use wgpu::util::DeviceExt;
 
@@ -16,6 +16,7 @@ use crate::irid::{
 	uniform::{Uniforms, create_bind_group_layout_desc_for_uniforms},
 	vertex::{INDICES, VERTICES, Vertex, create_polygon},
 };
+use crate::irid::uniform::UniformStaging;
 
 
 //= STATE STRUCT AND IMPL ==========================================================================
@@ -43,9 +44,9 @@ pub struct State {
 	use_complex: bool,
 
 	// Camera
-	camera: Camera,
 	camera_controller: CameraController,
 	uniforms: Uniforms,
+	uniform_staging: UniformStaging,
 	uniform_buffer: wgpu::Buffer,
 	uniform_bind_group: wgpu::BindGroup,
 }
@@ -133,7 +134,8 @@ impl State {
 		let camera_controller = CameraController::new(0.2);
 
 		let mut uniforms = Uniforms::new();
-		uniforms.update_view_proj(&camera);
+		let uniform_staging = UniformStaging::new(camera);
+		uniform_staging.update_uniforms(&mut uniforms);
 
 		let uniform_buffer = device.create_buffer_init(
 			&wgpu::util::BufferInitDescriptor {
@@ -276,9 +278,9 @@ impl State {
 			challenge_index_buffer,
 			num_challenge_indices,
 			use_complex,
-			camera,
 			camera_controller,
 			uniforms,
+			uniform_staging,
 			uniform_buffer,
 			uniform_bind_group,
 		}
@@ -288,6 +290,9 @@ impl State {
 		self.swap_chain_desc.width = self.size.width;
 		self.swap_chain_desc.height = self.size.height;
 		self.swap_chain = self.device.create_swap_chain(&self.surface, &self.swap_chain_desc);
+
+		//self.camera.aspect = self.sc_desc.width as f32 / self.sc_desc.height as f32;  // old
+		self.uniform_staging.camera.aspect = self.swap_chain_desc.width as f32 / self.swap_chain_desc.height as f32;
 	}
 
 	pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
@@ -312,8 +317,9 @@ impl State {
 	}
 
 	pub fn update(&mut self) {
-		self.camera_controller.update_camera(&mut self.camera);
-		self.uniforms.update_view_proj(&self.camera);
+		self.camera_controller.update_camera(&mut self.uniform_staging.camera);
+		self.uniform_staging.model_rotation += cgmath::Deg(2.0);
+		self.uniform_staging.update_uniforms(&mut self.uniforms);
 		self.queue.write_buffer(&self.uniform_buffer, 0, bytemuck::cast_slice(&[self.uniforms]));
 	}
 
