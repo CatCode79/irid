@@ -10,8 +10,10 @@ use winit::{
 use wgpu::util::DeviceExt;
 
 use crate::irid::{
-	bind::create_bind_group_layout_desc,
+	bind::create_bind_group_layout_desc_for_texture,
+	camera::{Camera, controller::CameraController},
 	texture::{PREFERRED_TEXTURE_FORMAT, Texture},
+	uniform::{Uniforms, create_bind_group_layout_desc_for_uniforms},
 	vertex::{INDICES, VERTICES, Vertex, create_polygon},
 };
 
@@ -28,6 +30,10 @@ pub struct State {
 	clear_color: wgpu::Color,
 	render_pipeline: wgpu::RenderPipeline,
 
+	// Texture support
+	diffuse_bind_group: wgpu::BindGroup,
+
+	// Polygon support
 	vertex_buffer: wgpu::Buffer,
 	index_buffer: wgpu::Buffer,
 	num_indices: u32,
@@ -36,7 +42,12 @@ pub struct State {
 	num_challenge_indices: u32,
 	use_complex: bool,
 
-	diffuse_bind_group: wgpu::BindGroup,
+	// Camera
+	camera: Camera,
+	camera_controller: CameraController,
+	uniforms: Uniforms,
+	uniform_buffer: wgpu::Buffer,
+	uniform_bind_group: wgpu::BindGroup,
 }
 
 
@@ -80,7 +91,7 @@ impl State {
 		//- Texture Section ------------------------------------------------------------------------
 
 		let texture_bind_group_layout = device.create_bind_group_layout(
-			&create_bind_group_layout_desc("texture_bind_group_layout")
+			&create_bind_group_layout_desc_for_texture("texture_bind_group_layout")
 		);
 
 		let diffuse_bytes = include_bytes!("happy-tree.png");
@@ -103,6 +114,52 @@ impl State {
 			}
 		);
 
+		//- Camera ---------------------------------------------------------------------------------
+
+		let camera = Camera {
+			// position the camera one unit up and 2 units back
+			// +z is out of the screen
+			eye: (0.0, 1.0, 2.0).into(),
+			// have it look at the origin
+			target: (0.0, 0.0, 0.0).into(),
+			// which way is "up"
+			up: cgmath::Vector3::unit_y(),
+			aspect: swap_chain_desc.width as f32 / swap_chain_desc.height as f32,
+			fovy: 45.0,
+			znear: 0.1,
+			zfar: 100.0,
+		};
+
+		let camera_controller = CameraController::new(0.2);
+
+		let mut uniforms = Uniforms::new();
+		uniforms.update_view_proj(&camera);
+
+		let uniform_buffer = device.create_buffer_init(
+			&wgpu::util::BufferInitDescriptor {
+				label: Some("Uniform Buffer"),
+				contents: bytemuck::cast_slice(&[uniforms]),
+				usage: wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
+			}
+		);
+
+		let uniform_bind_group_layout = device.create_bind_group_layout(
+			&create_bind_group_layout_desc_for_uniforms("Uniform Bind Group Layout")
+		);
+
+		let uniform_bind_group = device.create_bind_group(
+			&wgpu::BindGroupDescriptor {
+				layout: &uniform_bind_group_layout,
+				entries: &[
+					wgpu::BindGroupEntry {
+						binding: 0,
+						resource: uniform_buffer.as_entire_binding(),
+					}
+				],
+				label: Some("Uniform Bind Group"),
+			}
+		);
+
 		//- Shader Section -------------------------------------------------------------------------
 
 		let vs_module = device.create_shader_module(&wgpu::include_spirv!("irid/shaders/shader.vert.spv"));
@@ -111,7 +168,10 @@ impl State {
 		let render_pipeline_layout = device.create_pipeline_layout(
 			&wgpu::PipelineLayoutDescriptor {
 				label: Some("Render Pipeline Layout"),
-				bind_group_layouts: &[&texture_bind_group_layout],
+				bind_group_layouts: &[
+					&texture_bind_group_layout,
+					&uniform_bind_group_layout
+				],
 				push_constant_ranges: &[],
 			}
 		);
@@ -208,6 +268,7 @@ impl State {
 			clear_color,
 			size,
 			render_pipeline,
+			diffuse_bind_group,
 			vertex_buffer,
 			index_buffer,
 			num_indices,
@@ -215,8 +276,11 @@ impl State {
 			challenge_index_buffer,
 			num_challenge_indices,
 			use_complex,
-
-			diffuse_bind_group,
+			camera,
+			camera_controller,
+			uniforms,
+			uniform_buffer,
+			uniform_bind_group,
 		}
 	}
 
@@ -231,9 +295,9 @@ impl State {
 		self.refresh_size();
 	}
 
-	#[allow(unused_variables)]
 	pub fn input(&mut self, event: &WindowEvent) -> bool {
-		match event {
+		self.camera_controller.process_events(event)
+		/*match event {
 			WindowEvent::CursorMoved { position, .. } => {
 				self.clear_color = wgpu::Color {
 					r: position.x as f64 / self.size.width as f64,
@@ -242,24 +306,16 @@ impl State {
 					a: 1.0,
 				};
 				true
-			}
-			WindowEvent::KeyboardInput {
-				input:
-				KeyboardInput {
-					state,
-					virtual_keycode: Some(VirtualKeyCode::Space),
-					..
-				},
-				..
-			} => {
-				self.use_complex = *state == ElementState::Pressed;
-				true
-			}
-			_ => false,
-		}
+			},
+			_ => self.camera_controller.process_events(event),
+		}*/
 	}
 
-	pub fn update(&mut self) {}
+	pub fn update(&mut self) {
+		self.camera_controller.update_camera(&mut self.camera);
+		self.uniforms.update_view_proj(&self.camera);
+		self.queue.write_buffer(&self.uniform_buffer, 0, bytemuck::cast_slice(&[self.uniforms]));
+	}
 
 	pub fn render(&mut self) -> Result<(), wgpu::SwapChainError> {
 		let frame = self.swap_chain.get_current_frame()?.output;
@@ -286,6 +342,7 @@ impl State {
 
 			render_pass.set_pipeline(&self.render_pipeline);
 			render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
+			render_pass.set_bind_group(1, &self.uniform_bind_group, &[]);
 
 			let data = if self.use_complex {
 				(&self.challenge_vertex_buffer, &self.challenge_index_buffer, self.num_challenge_indices)

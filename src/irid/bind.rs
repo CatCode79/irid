@@ -1,7 +1,7 @@
 
 //= FNS ============================================================================================
 
-pub fn create_bind_group_layout_desc(label_text: &str) -> wgpu::BindGroupLayoutDescriptor {
+pub fn create_bind_group_layout_desc_for_texture(label_text: &str) -> wgpu::BindGroupLayoutDescriptor {
     wgpu::BindGroupLayoutDescriptor {
         label: Some(label_text),
         entries: &[
