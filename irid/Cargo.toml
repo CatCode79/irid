@@ -1,0 +1,18 @@
+[package]
+name = "irid"
+version = "0.1.12"
+authors = ["Iolo1979 <andrea.postal@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0"  # It have the no_std feature
+bytemuck = { version = "1.5", features = ["derive"] }
+cgmath = "0.18"
+env_logger = "0.8"
+futures = "0.3"
+image = "0.23"
+log = "0.4"
+wgpu = "0.8"
+winit = "0.24"

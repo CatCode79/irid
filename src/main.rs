@@ -1,18 +1,15 @@
+//= MODS ===========================================================================================
+
+mod state;
+
+
 //= USES ===========================================================================================
 
 use winit::{
-	event::*,
+	event::{Event, ElementState, KeyboardInput, VirtualKeyCode, WindowEvent},
 	event_loop::{ControlFlow, EventLoop},
 	window::WindowBuilder,
 };
-
-use self::state::State;
-
-
-//= MODS ===========================================================================================
-
-mod irid;
-mod state;
 
 
 //= MAIN ===========================================================================================
@@ -25,8 +22,7 @@ fn main() {
 		.build(&event_loop)
 		.unwrap();
 
-	// Since main can't be async, we're going to need to block
-	let mut state: State = State::new(&window);
+	let mut state = crate::state::State::new(&window);
 
 	event_loop.run(move |event, _, control_flow| {
 		match event {
@@ -42,7 +38,7 @@ fn main() {
 								..
 							} => *control_flow = ControlFlow::Exit,
 							_ => {}
-						},
+						}
 						WindowEvent::Resized(physical_size) => {
 							state.resize(*physical_size);
 						}
@@ -67,8 +63,7 @@ fn main() {
 				}
 			}
 			Event::MainEventsCleared => {
-				// RedrawRequested will only trigger once, unless we manually
-				// request it.
+				// RedrawRequested will only trigger once, unless we manually request it
 				window.request_redraw();
 			}
 			_ => {}

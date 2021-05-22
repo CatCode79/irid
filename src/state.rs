@@ -1,35 +1,43 @@
 //= USES ===========================================================================================
 
-use std::iter;
-
-use futures::executor::block_on;
 use winit::{
 	window::Window,
 	event::WindowEvent,
 };
-use wgpu::util::DeviceExt;
 
-use crate::irid::{
-	bind::create_bind_group_layout_desc_for_texture,
-	camera::{Camera, controller::CameraController},
-	texture::{PREFERRED_TEXTURE_FORMAT, Texture},
-	uniform::{Uniforms, create_bind_group_layout_desc_for_uniforms},
-	vertex::{INDICES, VERTICES, Vertex, create_polygon},
-};
-use crate::irid::uniform::UniformStaging;
+
+//= CONSTS =========================================================================================
+
+/**
+ We arrange the vertices in counter clockwise order: top, bottom left, bottom right.
+ We do it this way partially out of tradition, but mostly because we specified
+ in the rasterization_state of the render_pipeline that we want the front_face of our triangle
+ to be wgpu::FrontFace::Ccw so that we cull the back face.
+ This means that any triangle that should be facing us should have its vertices
+ in counter clockwise order.
+ */
+pub(crate) const VERTICES: &[irid::vertex::Vertex] = &[
+	irid::vertex::Vertex { position: [-0.08682410,  0.49240386, 0.0], /*color: [0.10, 0.0, 0.50],*/ tex_coords: [0.4131759000, 0.007596140] },  // 0
+	irid::vertex::Vertex { position: [-0.49513406,  0.06958647, 0.0], /*color: [0.20, 0.0, 0.40],*/ tex_coords: [0.0048659444, 0.430413540] },  // 1
+	irid::vertex::Vertex { position: [-0.21918549, -0.44939706, 0.0], /*color: [0.25, 0.0, 0.25],*/ tex_coords: [0.2808145300, 0.949397057] },  // 2
+	irid::vertex::Vertex { position: [ 0.35966998, -0.34732910, 0.0], /*color: [0.40, 0.0, 0.50],*/ tex_coords: [0.8596700000, 0.847329110] },  // 3
+	irid::vertex::Vertex { position: [ 0.44147372,  0.23473590, 0.0], /*color: [0.50, 0.0, 0.10],*/ tex_coords: [0.9414737000, 0.265264100] },  // 4
+];
+
+
+pub(crate) const INDICES: &[u16] = &[
+	0, 1, 4,
+	1, 2, 4,
+	2, 3, 4,
+];
 
 
 //= STATE STRUCT AND IMPL ==========================================================================
 
 pub struct State {
-	surface: wgpu::Surface,
-	device: wgpu::Device,
-	queue: wgpu::Queue,
-	swap_chain_desc: wgpu::SwapChainDescriptor,
-	swap_chain: wgpu::SwapChain,
-	size: winit::dpi::PhysicalSize<u32>,
-	clear_color: wgpu::Color,
+	renderer: irid::renderer::Renderer,
 	render_pipeline: wgpu::RenderPipeline,
+	clear_color: wgpu::Color,
 
 	// Texture support
 	diffuse_bind_group: wgpu::BindGroup,
@@ -38,15 +46,11 @@ pub struct State {
 	vertex_buffer: wgpu::Buffer,
 	index_buffer: wgpu::Buffer,
 	num_indices: u32,
-	challenge_vertex_buffer: wgpu::Buffer,
-	challenge_index_buffer: wgpu::Buffer,
-	num_challenge_indices: u32,
-	use_complex: bool,
 
 	// Camera
-	camera_controller: CameraController,
-	uniforms: Uniforms,
-	uniform_staging: UniformStaging,
+	camera_controller: irid::camera::CameraController,
+	uniforms: irid::uniform::Uniforms,
+	uniform_staging: irid::uniform::UniformStaging,
 	uniform_buffer: wgpu::Buffer,
 	uniform_bind_group: wgpu::BindGroup,
 }
@@ -54,230 +58,118 @@ pub struct State {
 
 impl State {
 	pub fn new(window: &Window) -> Self {
-		let size = window.inner_size();
+		let renderer = irid::renderer::Renderer::new(window);
 
-		// The instance is a handle to our GPU
-		// BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
-		let instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
-		let surface = unsafe { instance.create_surface(window) };
-		let adapter = block_on(async {
-			instance.request_adapter(&wgpu::RequestAdapterOptions {
-				power_preference: wgpu::PowerPreference::HighPerformance,
-				compatible_surface: Some(&surface),
-			}).await
-		}).unwrap();
-
-		let (device, queue) = block_on(async {
-			adapter.request_device(
-				&wgpu::DeviceDescriptor {
-					label: None,
-					features: wgpu::Features::empty(),
-					limits: wgpu::Limits::default(),
-				},
-				None, // Trace path
-			).await
-		}).unwrap();
-
-		let swap_chain_desc = wgpu::SwapChainDescriptor {
-			usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
-			format: PREFERRED_TEXTURE_FORMAT,
-			width: size.width,
-			height: size.height,
-			present_mode: wgpu::PresentMode::Fifo,
-		};
-		let swap_chain = device.create_swap_chain(&surface, &swap_chain_desc);
-
-		let clear_color = wgpu::Color::BLACK;
+		let clear_color = wgpu::Color::BLACK;  // todo nascondere wgpu
 
 		//- Texture Section ------------------------------------------------------------------------
 
-		let texture_bind_group_layout = device.create_bind_group_layout(
-			&create_bind_group_layout_desc_for_texture("texture_bind_group_layout")
+		let diffuse_texture = {
+			let diffuse_bytes = include_bytes!("assets/textures/happy-tree.png");
+			irid::texture::Texture::from_bytes(&renderer, diffuse_bytes, "happy-tree.png").unwrap()
+		};
+
+		let texture_bind_group_layout = irid::texture::create_bind_group_layout(
+			&renderer,
+			"Texture Bind Group Layout"
 		);
 
-		let diffuse_bytes = include_bytes!("happy-tree.png");
-		let diffuse_texture = Texture::from_bytes(&device, &queue, diffuse_bytes, "happy-tree.png").unwrap();
-
-		let diffuse_bind_group = device.create_bind_group(
-			&wgpu::BindGroupDescriptor {
-				layout: &texture_bind_group_layout,
-				entries: &[
-					wgpu::BindGroupEntry {
-						binding: 0,
-						resource: wgpu::BindingResource::TextureView(&diffuse_texture.view),
-					},
-					wgpu::BindGroupEntry {
-						binding: 1,
-						resource: wgpu::BindingResource::Sampler(&diffuse_texture.sampler),
-					}
-				],
-				label: Some("diffuse_bind_group"),
-			}
+		let diffuse_bind_group = diffuse_texture.create_bind_group(
+			&renderer,
+			"Diffuse Bind Group",
+			&texture_bind_group_layout,
 		);
 
 		//- Camera ---------------------------------------------------------------------------------
 
-		let camera = Camera {
-			// position the camera one unit up and 2 units back
-			// +z is out of the screen
+		// TODO Pensare se fare un descrittore che crei la camera senza rendere così gli attributi pubblici
+		let camera = irid::camera::Camera {
+			// Position the camera one unit up and 2 units back +z is out of the screen
 			eye: (0.0, 1.0, 2.0).into(),
-			// have it look at the origin
+			// Have it look at the origin
 			target: (0.0, 0.0, 0.0).into(),
-			// which way is "up"
+			// Which way is "up"
 			up: cgmath::Vector3::unit_y(),
-			aspect: swap_chain_desc.width as f32 / swap_chain_desc.height as f32,
+			aspect: renderer.calc_aspect_ratio(),
 			fovy: 45.0,
 			znear: 0.1,
 			zfar: 100.0,
 		};
 
-		let camera_controller = CameraController::new(0.2);
+		let camera_controller = irid::camera::CameraController::new(0.2);
 
-		let mut uniforms = Uniforms::new();
-		let uniform_staging = UniformStaging::new(camera);
+		let mut uniforms = irid::uniform::Uniforms::new();
+
+		let uniform_staging = irid::uniform::UniformStaging::new(camera);
 		uniform_staging.update_uniforms(&mut uniforms);
 
-		let uniform_buffer = device.create_buffer_init(
-			&wgpu::util::BufferInitDescriptor {
-				label: Some("Uniform Buffer"),
-				contents: bytemuck::cast_slice(&[uniforms]),
-				usage: wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
-			}
+		let uniform_buffer = irid::uniform::create_buffer_init(
+			&renderer,
+			"Uniform Buffer",
+			uniforms
 		);
 
-		let uniform_bind_group_layout = device.create_bind_group_layout(
-			&create_bind_group_layout_desc_for_uniforms("Uniform Bind Group Layout")
+		let uniform_bind_group_layout = irid::uniform::create_bind_group_layout(
+			&renderer,
+			"Uniform Bind Group Layout"
 		);
 
-		let uniform_bind_group = device.create_bind_group(
-			&wgpu::BindGroupDescriptor {
-				layout: &uniform_bind_group_layout,
-				entries: &[
-					wgpu::BindGroupEntry {
-						binding: 0,
-						resource: uniform_buffer.as_entire_binding(),
-					}
-				],
-				label: Some("Uniform Bind Group"),
-			}
+		let uniform_bind_group = irid::uniform::create_bind_group(
+			&renderer,
+			"Uniform Bind Group",
+			&uniform_bind_group_layout,
+			&uniform_buffer
 		);
+
 
 		//- Shader Section -------------------------------------------------------------------------
 
-		let vs_module = device.create_shader_module(&wgpu::include_spirv!("irid/shaders/shader.vert.spv"));
-		let fs_module = device.create_shader_module(&wgpu::include_spirv!("irid/shaders/shader.frag.spv"));
+		let render_pipeline = {
+			let vs_module = irid::shader::create_module(&renderer, &wgpu::include_spirv!("assets/shaders/shader.vert.spv"));
+			let fs_module = irid::shader::create_module(&renderer, &wgpu::include_spirv!("assets/shaders/shader.frag.spv"));
 
-		let render_pipeline_layout = device.create_pipeline_layout(
-			&wgpu::PipelineLayoutDescriptor {
-				label: Some("Render Pipeline Layout"),
-				bind_group_layouts: &[
+			let render_pipeline_layout = renderer.create_pipeline_layout(
+				"Render Pipeline Layout",
+				&[
 					&texture_bind_group_layout,
 					&uniform_bind_group_layout
-				],
-				push_constant_ranges: &[],
-			}
-		);
+				]
+			);
 
-		let render_pipeline = device.create_render_pipeline(
-			&wgpu::RenderPipelineDescriptor {
-				label: Some("Render Pipeline"),
-				layout: Some(&render_pipeline_layout),
-				vertex: wgpu::VertexState {
-					module: &vs_module,
-					entry_point: "main",
-					buffers: &[Vertex::desc()],
-				},
-				fragment: Some(wgpu::FragmentState {
-					module: &fs_module,
-					entry_point: "main",
-					targets: &[wgpu::ColorTargetState {
-						format: swap_chain_desc.format,
-						write_mask: wgpu::ColorWrite::ALL,
-						blend: Option::from(wgpu::BlendState::REPLACE),
-					}],
-				}),
-				primitive: wgpu::PrimitiveState {
-					topology: wgpu::PrimitiveTopology::TriangleList,
-					strip_index_format: None,
-					front_face: wgpu::FrontFace::Ccw,
-					cull_mode: Option::from(wgpu::Face::Back),
-					clamp_depth: false,
-					// Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
-					polygon_mode: wgpu::PolygonMode::Fill,
-					conservative: false,
-				},
-				depth_stencil: None,
-				multisample: wgpu::MultisampleState {
-					count: 1,
-					mask: !0,
-					alpha_to_coverage_enabled: false,
-				},
-			}
-		);
+			renderer.create_render_pipeline(
+				"Render Pipeline",
+				&render_pipeline_layout,
+				&vs_module,
+				&fs_module
+			)
+		};
 
 		//- Vertex And Indices Section -------------------------------------------------------------
 
-		let vertex_buffer = device.create_buffer_init(
-			&wgpu::util::BufferInitDescriptor {
-				label: Some("Vertex Buffer"),
-				contents: bytemuck::cast_slice(VERTICES),
-				usage: wgpu::BufferUsage::VERTEX,
-			}
+		let vertex_buffer = irid::vertex::create_buffer_for_vertices(
+			&renderer,
+			"Vertex Buffer",
+			&VERTICES
 		);
 
-		let index_buffer = device.create_buffer_init(
-			&wgpu::util::BufferInitDescriptor {
-				label: Some("Index Buffer"),
-				contents: bytemuck::cast_slice(INDICES),
-				usage: wgpu::BufferUsage::INDEX,
-			}
+		let index_buffer = irid::vertex::create_buffer_for_indices(
+			&renderer,
+			"Index Buffer",
+			&INDICES
 		);
 
 		let num_indices = INDICES.len() as u32;
 
-		//- Vertex and Indices Challenge Section ---------------------------------------------------
-
-		let (challenge_verts, challenge_indices) = create_polygon(16);
-
-		let challenge_vertex_buffer = device.create_buffer_init(
-			&wgpu::util::BufferInitDescriptor {
-				label: Some("Challenge Vertex Buffer"),
-				contents: bytemuck::cast_slice(&challenge_verts),
-				usage: wgpu::BufferUsage::VERTEX,
-			}
-		);
-
-		let challenge_index_buffer = device.create_buffer_init(
-			&wgpu::util::BufferInitDescriptor {
-				label: Some("Challenge Index Buffer"),
-				contents: bytemuck::cast_slice(&challenge_indices),
-				usage: wgpu::BufferUsage::INDEX,
-			}
-		);
-
-		let num_challenge_indices = challenge_indices.len() as u32;
-
-		let use_complex = false;
-
 		//- State Struct Instantiation -------------------------------------------------------------
 
 		Self {
-			surface,
-			device,
-			queue,
-			swap_chain_desc,
-			swap_chain,
+			renderer,
 			clear_color,
-			size,
 			render_pipeline,
 			diffuse_bind_group,
 			vertex_buffer,
 			index_buffer,
 			num_indices,
-			challenge_vertex_buffer,
-			challenge_index_buffer,
-			num_challenge_indices,
-			use_complex,
 			camera_controller,
 			uniforms,
 			uniform_staging,
@@ -287,16 +179,12 @@ impl State {
 	}
 
 	pub fn refresh_size(&mut self) {
-		self.swap_chain_desc.width = self.size.width;
-		self.swap_chain_desc.height = self.size.height;
-		self.swap_chain = self.device.create_swap_chain(&self.surface, &self.swap_chain_desc);
-
-		//self.camera.aspect = self.sc_desc.width as f32 / self.sc_desc.height as f32;  // old
-		self.uniform_staging.camera.aspect = self.swap_chain_desc.width as f32 / self.swap_chain_desc.height as f32;
+		self.renderer.update_swap_chain();
+		self.uniform_staging.update_camera(self.renderer.calc_aspect_ratio());
 	}
 
 	pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
-		self.size = new_size;
+		self.renderer.set_size(new_size);
 		self.refresh_size();
 	}
 
@@ -320,48 +208,42 @@ impl State {
 		self.camera_controller.update_camera(&mut self.uniform_staging.camera);
 		self.uniform_staging.model_rotation += cgmath::Deg(2.0);
 		self.uniform_staging.update_uniforms(&mut self.uniforms);
-		self.queue.write_buffer(&self.uniform_buffer, 0, bytemuck::cast_slice(&[self.uniforms]));
+		self.renderer.write_queue_buffer(&self.uniform_buffer, 0, self.uniforms);
 	}
 
 	pub fn render(&mut self) -> Result<(), wgpu::SwapChainError> {
-		let frame = self.swap_chain.get_current_frame()?.output;
+		let frame = self.renderer.get_current_frame()?.output;
 
-		let mut encoder = self
-			.device
-			.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-				label: Some("Render Encoder"),
-			});
+		let mut encoder = self.renderer.create_command_encoder("Render Encoder");
 
 		{
-			let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-				label: Some("Render Pass"),
-				color_attachments: &[wgpu::RenderPassColorAttachment {
-					view: &frame.view,
-					resolve_target: None,
-					ops: wgpu::Operations {
-						load: wgpu::LoadOp::Clear(self.clear_color),
-						store: true,
-					},
-				}],
-				depth_stencil_attachment: None,
-			});
+			let mut render_pass = encoder.begin_render_pass(
+				&wgpu::RenderPassDescriptor {
+					label: Some("Render Pass"),
+					color_attachments: &[wgpu::RenderPassColorAttachment {
+						view: &frame.view,
+						resolve_target: None,
+						ops: wgpu::Operations {
+							load: wgpu::LoadOp::Clear(self.clear_color),
+							store: true,
+						},
+					}],
+					depth_stencil_attachment: None,
+				}
+			);
 
 			render_pass.set_pipeline(&self.render_pipeline);
 			render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
 			render_pass.set_bind_group(1, &self.uniform_bind_group, &[]);
 
-			let data = if self.use_complex {
-				(&self.challenge_vertex_buffer, &self.challenge_index_buffer, self.num_challenge_indices)
-			} else {
-				(&self.vertex_buffer, &self.index_buffer, self.num_indices)
-			};
+			let data = (&self.vertex_buffer, &self.index_buffer, self.num_indices);
 			render_pass.set_vertex_buffer(0, data.0.slice(..));
 			render_pass.set_index_buffer(data.1.slice(..), wgpu::IndexFormat::Uint16);
 
 			render_pass.draw_indexed(0..data.2, 0, 0..1);
 		}
 
-		self.queue.submit(iter::once(encoder.finish()));
+		self.renderer.submit_to_queue(encoder);
 
 		Ok(())
 	}

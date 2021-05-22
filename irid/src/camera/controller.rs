@@ -3,8 +3,6 @@
 
 use winit::event::{ElementState, KeyboardInput, VirtualKeyCode, WindowEvent};
 
-use crate::irid::camera::Camera;
-
 
 //= STRUCTS ========================================================================================
 
@@ -20,7 +18,7 @@ pub struct CameraController {
 
 
 impl CameraController {
-    pub(crate) fn new(speed: f32) -> Self {
+    pub fn new(speed: f32) -> Self {
         Self {
             speed,
             is_up_pressed: false,
@@ -32,7 +30,7 @@ impl CameraController {
         }
     }
 
-    pub(crate) fn process_events(&mut self, event: &WindowEvent) -> bool {
+    pub fn process_events(&mut self, event: &WindowEvent) -> bool {
         match event {
             WindowEvent::KeyboardInput {
                 input: KeyboardInput {
@@ -75,7 +73,7 @@ impl CameraController {
         }
     }
 
-    pub(crate) fn update_camera(&self, camera: &mut Camera) {
+    pub fn update_camera(&self, camera: &mut crate::camera::Camera) {
         use cgmath::InnerSpace;
         let forward = camera.target - camera.eye;
         let forward_norm = forward.normalize();

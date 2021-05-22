@@ -2,6 +2,8 @@
 
 pub mod controller;
 
+pub use controller::CameraController;
+
 
 //= CONSTS =========================================================================================
 
@@ -16,7 +18,7 @@ pub mod controller;
  * be halfway inside the clipping area. This is only an issue if you aren't using a camera matrix.
  */
 #[rustfmt::skip]
-pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
+pub(crate) const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
     1.0, 0.0, 0.0, 0.0,
     0.0, 1.0, 0.0, 0.0,
     0.0, 0.0, 0.5, 0.0,
@@ -27,13 +29,13 @@ pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
 //= STRUCTS ========================================================================================
 
 pub struct Camera {
-    pub(crate) eye: cgmath::Point3<f32>,
-    pub(crate) target: cgmath::Point3<f32>,
-    pub(crate) up: cgmath::Vector3<f32>,
-    pub(crate) aspect: f32,
-    pub(crate) fovy: f32,
-    pub(crate) znear: f32,
-    pub(crate) zfar: f32,
+    pub eye: cgmath::Point3<f32>,
+    pub target: cgmath::Point3<f32>,
+    pub up: cgmath::Vector3<f32>,
+    pub aspect: f32,
+    pub fovy: f32,
+    pub znear: f32,
+    pub zfar: f32,
 }
 
 

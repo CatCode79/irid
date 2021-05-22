@@ -1,17 +1,19 @@
 [package]
 name = "bad"
-version = "0.1.11"
+version = "0.1.12"
 authors = ["CatCode <andrea.postal@gmail.com>"]
 edition = "2018"
 description = "Black Abyss Dungeon"
 publish = false
 
 
+[dependencies.irid]
+path = "irid"
+version = "0.1"
+
 [dependencies]
-anyhow = "1.0"  # It have the no_std feature
 bytemuck = { version = "1.5", features = ["derive"] }
 cgmath = "0.18"
-#const_format = { version = "0.2", features = ["const_generics"]}  # It have the no_std feature
 env_logger = "0.8"
 futures = "0.3"
 image = "0.23"
