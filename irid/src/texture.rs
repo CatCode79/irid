@@ -1,7 +1,3 @@
-//= USES ===========================================================================================
-
-use anyhow::*;
-
 
 //= CONSTS =========================================================================================
 
@@ -26,7 +22,7 @@ impl Texture {
         renderer: &crate::renderer::Renderer,
         bytes: &[u8],
         label_text: &str
-    ) -> Result<Self> {
+    ) -> anyhow::Result<Self> {
         let img = image::load_from_memory_with_format(
             bytes,
             image::ImageFormat::Png  // TODO Configurabile o passabile come argomento
@@ -39,7 +35,7 @@ impl Texture {
         renderer: &crate::renderer::Renderer,
         img: &image::DynamicImage,
         label_text: &str
-    ) -> Result<Self> {
+    ) -> anyhow::Result<Self> {
         let rgba = img.as_rgba8().unwrap();  // TODO panic? in realtà penso ci pensi anyhow
 
         let dimensions = {

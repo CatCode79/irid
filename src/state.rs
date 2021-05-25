@@ -29,7 +29,17 @@ pub(crate) const INDICES: &[u16] = &[
 	0, 1, 4,
 	1, 2, 4,
 	2, 3, 4,
+	/* padding */ 0,
 ];
+
+
+const NUM_INSTANCES_PER_ROW: u32 = 10;
+//const NUM_INSTANCES: u32 = NUM_INSTANCES_PER_ROW * NUM_INSTANCES_PER_ROW;
+const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
+	NUM_INSTANCES_PER_ROW as f32 * 0.5,
+	0.0,
+	NUM_INSTANCES_PER_ROW as f32 * 0.5
+);
 
 
 //= STATE STRUCT AND IMPL ==========================================================================
@@ -53,6 +63,10 @@ pub struct State {
 	uniform_staging: irid::uniform::UniformStaging,
 	uniform_buffer: wgpu::Buffer,
 	uniform_bind_group: wgpu::BindGroup,
+
+	// Instancing
+	instances: Vec<irid::instance::Instance>,
+	instance_buffer: wgpu::Buffer,
 }
 
 
@@ -60,7 +74,13 @@ impl State {
 	pub fn new(window: &Window) -> Self {
 		let renderer = irid::renderer::Renderer::new(window);
 
-		let clear_color = wgpu::Color::BLACK;  // todo nascondere wgpu
+		//let clear_color = wgpu::Color::BLACK;  // todo nascondere wgpu
+		let clear_color = wgpu::Color {
+			r: 0.1,
+			g: 0.2,
+			b: 0.3,
+			a: 1.0,
+		};
 
 		//- Texture Section ------------------------------------------------------------------------
 
@@ -85,7 +105,7 @@ impl State {
 		// TODO Pensare se fare un descrittore che crei la camera senza rendere così gli attributi pubblici
 		let camera = irid::camera::Camera {
 			// Position the camera one unit up and 2 units back +z is out of the screen
-			eye: (0.0, 1.0, 2.0).into(),
+			eye: (0.0, 5.0, 10.0).into(),
 			// Have it look at the origin
 			target: (0.0, 0.0, 0.0).into(),
 			// Which way is "up"
@@ -146,19 +166,42 @@ impl State {
 
 		//- Vertex And Indices Section -------------------------------------------------------------
 
-		let vertex_buffer = irid::vertex::create_buffer_for_vertices(
+		let vertex_buffer = irid::vertex::create_buffer_init(
 			&renderer,
 			"Vertex Buffer",
 			&VERTICES
 		);
 
-		let index_buffer = irid::vertex::create_buffer_for_indices(
+		let index_buffer = irid::index::create_buffer_init(
 			&renderer,
 			"Index Buffer",
 			&INDICES
 		);
 
 		let num_indices = INDICES.len() as u32;
+
+		//- Instancing Section ---------------------------------------------------------------------
+
+		let instances = (0..NUM_INSTANCES_PER_ROW).flat_map(|z| {
+			use cgmath::{Zero, Rotation3, InnerSpace};
+			(0..NUM_INSTANCES_PER_ROW).map(move |x| {
+				let position = cgmath::Vector3 { x: x as f32, y: 0.0, z: z as f32 } - INSTANCE_DISPLACEMENT;
+
+				let rotation = if position.is_zero() {
+					// This is needed so an object at (0, 0, 0) won't get scaled to zero
+					// as Quaternions can effect scale if they're not created correctly
+					cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(), cgmath::Deg(0.0))
+				} else {
+					cgmath::Quaternion::from_axis_angle(position.clone().normalize(), cgmath::Deg(45.0))
+				};
+
+				irid::instance::Instance {
+					position, rotation,
+				}
+			})
+		}).collect::<Vec<_>>();
+
+		let instance_buffer = irid::instance::create_buffer_init(&renderer, "Instance Buffer", &instances);
 
 		//- State Struct Instantiation -------------------------------------------------------------
 
@@ -175,6 +218,8 @@ impl State {
 			uniform_staging,
 			uniform_buffer,
 			uniform_bind_group,
+			instances,
+			instance_buffer,
 		}
 	}
 
@@ -189,26 +234,26 @@ impl State {
 	}
 
 	pub fn input(&mut self, event: &WindowEvent) -> bool {
-		self.camera_controller.process_events(event)
-		/*match event {
+		//self.camera_controller.process_events(event);
+		match event {
 			WindowEvent::CursorMoved { position, .. } => {
 				self.clear_color = wgpu::Color {
-					r: position.x as f64 / self.size.width as f64,
-					g: position.y as f64 / self.size.height as f64,
+					r: position.x as f64 / self.renderer.get_size().width as f64,
+					g: position.y as f64 / self.renderer.get_size().height as f64,
 					b: 1.0,
 					a: 1.0,
 				};
 				true
 			},
 			_ => self.camera_controller.process_events(event),
-		}*/
+		}
 	}
 
 	pub fn update(&mut self) {
 		self.camera_controller.update_camera(&mut self.uniform_staging.camera);
-		self.uniform_staging.model_rotation += cgmath::Deg(2.0);
+		//self.uniform_staging.model_rotation += cgmath::Deg(2.0);  // Commented to avoid model rotation
 		self.uniform_staging.update_uniforms(&mut self.uniforms);
-		self.renderer.write_queue_buffer(&self.uniform_buffer, 0, self.uniforms);
+		self.renderer.add_buffer_to_queue(&self.uniform_buffer, 0, self.uniforms);
 	}
 
 	pub fn render(&mut self) -> Result<(), wgpu::SwapChainError> {
@@ -236,14 +281,17 @@ impl State {
 			render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
 			render_pass.set_bind_group(1, &self.uniform_bind_group, &[]);
 
-			let data = (&self.vertex_buffer, &self.index_buffer, self.num_indices);
-			render_pass.set_vertex_buffer(0, data.0.slice(..));
-			render_pass.set_index_buffer(data.1.slice(..), wgpu::IndexFormat::Uint16);
+			render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+			// Make sure if you add new instances to the Vec, that you recreate the instance_buffer
+			// and as well as uniform_bind_group, otherwise your new instances won't show up correctly.
+			render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
+			render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
 
-			render_pass.draw_indexed(0..data.2, 0, 0..1);
+			//render_pass.draw_indexed(0..self.num_indices, 0, 0..1);  // previous code
+			render_pass.draw_indexed(0..self.num_indices, 0, 0..self.instances.len() as u32);
 		}
 
-		self.renderer.submit_to_queue(encoder);
+		self.renderer.submit_command_buffers(encoder);
 
 		Ok(())
 	}

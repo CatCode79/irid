@@ -1,3 +1,4 @@
+
 //= STRUCTS ========================================================================================
 
 /**
@@ -13,37 +14,39 @@ pub struct Vertex {
 }
 
 
-//= FNS ============================================================================================
-
-pub fn create_buffer_layout() -> wgpu::VertexBufferLayout<'static> {
-    wgpu::VertexBufferLayout {
-        array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
-        step_mode: wgpu::InputStepMode::Vertex,
-        attributes: &[
-            wgpu::VertexAttribute {
-                offset: 0,
-                shader_location: 0,
-                format: wgpu::VertexFormat::Float32x3,
-            },
-/*                wgpu::VertexAttribute {
-                offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
-                shader_location: 1,
-                format: wgpu::VertexFormat::Float32x3,
-            },*/
-            wgpu::VertexAttribute {
-                offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
-                shader_location: 1,  // was shader_location: 2,
-                format: wgpu::VertexFormat::Float32x2,
-            },
-        ],
+impl Vertex {
+    pub(crate) fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
+        wgpu::VertexBufferLayout {
+            array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
+            step_mode: wgpu::InputStepMode::Vertex,
+            attributes: &[
+                wgpu::VertexAttribute {
+                    offset: 0,
+                    shader_location: 0,
+                    format: wgpu::VertexFormat::Float32x3,
+                },
+                /*                wgpu::VertexAttribute {
+                                offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
+                                shader_location: 1,
+                                format: wgpu::VertexFormat::Float32x3,
+                            },*/
+                wgpu::VertexAttribute {
+                    offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
+                    shader_location: 1,  // was shader_location: 2,
+                    format: wgpu::VertexFormat::Float32x2,
+                },
+            ],
+        }
     }
 }
 
 
+//= FNS ============================================================================================
+
 /**
  *
  */
-pub fn create_buffer_for_vertices(
+pub fn create_buffer_init(
     renderer: &crate::renderer::Renderer,
     label_text: &str,
     vertices: &[Vertex]
@@ -58,24 +61,6 @@ pub fn create_buffer_for_vertices(
     )
 }
 
-
-/**
- *
- */
-pub fn create_buffer_for_indices(
-    renderer: &crate::renderer::Renderer,
-    label_text: &str,
-    indices: &[u16]
-) -> wgpu::Buffer {
-    use wgpu::util::DeviceExt;
-    renderer.device.create_buffer_init(
-        &wgpu::util::BufferInitDescriptor {
-            label: Some(label_text),
-            contents: bytemuck::cast_slice(indices),
-            usage: wgpu::BufferUsage::INDEX,
-        }
-    )
-}
 
 //= FNS ============================================================================================
 

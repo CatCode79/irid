@@ -78,6 +78,7 @@ impl Renderer {
     /**
      * Setter for the windows's physical size attribute.
      */
+    #[inline(always)]
     pub fn set_size(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
         self.size = new_size;
     }
@@ -126,7 +127,7 @@ impl Renderer {
                 vertex: wgpu::VertexState {
                     module: &vs_module,
                     entry_point: "main",
-                    buffers: &[crate::vertex::create_buffer_layout()],
+                    buffers: &[crate::vertex::Vertex::desc(), crate::instance::InstanceRaw::desc()],
                 },
                 fragment: Some(wgpu::FragmentState {
                     module: &fs_module,
@@ -171,6 +172,7 @@ impl Renderer {
     /**
      *
      */
+    #[inline(always)]
     pub fn get_current_frame(&self) -> Result<wgpu::SwapChainFrame, wgpu::SwapChainError> {
         self.swap_chain.get_current_frame()
     }
@@ -180,7 +182,8 @@ impl Renderer {
     /**
      *
      */
-    pub fn write_queue_buffer(
+    #[inline(always)]
+    pub fn add_buffer_to_queue(
         &self,
         uniform_buffer: &wgpu::Buffer,
         offset: u64,
@@ -192,7 +195,8 @@ impl Renderer {
     /**
      *
      */
-    pub fn submit_to_queue(&self, encoder: wgpu::CommandEncoder) {
+    #[inline(always)]
+    pub fn submit_command_buffers(&self, encoder: wgpu::CommandEncoder) {
         self.queue.submit(std::iter::once(encoder.finish()));
     }
 

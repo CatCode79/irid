@@ -1,8 +1,10 @@
 //= MODS ===========================================================================================
 
 pub mod camera;
+pub mod index;
+pub mod instance;
 pub mod renderer;
-pub mod texture;
 pub mod shader;
+pub mod texture;
 pub mod uniform;
 pub mod vertex;
