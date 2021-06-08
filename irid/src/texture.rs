@@ -182,7 +182,7 @@ fn create_bind_group_layout_desc(label_text: &str) -> wgpu::BindGroupLayoutDescr
                 ty: wgpu::BindingType::Texture {
                     multisampled: false,
                     view_dimension: wgpu::TextureViewDimension::D2,
-                    sample_type: wgpu::TextureSampleType::Float { filterable: false },
+                    sample_type: wgpu::TextureSampleType::Float { filterable: true },
                 },
                 count: None,
             },

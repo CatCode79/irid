@@ -1,0 +1,10 @@
+[package]
+name = "learnwgpu_01_window"
+version = "0.0.1"
+authors = ["CatCode <andrea.postal@gmail.com>"]
+edition = "2018"
+description = "based on https://github.com/sotrh/learn-wgpu/tree/0.8/code/beginner/tutorial1-window"
+
+[dependencies.irid]
+path = "../../irid"
+version = "0.0"

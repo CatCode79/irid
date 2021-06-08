@@ -1,5 +1,6 @@
 //= MODS ===========================================================================================
 
+pub mod app;
 pub mod camera;
 pub mod index;
 pub mod instance;

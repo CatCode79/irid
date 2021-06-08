@@ -1,16 +1,25 @@
 [package]
-name = "irid"
+name = "bad"
 version = "0.0.14"
 authors = ["CatCode <andrea.postal@gmail.com>"]
 edition = "2018"
+description = "Black Abyss Dungeon"
+publish = false
+
+[dependencies.irid]
+path = "../irid"
+version = "0.0"
 
 [dependencies]
-anyhow = "1.0"  # It have the no_std feature
 bytemuck = { version = "1.5", features = ["derive"] }
 cgmath = "0.18"
 env_logger = "0.8"
-futures = "0.3"
-image = "0.23"
 log = "0.4"
 wgpu = "0.8"
-winit = "0.25"
+winit = "0.24"
+
+[build-dependencies]
+anyhow = "1.0"
+fs_extra = "1.2"
+glob = "0.3"
+shaderc = "0.7"

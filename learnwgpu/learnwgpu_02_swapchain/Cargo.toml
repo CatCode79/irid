@@ -1,0 +1,19 @@
+[package]
+name = "learnwgpu_02_swapchain"
+version = "0.0.1"
+authors = ["CatCode <andrea.postal@gmail.com>"]
+edition = "2018"
+description = "based on https://github.com/sotrh/learn-wgpu/tree/0.8/code/beginner/tutorial2-swapchain"
+
+[dependencies.irid]
+path = "../../irid"
+version = "0.0"
+
+[dependencies]
+cgmath = "0.18"
+env_logger = "0.8"
+image = "0.23"
+log = "0.4"
+shaderc = "0.7"
+winit = "0.24"
+wgpu = "0.8"
