@@ -1,6 +1,6 @@
 [package]
 name = "bad"
-version = "0.0.14"
+version = "0.0.15"
 authors = ["CatCode <andrea.postal@gmail.com>"]
 edition = "2018"
 description = "Black Abyss Dungeon"
@@ -16,7 +16,7 @@ cgmath = "0.18"
 env_logger = "0.8"
 log = "0.4"
 wgpu = "0.8"
-winit = "0.24"
+winit = "0.25"
 
 [build-dependencies]
 anyhow = "1.0"
