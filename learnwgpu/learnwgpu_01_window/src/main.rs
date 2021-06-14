@@ -8,6 +8,12 @@ use irid;
 
 struct GameListener {}
 
+impl irid::window::EventListener for GameListener {
+    fn on_redraw_begin(&self) -> bool {
+        true
+    }
+}
+
 impl irid::window::WindowListener for GameListener { }
 
 

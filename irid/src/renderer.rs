@@ -29,7 +29,7 @@ impl Renderer {
                 power_preference: wgpu::PowerPreference::HighPerformance,
                 compatible_surface: Some(&surface),
             }).await
-        }).unwrap();
+        }).unwrap();  // todo None check
 
         // The device is an open connection to a graphics and/or compute device responsible
         // for the creation of most rendering and compute resources.
@@ -37,13 +37,13 @@ impl Renderer {
         let (device, queue) = futures::executor::block_on(async {
             adapter.request_device(
                 &wgpu::DeviceDescriptor {
-                    label: None,
+                    label: Some("New Device & Queue"),
                     features: wgpu::Features::empty(),
                     limits: wgpu::Limits::default(),
                 },
                 None, // Trace path
             ).await
-        }).unwrap();
+        }).unwrap();  // todo None check
 
         // A SwapChain represents the image or series of images that will be presented to a Surface.
         let swap_chain_desc = wgpu::SwapChainDescriptor {
@@ -70,25 +70,38 @@ impl Renderer {
     /**
      * Getter for the windows's physical size attribute.
      */
-    #[inline(always)]
-    pub fn get_size(&self) -> winit::dpi::PhysicalSize<u32> {
+    #[inline]
+    pub fn get_size(&self) -> crate::window::PhysicalSize {
         self.size
     }
 
     /**
      * Setter for the windows's physical size attribute.
      */
-    #[inline(always)]
-    pub fn set_size(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
+    #[inline]
+    pub fn set_size(&mut self, new_size: crate::window::PhysicalSize) {
         self.size = new_size;
     }
 
     /**
      * Calculate the aspect ratio of the window's inner size.
      */
-    #[inline(always)]
+    #[inline]
     pub fn calc_aspect_ratio(&self) -> f32 {
         self.size.width as f32 / self.size.height as f32
+    }
+
+    /**
+     * Resize the renderer window.
+     */
+    pub(crate) fn resize(&mut self, new_size: &crate::window::PhysicalSize) {
+        self.set_size(*new_size);
+        self.refresh_current_size();
+    }
+
+    #[inline]
+    pub(crate) fn refresh_current_size(&mut self) {
+        self.update_swap_chain();
     }
 
     //- Pipeline Methods ---------------------------------------------------------------------------
@@ -172,7 +185,7 @@ impl Renderer {
     /**
      *
      */
-    #[inline(always)]
+    #[inline]
     pub fn get_current_frame(&self) -> Result<wgpu::SwapChainFrame, wgpu::SwapChainError> {
         self.swap_chain.get_current_frame()
     }
@@ -182,7 +195,7 @@ impl Renderer {
     /**
      *
      */
-    #[inline(always)]
+    #[inline]
     pub fn add_buffer_to_queue(
         &self,
         uniform_buffer: &wgpu::Buffer,
@@ -195,7 +208,7 @@ impl Renderer {
     /**
      *
      */
-    #[inline(always)]
+    #[inline]
     pub fn submit_command_buffers(&self, encoder: wgpu::CommandEncoder) {
         self.queue.submit(std::iter::once(encoder.finish()));
     }
@@ -216,7 +229,7 @@ impl Renderer {
 
 
 /**
- * Show all the adapters infos for debug
+ * Show all the adapters information for debug.
  */
 #[cfg(debug_assertions)]
 fn enumerate_all_adapters(instance: &wgpu::Instance) {

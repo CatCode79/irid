@@ -1,4 +1,5 @@
-use std::iter;
+
+//= USES ===========================================================================================
 
 use winit::{
     event::*,
@@ -6,67 +7,26 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
+
+//= STATE STRUCTS ==================================================================================
+
 struct State {
-    surface: wgpu::Surface,
-    device: wgpu::Device,
-    queue: wgpu::Queue,
-    sc_desc: wgpu::SwapChainDescriptor,
-    swap_chain: wgpu::SwapChain,
-    size: winit::dpi::PhysicalSize<u32>,
+    renderer: irid::renderer::Renderer,
 }
 
+
 impl State {
-    async fn new(window: &Window) -> Self {
-        let size = window.inner_size();
-
-        // The instance is a handle to our GPU
-        // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
-        let instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
-        let surface = unsafe { instance.create_surface(window) };
-        let adapter = instance
-            .request_adapter(&wgpu::RequestAdapterOptions {
-                power_preference: wgpu::PowerPreference::default(),
-                compatible_surface: Some(&surface),
-            })
-            .await
-            .unwrap();
-
-        let (device, queue) = adapter
-            .request_device(
-                &wgpu::DeviceDescriptor {
-                    label: None,
-                    features: wgpu::Features::empty(),
-                    limits: wgpu::Limits::default(),
-                },
-                None, // Trace path
-            )
-            .await
-            .unwrap();
-
-        let sc_desc = wgpu::SwapChainDescriptor {
-            usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
-            format: adapter.get_swap_chain_preferred_format(&surface).unwrap(),
-            width: size.width,
-            height: size.height,
-            present_mode: wgpu::PresentMode::Fifo,
-        };
-        let swap_chain = device.create_swap_chain(&surface, &sc_desc);
+    fn new(window: &Window) -> Self {
+        let renderer = irid::renderer::Renderer::new(window);
 
         Self {
-            surface,
-            device,
-            queue,
-            sc_desc,
-            swap_chain,
-            size,
+            renderer,
         }
     }
 
     fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
-        self.size = new_size;
-        self.sc_desc.width = new_size.width;
-        self.sc_desc.height = new_size.height;
-        self.swap_chain = self.device.create_swap_chain(&self.surface, &self.sc_desc);
+        self.renderer.set_size(new_size);
+        self.renderer.update_swap_chain();
     }
 
     #[allow(unused_variables)]
@@ -77,15 +37,11 @@ impl State {
     fn update(&mut self) {}
 
     fn render(&mut self) -> Result<(), wgpu::SwapChainError> {
-        let frame = self.swap_chain.get_current_frame()?.output;
-
-        let mut encoder = self
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("Render Encoder"),
-            });
+        let mut encoder = self.renderer.create_command_encoder("Render Encoder");
 
         {
+            let frame = self.renderer.get_current_frame()?.output;
+
             let _render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
                 color_attachments: &[wgpu::RenderPassColorAttachment {
@@ -105,7 +61,7 @@ impl State {
             });
         }
 
-        self.queue.submit(iter::once(encoder.finish()));
+        self.renderer.submit_command_buffers(encoder);
 
         Ok(())
     }
@@ -113,13 +69,12 @@ impl State {
 
 fn main() {
     env_logger::init();
+
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new().build(&event_loop).unwrap();
 
-    use futures::executor::block_on;
-
     // Since main can't be async, we're going to need to block
-    let mut state: State = block_on(State::new(&window));
+    let mut state: State = State::new(&window);
 
     event_loop.run(move |event, _, control_flow| {
         match event {
@@ -155,7 +110,7 @@ fn main() {
                 match state.render() {
                     Ok(_) => {}
                     // Recreate the swap_chain if lost
-                    Err(wgpu::SwapChainError::Lost) => state.resize(state.size),
+                    Err(wgpu::SwapChainError::Lost) => state.resize(state.renderer.get_size()),
                     // The system is out of memory, we should probably quit
                     Err(wgpu::SwapChainError::OutOfMemory) => *control_flow = ControlFlow::Exit,
                     // All other errors (Outdated, Timeout) should be resolved by the next frame

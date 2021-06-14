@@ -4,8 +4,11 @@
 /// It's an alias to winit::event::ElementState.
 pub type ElementState = winit::event::ElementState;
 
+///Describes the reason the event loop is resuming.
+pub type StartCause = winit::event::StartCause;
+
 /// It's an alias to winit::event::VirtualKeyCode.
-pub type VirtualKeycode = winit::event::VirtualKeyCode;
+pub type VirtualKeyCode = winit::event::VirtualKeyCode;
 
 
 //= STRUCT ALIASES =================================================================================
@@ -24,5 +27,5 @@ pub struct KeyboardInput {
     pub state: ElementState,
 
     /// Identifies the semantic meaning of the key.
-    pub virtual_keycode: VirtualKeycode,
+    pub virtual_keycode: VirtualKeyCode,
 }

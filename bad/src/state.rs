@@ -223,14 +223,10 @@ impl State {
 		}
 	}
 
-	pub fn refresh_size(&mut self) {
-		self.renderer.update_swap_chain();
-		self.uniform_staging.update_camera(self.renderer.calc_aspect_ratio());
-	}
-
 	pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
 		self.renderer.set_size(new_size);
-		self.refresh_size();
+		self.renderer.update_swap_chain();
+		self.uniform_staging.update_camera(self.renderer.calc_aspect_ratio());
 	}
 
 	pub fn input(&mut self, event: &WindowEvent) -> bool {
