@@ -110,7 +110,7 @@ pub trait WindowListener {
     ///
     /// * `physical_position` - Contains the window's new position.
     #[allow(unused_variables)]
-    fn on_window_move(&self, physical_position: &winit::dpi::PhysicalPosition<i32>) -> bool {
+    fn on_window_move(&self, physical_position: winit::dpi::PhysicalPosition<i32>) -> bool {
         true
     }
 
@@ -129,7 +129,7 @@ pub trait WindowListener {
     /// When the user drops multiple files at once, this event will be emitted for each file
     /// separately.
     #[allow(unused_variables)]
-    fn on_window_drop_file(&self, path: &std::path::PathBuf) -> bool {
+    fn on_window_drop_file(&self, path: std::path::PathBuf) -> bool {
         true
     }
 
@@ -138,7 +138,7 @@ pub trait WindowListener {
     /// When the user hovers multiple files at once, this event will be emitted for each file
     /// separately.
     #[allow(unused_variables)]
-    fn on_window_hover_file(&self, path: &std::path::PathBuf) -> bool {
+    fn on_window_hover_file(&self, path: std::path::PathBuf) -> bool {
         true
     }
 
@@ -182,7 +182,7 @@ pub trait WindowListener {
     /// - **Web**: This API is currently unimplemented on the web. This isn't by design - it's an
     ///   issue, and it should get fixed - but it's the current state of the API.
     #[allow(unused_variables)]
-    fn on_window_modifiers_change(&self, state: &winit::event::ModifiersState) -> bool {
+    fn on_window_modifiers_change(&self, state: winit::event::ModifiersState) -> bool {
         true
     }
 
@@ -196,7 +196,7 @@ pub trait WindowListener {
     fn on_window_cursor_move(
         &self,
         device_id: winit::event::DeviceId,
-        position: &winit::dpi::PhysicalPosition<f64>
+        position: winit::dpi::PhysicalPosition<f64>
     ) -> bool {
         true
     }
@@ -224,8 +224,8 @@ pub trait WindowListener {
     fn on_window_mouse_wheel(
         &self,
         device_id: winit::event::DeviceId,
-        delta: &winit::event::MouseScrollDelta,
-        phase: &winit::event::TouchPhase
+        delta: winit::event::MouseScrollDelta,
+        phase: winit::event::TouchPhase
     ) -> bool {
         true
     }
@@ -235,8 +235,8 @@ pub trait WindowListener {
     fn on_window_mouse_input(
         &self,
         device_id: winit::event::DeviceId,
-        state: &winit::event::ElementState,
-        button: &winit::event::MouseButton
+        state: winit::event::ElementState,
+        button: winit::event::MouseButton
     ) -> bool {
         true
     }
@@ -272,7 +272,7 @@ pub trait WindowListener {
     #[allow(unused_variables)]
     fn on_window_touch(
         &self,
-        touch: &winit::event::Touch
+        touch: winit::event::Touch
     ) -> bool {
         true
     }
@@ -292,7 +292,7 @@ pub trait WindowListener {
     fn on_window_scale_change(
         &self,
         scale_factor: f64,
-        new_inner_size: &&mut winit::dpi::PhysicalSize<u32>
+        new_inner_size: &mut winit::dpi::PhysicalSize<u32>
     ) -> bool {
         true
     }

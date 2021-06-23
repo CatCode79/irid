@@ -6,8 +6,8 @@ pub struct Renderer {
     surface: wgpu::Surface,
     pub(crate) device: wgpu::Device,
     pub(crate) queue: wgpu::Queue,
-    swap_chain_desc: wgpu::SwapChainDescriptor,
-    swap_chain: wgpu::SwapChain,
+    //swap_chain_desc: wgpu::SwapChainDescriptor,
+    //swap_chain: wgpu::SwapChain,
 }
 
 
@@ -46,22 +46,22 @@ impl Renderer {
         }).unwrap();  // todo None check
 
         // A SwapChain represents the image or series of images that will be presented to a Surface.
-        let swap_chain_desc = wgpu::SwapChainDescriptor {
+/*        let swap_chain_desc = wgpu::SwapChainDescriptor {
             usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
             format: crate::texture::PREFERRED_TEXTURE_FORMAT,
             width: size.width,
             height: size.height,
             present_mode: wgpu::PresentMode::Fifo,
         };
-        let swap_chain = device.create_swap_chain(&surface, &swap_chain_desc);
+        let swap_chain = device.create_swap_chain(&surface, &swap_chain_desc);*/
 
         Self {
             size,
             surface,
             device,
             queue,
-            swap_chain_desc,
-            swap_chain,
+            //swap_chain_desc,
+            //swap_chain,
         }
     }
 
@@ -101,7 +101,7 @@ impl Renderer {
 
     #[inline]
     pub(crate) fn refresh_current_size(&mut self) {
-        self.update_swap_chain();
+        //self.update_swap_chain();
     }
 
     //- Pipeline Methods ---------------------------------------------------------------------------
@@ -126,7 +126,7 @@ impl Renderer {
     /**
      *
      */
-    pub fn create_render_pipeline(
+    /*pub fn create_render_pipeline(
         &self,
         label_text: &str,
         render_pipeline_layout: &wgpu::PipelineLayout,
@@ -169,26 +169,26 @@ impl Renderer {
                 },
             }
         )
-    }
+    }*/
 
     //- Swap Chain Methods -------------------------------------------------------------------------
 
     /**
      *
      */
-    pub fn update_swap_chain(&mut self) {
+    /*pub fn update_swap_chain(&mut self) {
         self.swap_chain_desc.width = self.size.width;
         self.swap_chain_desc.height = self.size.height;
         self.swap_chain = self.device.create_swap_chain(&self.surface, &self.swap_chain_desc);
-    }
+    }*/
 
     /**
      *
      */
     #[inline]
-    pub fn get_current_frame(&self) -> Result<wgpu::SwapChainFrame, wgpu::SwapChainError> {
+    /*pub fn get_current_frame(&self) -> Result<wgpu::SwapChainFrame, wgpu::SwapChainError> {
         self.swap_chain.get_current_frame()
-    }
+    }*/
 
     //- Queue Methods ------------------------------------------------------------------------------
 
