@@ -16,8 +16,13 @@ impl<T: EventListener + WindowListener> Listener for T {}
 /// For more information see [`enum Event`](winit::event::Event).
 pub trait EventListener {
     /// Emitted when new events arrive from the OS to be processed.
+    ///
+    /// This event type is useful as a place to put code that should be done before you start
+    /// processing events, such as updating frame timing information for benchmarking or checking
+    /// the [`StartCause`][winit::event::StartCause] to see if a timer set by
+    /// [`ControlFlow::WaitUntil`](winit::event_loop::ControlFlow::WaitUntil) has elapsed.
     #[allow(unused_variables)]
-    fn on_new_events(&self, start_cause: crate::window::event::StartCause) -> bool {
+    fn on_new_events(&self, start_cause: winit::event::StartCause) -> bool {
         true
     }
 
@@ -43,6 +48,9 @@ pub trait EventListener {
     /// This event is useful as a place to put your code that should be run after all
     /// state-changing events have been handled and you want to do stuff (updating state,
     /// performing calculations, etc) that happens as the "main body" of your event loop.
+    /// If your program only draws graphics when something changes, it's usually better
+    /// to do it in response to [`Event::RedrawRequested`](winit::event::Event::RedrawRequested),
+    /// which gets emitted immediately after this event.
     ///
     /// Programs that draw graphics continuously, like most games, can render here unconditionally
     /// for simplicity.
@@ -50,10 +58,19 @@ pub trait EventListener {
 
     /// Emitted after `on_redraw_begin` when a window should be redrawn.
     ///
+    /// This gets triggered in two scenarios:
+    /// - The OS has performed an operation that's invalidated the window's contents (such as
+    ///   resizing the window).
+    /// - The application has explicitly requested a redraw via
+    ///   [`Window::request_redraw`](winit::window::Window::request_redraw).
+    ///
+    /// During each iteration of the event loop, Winit will aggregate duplicate redraw requests
+    /// into a single event, to help avoid duplicating rendering work.
+    ///
     /// Mainly of interest to applications with mostly-static graphics that avoid redrawing unless
     /// something changes, like most non-game GUIs.
     #[allow(unused_variables)]
-    fn on_redraw_request(&self, window_id: &crate::window::WindowId) -> bool {
+    fn on_redraw_request(&self, window_id: &winit::window::WindowId) -> bool {
         true
     }
 
@@ -77,19 +94,23 @@ pub trait EventListener {
 }
 
 
-/// Listener for a window event.
+/// Listener for a `Window` event.
 ///
-/// For more information see [`enum Event`](winit::event::Event).
+/// For more information see [`enum WindowEvent`](winit::event::WindowEvent).
 pub trait WindowListener {
     /// The size of the window has changed.
+    ///
+    /// * `new_size` - Contains the client area's new dimensions.
     #[allow(unused_variables)]
-    fn on_window_resize(&self, new_size: crate::window::PhysicalSize) -> bool {
+    fn on_window_resize(&self, new_size: winit::dpi::PhysicalSize<u32>) -> bool {
         true
     }
 
-    /// The position of the window has changed. Contains the window's new position.
+    /// The position of the window has changed.
+    ///
+    /// * `physical_position` - Contains the window's new position.
     #[allow(unused_variables)]
-    fn on_window_move(&self, physical_position: crate::window::PhysicalPosition) -> bool {
+    fn on_window_move(&self, physical_position: &winit::dpi::PhysicalPosition<i32>) -> bool {
         true
     }
 
@@ -104,18 +125,27 @@ pub trait WindowListener {
     }
 
     /// A file has been dropped into the window.
+    ///
+    /// When the user drops multiple files at once, this event will be emitted for each file
+    /// separately.
     #[allow(unused_variables)]
     fn on_window_drop_file(&self, path: &std::path::PathBuf) -> bool {
         true
     }
 
     /// A file is being hovered over the window.
+    ///
+    /// When the user hovers multiple files at once, this event will be emitted for each file
+    /// separately.
     #[allow(unused_variables)]
     fn on_window_hover_file(&self, path: &std::path::PathBuf) -> bool {
         true
     }
 
     /// A file was hovered, but has exited the window.
+    ///
+    /// There will be a single `on_window_hover_file_cancelled` event triggered even if multiple
+    /// files were hovered.
     #[allow(unused_variables)]
     fn on_window_hover_file_cancelled(&self) -> bool {
         true
@@ -123,13 +153,15 @@ pub trait WindowListener {
 
     /// The window received a unicode character.
     #[allow(unused_variables)]
-    fn on_window_receive_character(c: char) -> bool  {
+    fn on_window_receive_character(&self, c: char) -> bool  {
         true
     }
 
     /// The window gained or lost the focus.
+    ///
+    /// * `gained_focus` - True if the window has gained focus, and false if it has lost focus.
     #[allow(unused_variables)]
-    fn on_window_focus(gained_focus: bool) -> bool {
+    fn on_window_focus(&self, gained_focus: bool) -> bool {
         true
     }
 
@@ -137,29 +169,34 @@ pub trait WindowListener {
     #[allow(unused_variables)]
     fn on_window_keyboard_input(
         &self,
-        device_id: &crate::window::DeviceId,
-        state: crate::window::ElementState,
-        virtual_keycode: crate::window::VirtualKeyCode
+        device_id: winit::event::DeviceId,
+        state: winit::event::ElementState,
+        virtual_keycode: winit::event::VirtualKeyCode
     ) -> bool {
         true
     }
 
     /// The keyboard modifiers have changed.
+    ///
+    /// Platform-specific behavior:
+    /// - **Web**: This API is currently unimplemented on the web. This isn't by design - it's an
+    ///   issue, and it should get fixed - but it's the current state of the API.
     #[allow(unused_variables)]
-    fn on_window_modifiers_change(state: winit::event::ModifiersState) -> bool {
+    fn on_window_modifiers_change(&self, state: &winit::event::ModifiersState) -> bool {
         true
     }
 
     /// The cursor has moved on the window.
+    ///
+    /// * `position` - (x,y) coords in pixels relative to the top-left corner of the window.
+    /// Because the range of this data is limited by the display area and it may have been
+    /// transformed by the OS to implement effects such as cursor acceleration,
+    /// it should not be used to implement non-cursor-like interactions such as 3D camera control.
     #[allow(unused_variables)]
     fn on_window_cursor_move(
         &self,
-        device_id: crate::window::DeviceId,
-        /// (x,y) coords in pixels relative to the top-left corner of the window. Because the range
-        /// of this data is limited by the display area and it may have been transformed by the OS
-        /// to implement effects such as cursor acceleration, it should not be used to implement
-        /// non-cursor-like interactions such as 3D camera control.
-        position:crate::window::PhysicalPosition
+        device_id: winit::event::DeviceId,
+        position: &winit::dpi::PhysicalPosition<f64>
     ) -> bool {
         true
     }
@@ -168,16 +205,16 @@ pub trait WindowListener {
     #[allow(unused_variables)]
     fn on_window_cursor_enter(
         &self,
-        device_id: crate::window::DeviceId
+        device_id: winit::event::DeviceId
     ) -> bool {
         true
     }
 
     /// The cursor has left the window.
     #[allow(unused_variables)]
-    fn on_window_cursor_exit(
+    fn on_window_cursor_left(
         &self,
-        device_id: crate::window::DeviceId
+        device_id: winit::event::DeviceId
     ) -> bool {
         true
     }
@@ -186,9 +223,9 @@ pub trait WindowListener {
     #[allow(unused_variables)]
     fn on_window_mouse_wheel(
         &self,
-        device_id: crate::window::DeviceId,
-        delta: crate::window::MouseScrollDelta,
-        phase: crate::window::TouchPhase
+        device_id: winit::event::DeviceId,
+        delta: &winit::event::MouseScrollDelta,
+        phase: &winit::event::TouchPhase
     ) -> bool {
         true
     }
@@ -197,9 +234,9 @@ pub trait WindowListener {
     #[allow(unused_variables)]
     fn on_window_mouse_input(
         &self,
-        device_id: crate::window::DeviceId,
-        delta: crate::window::ElementState,
-        phase: crate::window::MouseButton
+        device_id: winit::event::DeviceId,
+        state: &winit::event::ElementState,
+        button: &winit::event::MouseButton
     ) -> bool {
         true
     }
@@ -207,13 +244,14 @@ pub trait WindowListener {
     /// Touchpad pressure event.
     ///
     /// At the moment, only supported on Apple forcetouch-capable macbooks.
+    ///
+    /// * `pressure` - Value between 0 and 1 representing how hard the touchpad is being pressed.
+    /// * `stage` - Integer representing the click level.
     #[allow(unused_variables)]
     fn on_window_touchpad_pressure(
         &self,
-        device_id: crate::window::DeviceId,
-        /// Value between 0 and 1 representing how hard the touchpad is being pressed.
+        device_id: winit::event::DeviceId,
         pressure: f32,
-        /// Integer representing the click level.
         stage: i64
     ) -> bool {
         true
@@ -223,8 +261,8 @@ pub trait WindowListener {
     #[allow(unused_variables)]
     fn on_window_axis_motion(
         &self,
-        device_id: crate::window::DeviceId,
-        axis: crate::window::AxisId,
+        device_id: winit::event::DeviceId,
+        axis: winit::event::AxisId,
         value: f64
     ) -> bool {
         true
@@ -234,7 +272,7 @@ pub trait WindowListener {
     #[allow(unused_variables)]
     fn on_window_touch(
         &self,
-        Touch
+        touch: &winit::event::Touch
     ) -> bool {
         true
     }
@@ -242,21 +280,38 @@ pub trait WindowListener {
     /// The window's scale factor has changed.
     ///
     /// The following user actions can cause DPI changes:
+    ///
     /// * Changing the display's resolution.
     /// * Changing the display's scale factor (e.g. in Control Panel on Windows).
     /// * Moving the window to a display with a different scale factor.
+    ///
+    /// After this event callback has been processed, the window will be resized to whatever value
+    /// is pointed to by the `new_inner_size` reference. By default, this will contain the size
+    /// suggested by the OS, but it can be changed to any value.
     #[allow(unused_variables)]
     fn on_window_scale_change(
         &self,
         scale_factor: f64,
-        new_inner_size: crate::window::PhysicalSize
+        new_inner_size: &&mut winit::dpi::PhysicalSize<u32>
     ) -> bool {
+        true
+    }
+
+    /// The system window theme has changed.
+    ///
+    /// Applications might wish to react to this to change the theme of the content of the window
+    /// when the system changes the window theme.
+    ///
+    /// At the moment this is only supported on Windows.
+    #[allow(unused_variables)]
+    fn on_window_theme_change(&self, theme: winit::window::Theme) -> bool {
         true
     }
 }
 
 
 /*
+TODO non ho esattamente l'idea del perchè utilizzarli, ma forse centra con i joysticks
 pub trait DeviceListener {
 
 }

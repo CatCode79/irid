@@ -71,7 +71,7 @@ impl Renderer {
      * Getter for the windows's physical size attribute.
      */
     #[inline]
-    pub fn get_size(&self) -> crate::window::PhysicalSize {
+    pub fn get_size(&self) -> winit::dpi::PhysicalSize<u32> {
         self.size
     }
 
@@ -79,7 +79,7 @@ impl Renderer {
      * Setter for the windows's physical size attribute.
      */
     #[inline]
-    pub fn set_size(&mut self, new_size: crate::window::PhysicalSize) {
+    pub fn set_size(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
         self.size = new_size;
     }
 
@@ -94,8 +94,8 @@ impl Renderer {
     /**
      * Resize the renderer window.
      */
-    pub(crate) fn resize(&mut self, new_size: &crate::window::PhysicalSize) {
-        self.set_size(*new_size);
+    pub(crate) fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
+        self.set_size(new_size);
         self.refresh_current_size();
     }
 

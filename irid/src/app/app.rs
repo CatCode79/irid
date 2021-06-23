@@ -42,12 +42,12 @@ impl App {
             },
 
             winit::event::Event::WindowEvent {
-                event: ref window_event,
+                event: ref window_event,  // todo dubbioso riguardo ref, serve?
                 ref window_id,
             } => if *window_id == window.id() {  // todo multi-monitor support
                 match window_event {
                     winit::event::WindowEvent::Resized(physical_size) => {
-                        self.on_window_resize(listener, &mut renderer, physical_size);
+                        self.on_window_resize(listener, &mut renderer, *physical_size);
                     },
 
                     winit::event::WindowEvent::Moved(physical_position) => {
@@ -63,15 +63,23 @@ impl App {
                     },
 
                     winit::event::WindowEvent::DroppedFile(path) => {
-                        self.on_window_dropped_file(listener, path);
+                        self.on_window_drop_file(listener, path);
                     },
 
                     winit::event::WindowEvent::HoveredFile(path) => {
-                        self.on_hovered_file(listener, path);
+                        self.on_window_hover_file(listener, path);
                     },
 
                     winit::event::WindowEvent::HoveredFileCancelled => {
-                        self.on_hovered_file_cancelled(listener, path);
+                        self.on_window_hover_file_cancelled(listener);
+                    },
+
+                    winit::event::WindowEvent::ReceivedCharacter(c) => {
+                        self.on_window_receive_character(listener, *c);
+                    },
+
+                    winit::event::WindowEvent::Focused(gained_focus) => {
+                        self.on_window_focus(listener, *gained_focus);
                     },
 
                     winit::event::WindowEvent::KeyboardInput {
@@ -82,17 +90,77 @@ impl App {
                         self.on_window_keyboard_input(listener, control_flow, device_id, input);
                     },
 
+                    winit::event::WindowEvent::ModifiersChanged(state) => {
+                        self.on_window_modifiers_change(listener, state);
+                    },
+
+                    winit::event::WindowEvent::CursorMoved {
+                        device_id,
+                        position ,
+                        ..
+                    } => {
+                        self.on_window_cursor_move(listener, *device_id, position);
+                    },
+
+                    winit::event::WindowEvent::CursorEntered { device_id } => {
+                        self.on_window_cursor_enter(listener, *device_id);
+                    },
+
+                    winit::event::WindowEvent::CursorLeft { device_id } => {
+                        self.on_window_cursor_left(listener, *device_id);
+                    },
+
+                    winit::event::WindowEvent::MouseWheel {
+                        device_id,
+                        delta,
+                        phase,
+                        ..
+                    } => {
+                        self.on_window_mouse_wheel(listener, *device_id, delta, phase);
+                    },
+
+                    winit::event::WindowEvent::MouseInput {
+                        device_id,
+                        state,
+                        button,
+                        ..
+                    } => {
+                        self.on_window_mouse_input(listener, *device_id, state, button);
+                    },
+
+                    winit::event::WindowEvent::TouchpadPressure {
+                        device_id,
+                        pressure,
+                        stage
+                    } => {
+                        self.on_window_touchpad_pressure(listener, *device_id, *pressure, *stage);
+                    },
+
+                    winit::event::WindowEvent::AxisMotion {
+                        device_id,
+                        axis,
+                        value
+                    } => {
+                        self.on_window_axis_motion(listener, *device_id, *axis, *value);
+                    },
+
+                    winit::event::WindowEvent::Touch(touch) => {
+                        self.on_window_touch(listener, touch);
+                    },
+
                     // The window's scale factor has changed.
                     winit::event::WindowEvent::ScaleFactorChanged {
                         scale_factor,
                         new_inner_size
                     } => {
                         self.on_window_scale_change(
-                            listener, &mut renderer, scale_factor, new_inner_size
+                            listener, &mut renderer, *scale_factor, new_inner_size
                         );
                     },
 
-                    _ => {},  // todo error, devo averli inseriti tutti
+                    winit::event::WindowEvent::ThemeChanged(theme) => {
+                        self.on_window_theme_change(listener, *theme);
+                    },
                 }
             },
 
@@ -117,7 +185,7 @@ impl App {
             },
 
             winit::event::Event::RedrawRequested(window_id) => {
-                self.on_redraw_request(listener, &(window_id as crate::window::WindowId));
+                self.on_redraw_request(listener, &window_id);
             },
 
             winit::event::Event::RedrawEventsCleared => {
@@ -135,7 +203,7 @@ impl App {
     fn on_new_events<L: crate::window::Listener>(
         &self,
         listener: &L,
-        start_cause: crate::window::StartCause
+        start_cause: winit::event::StartCause
     ) {
         /*let use_default_behaviour: bool =*/ listener.on_new_events(start_cause);
     }
@@ -161,7 +229,7 @@ impl App {
     fn on_redraw_request<L: crate::window::Listener>(
         &self,
         listener: &L,
-        window_id: &crate::window::WindowId
+        window_id: &winit::window::WindowId
     ) {
         /*let use_default_behaviour: bool =*/ listener.on_redraw_request(window_id);
     }
@@ -180,12 +248,12 @@ impl App {
         &self,
         listener: &L,
         renderer: &mut crate::renderer::Renderer,
-        physical_size: &winit::dpi::PhysicalSize<u32>
+        physical_size: winit::dpi::PhysicalSize<u32>
     ) {
-        let use_default_behaviour = listener.on_window_resize(*physical_size);
+        let use_default_behaviour = listener.on_window_resize(physical_size);
         if use_default_behaviour {
             // todo Pensare se il metodo resize lo devo spostare qui, in window o tenerlo così
-            renderer.resize(&physical_size);
+            renderer.resize(physical_size);
         }
     }
 
@@ -194,7 +262,7 @@ impl App {
         listener: &L,
         physical_position: &winit::dpi::PhysicalPosition<i32>
     ) {
-        /*let use_default_behaviour =*/ listener.on_window_move(*physical_position);
+        /*let use_default_behaviour =*/ listener.on_window_move(&physical_position);
     }
 
     fn on_window_close<L: crate::window::Listener>(
@@ -212,6 +280,34 @@ impl App {
         /*let use_default_behaviour =*/ listener.on_window_destroy();
     }
 
+    fn on_window_drop_file<L: crate::window::Listener>(
+        &self,
+        listener: &L,
+        path: &std::path::PathBuf
+    ) {
+        /*let use_default_behaviour =*/ listener.on_window_drop_file(path);
+    }
+
+    fn on_window_hover_file<L: crate::window::Listener>(
+        &self,
+        listener: &L,
+        path: &std::path::PathBuf
+    ) {
+        /*let use_default_behaviour =*/ listener.on_window_hover_file(path);
+    }
+
+    fn on_window_hover_file_cancelled<L: crate::window::Listener>(&self, listener: &L) {
+        /*let use_default_behaviour =*/ listener.on_window_hover_file_cancelled();
+    }
+
+    fn on_window_receive_character<L: crate::window::Listener>(&self, listener: &L, c: char) {
+        /*let use_default_behaviour =*/ listener.on_window_receive_character(c);
+    }
+
+    fn on_window_focus<L: crate::window::Listener>(&self, listener: &L, gained_focus: bool) {
+        /*let use_default_behaviour =*/ listener.on_window_focus(gained_focus);
+    }
+
     // Triggered then an user press a key upon this active window.
     // Currently it's preferred to avoid the synthetic event's keys because they
     // works only on Windows and X11 OS; also because the API it's easier and less
@@ -227,9 +323,9 @@ impl App {
     ) {
         // First call a generic method to manage the key events
         let use_default_behaviour = listener.on_window_keyboard_input(
-            &device_id as &crate::window::DeviceId,
-            input.state as crate::window::ElementState,
-            input.virtual_keycode.unwrap() as crate::window::VirtualKeyCode,
+            *device_id,
+            input.state,
+            input.virtual_keycode.unwrap(),
         );
 
         // Then check the input's type for default behaviours
@@ -248,20 +344,110 @@ impl App {
         }
     }
 
+    fn on_window_modifiers_change<L: crate::window::Listener>(
+        &self,
+        listener: &L,
+        state: &winit::event::ModifiersState
+    ) {
+        /*let use_default_behaviour =*/ listener.on_window_modifiers_change(&state);
+    }
+
+    fn on_window_cursor_move<L: crate::window::Listener>(
+        &self,
+        listener: &L,
+        device_id: winit::event::DeviceId,
+        position: &winit::dpi::PhysicalPosition<f64>
+    ) {
+        /*let use_default_behaviour =*/ listener.on_window_cursor_move(device_id, position);
+    }
+
+    fn on_window_cursor_enter<L: crate::window::Listener>(
+        &self,
+        listener: &L,
+        device_id: winit::event::DeviceId
+    ) {
+        /*let use_default_behaviour =*/ listener.on_window_cursor_enter(device_id);
+    }
+
+    fn on_window_cursor_left<L: crate::window::Listener>(
+        &self,
+        listener: &L,
+        device_id: winit::event::DeviceId
+    ) {
+        /*let use_default_behaviour =*/ listener.on_window_cursor_left(device_id);
+    }
+
+    fn on_window_mouse_wheel<L: crate::window::Listener>(
+        &self,
+        listener: &L,
+        device_id: winit::event::DeviceId,
+        delta: &winit::event::MouseScrollDelta,
+        phase: &winit::event::TouchPhase
+    ) {
+        /*let use_default_behaviour =*/ listener.on_window_mouse_wheel(device_id, delta, phase);
+    }
+
+    fn on_window_mouse_input<L: crate::window::Listener>(
+        &self,
+        listener: &L,
+        device_id: winit::event::DeviceId,
+        state: &winit::event::ElementState,
+        button: &winit::event::MouseButton
+    ) {
+        /*let use_default_behaviour =*/ listener.on_window_mouse_input(device_id, &state, &button);
+    }
+
+    fn on_window_touchpad_pressure<L: crate::window::Listener>(
+        &self,
+        listener: &L,
+        device_id: winit::event::DeviceId,
+        pressure: f32,
+        stage: i64
+    ) {
+        /*let use_default_behaviour =*/ listener.on_window_touchpad_pressure(device_id, pressure, stage);
+    }
+
+    fn on_window_axis_motion<L: crate::window::Listener>(
+        &self,
+        listener: &L,
+        device_id: winit::event::DeviceId,
+        axis: u32,
+        value: f64
+    ) {
+        /*let use_default_behaviour =*/ listener.on_window_axis_motion(device_id, axis, value);
+    }
+
+    fn on_window_touch<L: crate::window::Listener>(
+        &self,
+        listener: &L,
+        touch: &winit::event::Touch
+    ) {
+        /*let use_default_behaviour =*/ listener.on_window_touch(touch);
+    }
+
+    fn on_window_theme_change<L: crate::window::Listener>(
+        &self,
+        listener: &L,
+        // theme is copied because an enumeration
+        theme: winit::window::Theme
+    ) {
+        /*let use_default_behaviour =*/ listener.on_window_theme_change(theme);
+    }
+
     fn on_window_scale_change<L: crate::window::Listener>(
         &self,
         listener: &L,
         renderer: &mut crate::renderer::Renderer,
-        scale_factor: &f64,
+        scale_factor: f64,
         new_inner_size: &&mut winit::dpi::PhysicalSize<u32>
     ) {
         let use_default_behaviour = listener.on_window_scale_change(
-            *scale_factor,
-            **new_inner_size
+            scale_factor,
+            new_inner_size  // TODO prob qui e giù devo passarla senza deref
         );
 
         if use_default_behaviour {
-            renderer.resize(*new_inner_size);
+            renderer.resize(**new_inner_size);
         }
     }
 
