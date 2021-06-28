@@ -10,5 +10,4 @@ path = "../../irid"
 version = "0.0"
 
 [dependencies]
-cgmath = "0.18"
-image = "0.23"
+env_logger = "0.8"

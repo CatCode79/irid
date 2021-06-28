@@ -1,3 +1,5 @@
+use log::LevelFilter;
+
 /**
  *
  todo link to example
@@ -5,36 +7,33 @@
 
 //= APP STRUCT =====================================================================================
 
+#[derive(Default)]
 pub struct App {
+    pub config: crate::app::Config,
 }
 
 
 impl App {
-
-    /**
-     * Create a new plain App struct.
-     todo: different from ::default
-     todo: after configured the App must be started with start method
-     */
-    pub fn new() -> App {
-        env_logger::init();
+    /// Create a new plain App struct.
+    // todo: different from ::default
+    // todo: after configured the App must be started with start method
+    pub fn new(config: crate::app::Config) -> App {
+        log::set_max_level(LevelFilter::Debug);
 
         App {
-
+            config,
         }
     }
 
-    /**
-     * Starts the event loop.
-     * The event loop is winit based.
-     todo: parameter explication
-     */
-    pub fn start<L: crate::window::Listener>(self, listener: &'static L) {
+    /// Starts the event loop.
+    /// The event loop is winit based.
+    // todo: parameter explication
+    pub fn start<L: crate::app::Listener>(self, listener: &'static L) {
         let event_loop = winit::event_loop::EventLoop::new();
         let window = winit::window::WindowBuilder::new()
-            .build(&event_loop)
+            .build(&event_loop)// TODO check oserror
             .unwrap();
-        let mut renderer = crate::renderer::Renderer::new(&window);
+        let mut renderer = crate::renderer::Renderer::new(&window, self.config.clear_color);
 
         event_loop.run(move |event, _, control_flow| match event {
             winit::event::Event::NewEvents(start_cause) => {
@@ -181,7 +180,7 @@ impl App {
             },
 
             winit::event::Event::MainEventsCleared => {
-                self.on_redraw_begin(listener);
+                self.on_redraw(listener, &mut renderer, control_flow);
             },
 
             winit::event::Event::RedrawRequested(window_id) => {
@@ -189,7 +188,7 @@ impl App {
             },
 
             winit::event::Event::RedrawEventsCleared => {
-                self.on_redraw_end(listener);
+                self.on_redraw_clear(listener);
             },
 
             winit::event::Event::LoopDestroyed => {
@@ -200,7 +199,7 @@ impl App {
 
     //- Generic Events Methods ---------------------------------------------------------------------
 
-    fn on_new_events<L: crate::window::Listener>(
+    fn on_new_events<L: crate::app::Listener>(
         &self,
         listener: &L,
         start_cause: winit::event::StartCause
@@ -208,25 +207,47 @@ impl App {
         /*let use_default_behaviour: bool =*/ listener.on_new_events(start_cause);
     }
 
-    fn on_user_event<L: crate::window::Listener>(&self, listener: &L, event: &()) {
+    fn on_user_event<L: crate::app::Listener>(&self, listener: &L, event: &()) {
         /*let use_default_behaviour: bool =*/ listener.on_user_event(event);
     }
 
-    fn on_suspend<L: crate::window::Listener>(&self, listener: &L) {
+    fn on_suspend<L: crate::app::Listener>(&self, listener: &L) {
         /*let use_default_behaviour: bool =*/ listener.on_suspend();
     }
 
-    fn on_resume<L: crate::window::Listener>(&self, listener: &L) {
+    fn on_resume<L: crate::app::Listener>(&self, listener: &L) {
         /*let use_default_behaviour: bool =*/ listener.on_resume();
     }
 
     // This method is probably one of the few that must always be inline.
     #[inline(always)]
-    fn on_redraw_begin<L: crate::window::Listener>(&self, listener: &L) {
-        /*let use_default_behaviour: bool =*/ listener.on_redraw_begin();
+    fn on_redraw<L: crate::app::Listener>(
+        &self,
+        listener: &L,
+        renderer: &mut crate::renderer::Renderer,
+        control_flow: &mut winit::event_loop::ControlFlow
+    ) {
+        let use_default_behaviour: bool = listener.on_redraw();
+        if use_default_behaviour {
+            match renderer.redraw() {
+                Ok(_) => {},
+                Err(error) => match error {
+                    // These errors should be resolved by the next frame
+                    wgpu::SwapChainError::Timeout | wgpu::SwapChainError::Outdated =>
+                        eprintln!("{:?}", error),  // todo
+
+                    // Recreate the swap chain if lost
+                    wgpu::SwapChainError::Lost => renderer.refresh_current_size(),
+
+                    // The system is out of memory, we should probably quit
+                    wgpu::SwapChainError::OutOfMemory =>
+                        *control_flow = winit::event_loop::ControlFlow::Exit,
+                }
+            }
+        }
     }
 
-    fn on_redraw_request<L: crate::window::Listener>(
+    fn on_redraw_request<L: crate::app::Listener>(
         &self,
         listener: &L,
         window_id: &winit::window::WindowId
@@ -234,17 +255,17 @@ impl App {
         /*let use_default_behaviour: bool =*/ listener.on_redraw_request(window_id);
     }
 
-    fn on_redraw_end<L: crate::window::Listener>(&self, listener: &L) {
-        /*let use_default_behaviour: bool =*/ listener.on_redraw_end();
+    fn on_redraw_clear<L: crate::app::Listener>(&self, listener: &L) {
+        /*let use_default_behaviour: bool =*/ listener.on_redraw_clear();
     }
 
-    fn on_destroy<L: crate::window::Listener>(&self, listener: &L) {
+    fn on_destroy<L: crate::app::Listener>(&self, listener: &L) {
         /*let use_default_behaviour: bool =*/ listener.on_destroy();
     }
 
     //- Window Events Methods ----------------------------------------------------------------------
 
-    fn on_window_resize<L: crate::window::Listener>(
+    fn on_window_resize<L: crate::app::Listener>(
         &self,
         listener: &L,
         renderer: &mut crate::renderer::Renderer,
@@ -257,7 +278,7 @@ impl App {
         }
     }
 
-    fn on_window_move<L: crate::window::Listener>(
+    fn on_window_move<L: crate::app::Listener>(
         &self,
         listener: &L,
         physical_position: winit::dpi::PhysicalPosition<i32>
@@ -265,22 +286,22 @@ impl App {
         /*let use_default_behaviour =*/ listener.on_window_move(physical_position);
     }
 
-    fn on_window_close<L: crate::window::Listener>(
+    fn on_window_close<L: crate::app::Listener>(
         &self,
         listener: &L,
         control_flow: &mut winit::event_loop::ControlFlow
     ) {
         let use_default_behaviour = listener.on_window_close();
         if use_default_behaviour {
-            App::close_window_default_behaviour(control_flow);
+            *control_flow = winit::event_loop::ControlFlow::Exit;
         }
     }
 
-    fn on_window_destroy<L: crate::window::Listener>(&self, listener: &L) {
+    fn on_window_destroy<L: crate::app::Listener>(&self, listener: &L) {
         /*let use_default_behaviour =*/ listener.on_window_destroy();
     }
 
-    fn on_window_drop_file<L: crate::window::Listener>(
+    fn on_window_drop_file<L: crate::app::Listener>(
         &self,
         listener: &L,
         path: std::path::PathBuf
@@ -288,7 +309,7 @@ impl App {
         /*let use_default_behaviour =*/ listener.on_window_drop_file(path);
     }
 
-    fn on_window_hover_file<L: crate::window::Listener>(
+    fn on_window_hover_file<L: crate::app::Listener>(
         &self,
         listener: &L,
         path: std::path::PathBuf
@@ -296,15 +317,15 @@ impl App {
         /*let use_default_behaviour =*/ listener.on_window_hover_file(path);
     }
 
-    fn on_window_hover_file_cancelled<L: crate::window::Listener>(&self, listener: &L) {
+    fn on_window_hover_file_cancelled<L: crate::app::Listener>(&self, listener: &L) {
         /*let use_default_behaviour =*/ listener.on_window_hover_file_cancelled();
     }
 
-    fn on_window_receive_character<L: crate::window::Listener>(&self, listener: &L, c: char) {
+    fn on_window_receive_character<L: crate::app::Listener>(&self, listener: &L, c: char) {
         /*let use_default_behaviour =*/ listener.on_window_receive_character(c);
     }
 
-    fn on_window_focus<L: crate::window::Listener>(&self, listener: &L, gained_focus: bool) {
+    fn on_window_focus<L: crate::app::Listener>(&self, listener: &L, gained_focus: bool) {
         /*let use_default_behaviour =*/ listener.on_window_focus(gained_focus);
     }
 
@@ -314,7 +335,7 @@ impl App {
     // breakable if used on listener's events.
     // Also then the window is restored (from minimize state) where are
     // input.virtual_keycode KeyboardInput events equals to None.
-    fn on_window_keyboard_input<L: crate::window::Listener>(
+    fn on_window_keyboard_input<L: crate::app::Listener>(
         &self,
         listener: &L,
         control_flow: &mut winit::event_loop::ControlFlow,
@@ -336,7 +357,7 @@ impl App {
                     state: winit::event::ElementState::Pressed,
                     virtual_keycode: Some(winit::event::VirtualKeyCode::Escape),
                     ..
-                } => App::close_window_default_behaviour(control_flow),
+                } => *control_flow = winit::event_loop::ControlFlow::Exit,
 
                 // The other keys are ignored
                 _ => {}
@@ -344,7 +365,7 @@ impl App {
         }
     }
 
-    fn on_window_modifiers_change<L: crate::window::Listener>(
+    fn on_window_modifiers_change<L: crate::app::Listener>(
         &self,
         listener: &L,
         state: winit::event::ModifiersState
@@ -352,7 +373,7 @@ impl App {
         /*let use_default_behaviour =*/ listener.on_window_modifiers_change(state);
     }
 
-    fn on_window_cursor_move<L: crate::window::Listener>(
+    fn on_window_cursor_move<L: crate::app::Listener>(
         &self,
         listener: &L,
         device_id: winit::event::DeviceId,
@@ -361,7 +382,7 @@ impl App {
         /*let use_default_behaviour =*/ listener.on_window_cursor_move(device_id, position);
     }
 
-    fn on_window_cursor_enter<L: crate::window::Listener>(
+    fn on_window_cursor_enter<L: crate::app::Listener>(
         &self,
         listener: &L,
         device_id: winit::event::DeviceId
@@ -369,7 +390,7 @@ impl App {
         /*let use_default_behaviour =*/ listener.on_window_cursor_enter(device_id);
     }
 
-    fn on_window_cursor_left<L: crate::window::Listener>(
+    fn on_window_cursor_left<L: crate::app::Listener>(
         &self,
         listener: &L,
         device_id: winit::event::DeviceId
@@ -377,7 +398,7 @@ impl App {
         /*let use_default_behaviour =*/ listener.on_window_cursor_left(device_id);
     }
 
-    fn on_window_mouse_wheel<L: crate::window::Listener>(
+    fn on_window_mouse_wheel<L: crate::app::Listener>(
         &self,
         listener: &L,
         device_id: winit::event::DeviceId,
@@ -387,7 +408,7 @@ impl App {
         /*let use_default_behaviour =*/ listener.on_window_mouse_wheel(device_id, delta, phase);
     }
 
-    fn on_window_mouse_input<L: crate::window::Listener>(
+    fn on_window_mouse_input<L: crate::app::Listener>(
         &self,
         listener: &L,
         device_id: winit::event::DeviceId,
@@ -397,7 +418,7 @@ impl App {
         /*let use_default_behaviour =*/ listener.on_window_mouse_input(device_id, state, button);
     }
 
-    fn on_window_touchpad_pressure<L: crate::window::Listener>(
+    fn on_window_touchpad_pressure<L: crate::app::Listener>(
         &self,
         listener: &L,
         device_id: winit::event::DeviceId,
@@ -407,7 +428,7 @@ impl App {
         /*let use_default_behaviour =*/ listener.on_window_touchpad_pressure(device_id, pressure, stage);
     }
 
-    fn on_window_axis_motion<L: crate::window::Listener>(
+    fn on_window_axis_motion<L: crate::app::Listener>(
         &self,
         listener: &L,
         device_id: winit::event::DeviceId,
@@ -417,7 +438,7 @@ impl App {
         /*let use_default_behaviour =*/ listener.on_window_axis_motion(device_id, axis, value);
     }
 
-    fn on_window_touch<L: crate::window::Listener>(
+    fn on_window_touch<L: crate::app::Listener>(
         &self,
         listener: &L,
         touch: winit::event::Touch
@@ -425,7 +446,7 @@ impl App {
         /*let use_default_behaviour =*/ listener.on_window_touch(touch);
     }
 
-    fn on_window_scale_change<L: crate::window::Listener>(
+    fn on_window_scale_change<L: crate::app::Listener>(
         &self,
         listener: &L,
         renderer: &mut crate::renderer::Renderer,
@@ -442,18 +463,12 @@ impl App {
         }
     }
 
-    fn on_window_theme_change<L: crate::window::Listener>(
+    fn on_window_theme_change<L: crate::app::Listener>(
         &self,
         listener: &L,
         // theme is copied because an enumeration
         theme: winit::window::Theme
     ) {
         /*let use_default_behaviour =*/ listener.on_window_theme_change(theme);
-    }
-
-    //- Default Behaviours -------------------------------------------------------------------------
-
-    fn close_window_default_behaviour(control_flow: &mut winit::event_loop::ControlFlow) {
-        *control_flow = winit::event_loop::ControlFlow::Exit;
     }
 }

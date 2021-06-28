@@ -54,7 +54,7 @@ pub trait EventListener {
     ///
     /// Programs that draw graphics continuously, like most games, can render here unconditionally
     /// for simplicity.
-    fn on_redraw_begin(&self) -> bool;
+    fn on_redraw(&self) -> bool;
 
     /// Emitted after `on_redraw_begin` when a window should be redrawn.
     ///
@@ -76,11 +76,11 @@ pub trait EventListener {
 
     /// Emitted after all `on_redraw_request` events have been processed and control flow is about
     /// to be taken away from the program. If there are no `on_redraw_request` events, it is emitted
-    /// immediately after `on_redraw_begin`.
+    /// immediately after `on_redraw`.
     ///
     /// This event is useful for doing any cleanup or bookkeeping work after all the rendering
     /// tasks have been completed.
-    fn on_redraw_end(&self) -> bool {
+    fn on_redraw_clear(&self) -> bool {
         true
     }
 
@@ -311,7 +311,7 @@ pub trait WindowListener {
 
 
 /*
-TODO non ho esattamente l'idea del perchè utilizzarli, ma forse centra con i joysticks
+TODO non ho esattamente l'idea del perchè utilizzarli, ma forse centrano i joypad
 pub trait DeviceListener {
 
 }
