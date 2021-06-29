@@ -2,25 +2,25 @@ use log::LevelFilter;
 
 /**
  *
- todo link to example
+ todo link to examples
  */
 
 //= APP STRUCT =====================================================================================
 
 #[derive(Default)]
-pub struct App {
+pub struct Application {
     pub config: crate::app::Config,
 }
 
 
-impl App {
+impl Application {
     /// Create a new plain App struct.
     // todo: different from ::default
     // todo: after configured the App must be started with start method
-    pub fn new(config: crate::app::Config) -> App {
+    pub fn new(config: crate::app::Config) -> Application {
         log::set_max_level(LevelFilter::Debug);
 
-        App {
+        Application {
             config,
         }
     }

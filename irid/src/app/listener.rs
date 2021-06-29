@@ -2,19 +2,13 @@
 ///
 /// todo: usage's example
 
-//= SUPER TRAITS ===================================================================================
-
-/// Super trait for all the listeners to use as alias.
-pub trait Listener: EventListener + WindowListener {}
-impl<T: EventListener + WindowListener> Listener for T {}
-
 
 //= LISTENER TRAITS ================================================================================
 
 /// Listener for a generic event.
 ///
-/// For more information see [`enum Event`](winit::event::Event).
-pub trait EventListener {
+/// For more information see [`enum Event`](winit::event::Event) and [`enum WindowEvent`](winit::event::WindowEvent).
+pub trait Listener {
     /// Emitted when new events arrive from the OS to be processed.
     ///
     /// This event type is useful as a place to put code that should be done before you start
@@ -33,14 +27,10 @@ pub trait EventListener {
     }
 
     /// Emitted when the application has been suspended.
-    fn on_suspend(&self) -> bool {
-        true
-    }
+    fn on_suspend(&self) -> bool;
 
     /// Emitted when the application has been resumed.
-    fn on_resume(&self) -> bool {
-        true
-    }
+    fn on_resume(&self) -> bool;
 
     /// Emitted when all of the event loop's input events have been processed and redraw processing
     /// is about to begin.
@@ -88,23 +78,15 @@ pub trait EventListener {
     ///
     /// This is irreversible - if this event is emitted, it is guaranteed to be the last event that
     /// gets emitted. You generally want to treat this as an "do on quit" event.
-    fn on_destroy(&self) -> bool {
-        true
-    }
-}
+    fn on_destroy(&self) -> bool;
 
+    //- Window Events ------------------------------------------------------------------------------
 
-/// Listener for a `Window` event.
-///
-/// For more information see [`enum WindowEvent`](winit::event::WindowEvent).
-pub trait WindowListener {
     /// The size of the window has changed.
     ///
     /// * `new_size` - Contains the client area's new dimensions.
     #[allow(unused_variables)]
-    fn on_window_resize(&self, new_size: winit::dpi::PhysicalSize<u32>) -> bool {
-        true
-    }
+    fn on_window_resize(&self, new_size: winit::dpi::PhysicalSize<u32>) -> bool;
 
     /// The position of the window has changed.
     ///
@@ -307,12 +289,7 @@ pub trait WindowListener {
     fn on_window_theme_change(&self, theme: winit::window::Theme) -> bool {
         true
     }
+
+    //- Device Events ------------------------------------------------------------------------------
+    // todo: non ho esattamente l'idea del perchè utilizzarli, ma forse centrano i joypad
 }
-
-
-/*
-TODO non ho esattamente l'idea del perchè utilizzarli, ma forse centrano i joypad
-pub trait DeviceListener {
-
-}
-*/

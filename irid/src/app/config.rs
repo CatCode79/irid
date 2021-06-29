@@ -18,12 +18,7 @@ impl Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            clear_color: wgpu::Color {
-                r: 0.1,
-                g: 0.2,
-                b: 0.3,
-                a: 1.0,
-            },
+            clear_color: wgpu::Color::WHITE,
         }
     }
 }

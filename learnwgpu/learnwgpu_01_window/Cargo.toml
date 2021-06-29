@@ -7,6 +7,7 @@ description = "based on https://github.com/sotrh/learn-wgpu/tree/0.8/code/beginn
 
 [dependencies]
 env_logger = "0.8"
+winit = "0.25"
 
 [dependencies.irid]
 path = "../../irid"
