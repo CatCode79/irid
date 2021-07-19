@@ -1,5 +1,5 @@
 [package]
-name = "learnwgpu_02_swapchain"
+name = "learnwgpu_03_pipeline"
 version = "0.0.1"
 authors = ["CatCode <andrea.postal@gmail.com>"]
 edition = "2018"

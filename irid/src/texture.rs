@@ -13,6 +13,7 @@ pub struct Texture {
     pub sampler: wgpu::Sampler,
 }
 
+
 //= IMPLS ==========================================================================================
 
 impl Texture {

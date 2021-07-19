@@ -2,18 +2,19 @@
 //= RENDERER STRUCT ================================================================================
 
 ///
-pub struct Renderer {
-    clear_color: wgpu::Color,
+pub struct Renderer<'a> {
+    config: &'a crate::app::Config,
     size: winit::dpi::PhysicalSize<u32>,
     surface: wgpu::Surface,
     pub(crate) device: wgpu::Device,
     pub(crate) queue: wgpu::Queue,
-    pub(crate) swap_chains: Vec<crate::renderer::swap_chain::SwapChain>,
+    pub(crate) swap_chains: Vec<crate::renderer::SwapChain>,
+    pub(crate) pipelines: Vec<crate::renderer::Pipeline<'a>>,
 }
 
 
-impl Renderer {
-    pub fn new(window: &winit::window::Window, clear_color: wgpu::Color) -> Self {
+impl<'a> Renderer<'a> {
+    pub fn new(window: &winit::window::Window, config: &'a crate::app::Config) -> Self {
         //window.fullscreen  TODO
         let size = window.inner_size();
 
@@ -60,15 +61,16 @@ impl Renderer {
             present_mode: wgpu::PresentMode::Fifo,
         };
 
-        let swap_chain = crate::renderer::swap_chain::SwapChain::new(&device, &surface, swap_chain_desc);
+        let swap_chain = crate::renderer::SwapChain::new(&device, &surface, swap_chain_desc);
 
         Self {
-            clear_color,
+            config,
             size,
             surface,
             device,
             queue,
             swap_chains: vec![swap_chain],
+            pipelines: vec![],
         }
     }
 
@@ -107,19 +109,9 @@ impl Renderer {
     //- Pipeline Methods ---------------------------------------------------------------------------
 
     ///
-    /*pub fn create_pipeline_layout(
-        &self,
-        label_text: &str,
-        bind_group_layouts: &[&wgpu::BindGroupLayout]
-    ) -> wgpu::PipelineLayout {
-        self.device.create_pipeline_layout(
-            &wgpu::PipelineLayoutDescriptor {
-                label: Some(label_text),
-                bind_group_layouts,
-                push_constant_ranges: &[],
-            }
-        )
-    }*/
+    pub fn add_pipeline(&mut self, pipeline: crate::renderer::Pipeline<'a>) {
+        self.pipelines.push(pipeline);
+    }
 
     ///
     /*pub fn create_render_pipeline(
@@ -214,7 +206,7 @@ impl Renderer {
                             view: &frame.view,
                             resolve_target: None,
                             ops: wgpu::Operations {
-                                load: wgpu::LoadOp::Clear(self.clear_color),
+                                load: wgpu::LoadOp::Clear(self.config.clear_color),
                                 store: true,
                             },
                         }],

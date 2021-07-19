@@ -1,5 +1,6 @@
+/// Application's configuration.
 
-//= STRUCTS ========================================================================================
+//= CONFIG STRUCT ==================================================================================
 
 pub struct Config {
     pub clear_color: wgpu::Color,
@@ -8,7 +9,7 @@ pub struct Config {
 
 impl Config {
     ///
-    // TODO: da fare
+    // TODO: da fare con serde
     pub fn new(_filename: &String) -> Self {
         Config::default()
     }

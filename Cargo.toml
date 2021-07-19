@@ -5,5 +5,6 @@ members = [
     "irid",
     "learnwgpu/learnwgpu_01_window",
     "learnwgpu/learnwgpu_02_swapchain",
+    "learnwgpu/learnwgpu_03_pipeline",
     "learnwgpu/learnwgpu_07_instancing",
 ]

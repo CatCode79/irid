@@ -1,15 +1,20 @@
-use log::LevelFilter;
-
 /**
- *
- todo link to examples
+*
+todo link to examples
  */
 
-//= APP STRUCT =====================================================================================
+//= USES ===========================================================================================
+
+use log::LevelFilter;
+use std::collections::HashMap;
+
+
+//= APPLICATION STRUCT =============================================================================
 
 #[derive(Default)]
 pub struct Application {
     pub config: crate::app::Config,
+    pub shaders: HashMap<String, String>,
 }
 
 
@@ -17,11 +22,10 @@ impl Application {
     /// Create a new plain App struct.
     // todo: different from ::default
     // todo: after configured the App must be started with start method
-    pub fn new(config: crate::app::Config) -> Application {
-        log::set_max_level(LevelFilter::Debug);
-
-        Application {
+    pub fn new(config: crate::app::Config, shaders: HashMap<String, String>) -> Self {
+        Self {
             config,
+            shaders,
         }
     }
 
@@ -33,7 +37,13 @@ impl Application {
         let window = winit::window::WindowBuilder::new()
             .build(&event_loop)// TODO check oserror
             .unwrap();
-        let mut renderer = crate::renderer::Renderer::new(&window, self.config.clear_color);
+
+        let mut renderer = crate::renderer::Renderer::new(&window, &self.config);
+        let pipeline = crate::renderer::Pipeline::new(
+            &renderer.device,
+            self.shaders.get("shader.wgsl").unwrap()
+        );
+        renderer.add_pipeline(pipeline);
 
         event_loop.run(move |event, _, control_flow| match event {
             winit::event::Event::NewEvents(start_cause) => {
