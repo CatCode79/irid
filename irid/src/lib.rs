@@ -2,6 +2,7 @@
 
 pub mod app;
 pub mod camera;
+pub mod file;
 pub mod index;
 pub mod instance;
 pub mod renderer;

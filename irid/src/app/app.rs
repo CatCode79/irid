@@ -5,16 +5,16 @@ todo link to examples
 
 //= USES ===========================================================================================
 
-use log::LevelFilter;
 use std::collections::HashMap;
+use wgpu::ShaderSource;
 
 
 //= APPLICATION STRUCT =============================================================================
 
 #[derive(Default)]
 pub struct Application {
-    pub config: crate::app::Config,
-    pub shaders: HashMap<String, String>,
+    pub config: std::rc::Rc<crate::app::Config>,
+    pub shaders: HashMap<String, Box<wgpu::ShaderSource<'static>>>,
 }
 
 
@@ -22,9 +22,9 @@ impl Application {
     /// Create a new plain App struct.
     // todo: different from ::default
     // todo: after configured the App must be started with start method
-    pub fn new(config: crate::app::Config, shaders: HashMap<String, String>) -> Self {
+    pub fn new(config: crate::app::Config, shaders: HashMap<String, Box<wgpu::ShaderSource<'static>>>) -> Self {
         Self {
-            config,
+            config: std::rc::Rc::new(config),
             shaders,
         }
     }
@@ -39,9 +39,9 @@ impl Application {
             .unwrap();
 
         let mut renderer = crate::renderer::Renderer::new(&window, &self.config);
-        let pipeline = crate::renderer::Pipeline::new(
+        let pipeline = crate::renderer::RenderPipeline::new(
             &renderer.device,
-            self.shaders.get("shader.wgsl").unwrap()
+            self.shaders.get("shader.wgsl").unwrap()  // TODO: bug! uso hardcoded del filename
         );
         renderer.add_pipeline(pipeline);
 

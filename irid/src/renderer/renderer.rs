@@ -2,19 +2,19 @@
 //= RENDERER STRUCT ================================================================================
 
 ///
-pub struct Renderer<'a> {
-    config: &'a crate::app::Config,
+pub struct Renderer {
+    config: std::rc::Rc<crate::app::Config>,
     size: winit::dpi::PhysicalSize<u32>,
     surface: wgpu::Surface,
-    pub(crate) device: wgpu::Device,
+    pub(crate) device: std::rc::Rc<wgpu::Device>,
     pub(crate) queue: wgpu::Queue,
     pub(crate) swap_chains: Vec<crate::renderer::SwapChain>,
-    pub(crate) pipelines: Vec<crate::renderer::Pipeline<'a>>,
+    pub(crate) pipelines: Vec<crate::renderer::RenderPipeline>,
 }
 
 
-impl<'a> Renderer<'a> {
-    pub fn new(window: &winit::window::Window, config: &'a crate::app::Config) -> Self {
+impl Renderer {
+    pub fn new(window: &winit::window::Window, config: &std::rc::Rc<crate::app::Config>) -> Self {
         //window.fullscreen  TODO
         let size = window.inner_size();
 
@@ -53,6 +53,8 @@ impl<'a> Renderer<'a> {
             }).unwrap() // todo Result check
         };
 
+        let rc_device = std::rc::Rc::new(device);
+
         let swap_chain_desc = wgpu::SwapChainDescriptor {
             usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
             format: crate::texture::PREFERRED_TEXTURE_FORMAT,
@@ -61,13 +63,13 @@ impl<'a> Renderer<'a> {
             present_mode: wgpu::PresentMode::Fifo,
         };
 
-        let swap_chain = crate::renderer::SwapChain::new(&device, &surface, swap_chain_desc);
+        let swap_chain = crate::renderer::SwapChain::new(&rc_device, &surface, swap_chain_desc);
 
         Self {
-            config,
+            config: std::rc::Rc::clone(&config),
             size,
             surface,
-            device,
+            device: rc_device,
             queue,
             swap_chains: vec![swap_chain],
             pipelines: vec![],
@@ -102,14 +104,14 @@ impl<'a> Renderer<'a> {
 
     pub(crate) fn refresh_current_size(&mut self) {
         for sc in self.swap_chains.iter_mut() {
-            sc.update(&self.device, &self.surface, self.size);
+            sc.update(&self.surface, self.size);
         }
     }
 
     //- Pipeline Methods ---------------------------------------------------------------------------
 
     ///
-    pub fn add_pipeline(&mut self, pipeline: crate::renderer::Pipeline<'a>) {
+    pub fn add_pipeline(&mut self, pipeline: crate::renderer::RenderPipeline) {
         self.pipelines.push(pipeline);
     }
 

@@ -1,8 +1,10 @@
+cargo-features = ["edition2021"]
+
 [package]
 name = "irid"
 version = "0.0.18"
 authors = ["CatCode <andrea.postal@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 anyhow = "1.0"  # It have the no_std feature
@@ -11,5 +13,8 @@ cgmath = "0.18"
 futures = "0.3"
 image = "0.23"
 log = "0.4"
-wgpu = "0.8"
+wgpu = "0.9"
 winit = "0.25"
+
+[features]
+default_label = []
