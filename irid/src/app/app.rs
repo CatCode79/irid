@@ -5,8 +5,8 @@ todo link to examples
 
 //= USES ===========================================================================================
 
+use std::borrow::Cow;
 use std::collections::HashMap;
-use wgpu::ShaderSource;
 
 
 //= APPLICATION STRUCT =============================================================================
@@ -14,7 +14,7 @@ use wgpu::ShaderSource;
 #[derive(Default)]
 pub struct Application {
     pub config: std::rc::Rc<crate::app::Config>,
-    pub shaders: HashMap<String, Box<wgpu::ShaderSource<'static>>>,
+    pub shaders: HashMap<String, String>,  // TODO: static no good! prob il casino avviene dal fatto che tanti valori vengono droppati a fine start per via della event loop
 }
 
 
@@ -22,7 +22,7 @@ impl Application {
     /// Create a new plain App struct.
     // todo: different from ::default
     // todo: after configured the App must be started with start method
-    pub fn new(config: crate::app::Config, shaders: HashMap<String, Box<wgpu::ShaderSource<'static>>>) -> Self {
+    pub fn new(config: crate::app::Config, shaders: HashMap<String, String>) -> Self {
         Self {
             config: std::rc::Rc::new(config),
             shaders,
@@ -35,13 +35,13 @@ impl Application {
     pub fn start<L: crate::app::Listener>(self, listener: &'static L) {
         let event_loop = winit::event_loop::EventLoop::new();
         let window = winit::window::WindowBuilder::new()
-            .build(&event_loop)// TODO check oserror
-            .unwrap();
+            .build(&event_loop)
+            .unwrap();  // TODO check OsError
 
         let mut renderer = crate::renderer::Renderer::new(&window, &self.config);
         let pipeline = crate::renderer::RenderPipeline::new(
             &renderer.device,
-            self.shaders.get("shader.wgsl").unwrap()  // TODO: bug! uso hardcoded del filename
+            Box::new(wgpu::ShaderSource::Wgsl(Cow::Borrowed(self.shaders.get("shader.wgsl").unwrap())))  // TODO: forse ora il box non serve più
         );
         renderer.add_pipeline(pipeline);
 

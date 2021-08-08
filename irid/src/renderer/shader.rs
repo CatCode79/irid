@@ -7,22 +7,18 @@ pub(crate) struct ShaderModuleBuilder<'a> {
 
 
 impl<'a> ShaderModuleBuilder<'a> {
-    pub(crate) fn new(source: &Box<wgpu::ShaderSource<'static>>) -> &'a mut Self {
-        let mut shader_module_desc = wgpu::ShaderModuleDescriptor {
-            label: None,
-            source: **source.clone(),
-            flags: wgpu::ShaderFlags::VALIDATION | wgpu::ShaderFlags::EXPERIMENTAL_TRANSLATION
-        };
+    pub(crate) fn new(source: Box<wgpu::ShaderSource<'static>>) -> Self {
+        #[cfg(feature = "debug_label")]
+        let label = Some("Render Pipeline Descriptor Default Label");
+        #[cfg(not(feature = "debug_label"))]
+        let label = wgpu::Label::default();
 
-        #[cfg(feature = "default_label")]
-        {
-            shader_module_desc.label = Some(
-                &format!("Render Pipeline Descriptor Default Label {:p}", &render_pipeline_desc)
-            );
-        }
-
-        &mut Self {
-            shader_module_desc,
+        Self {
+            shader_module_desc: wgpu::ShaderModuleDescriptor {
+                label,
+                source: *source,
+                flags: wgpu::ShaderFlags::VALIDATION | wgpu::ShaderFlags::EXPERIMENTAL_TRANSLATION
+            },
         }
     }
 
@@ -65,8 +61,8 @@ pub(crate) struct VertexStateBuilder<'a> {
 impl<'a> VertexStateBuilder<'a> {
     pub(crate) const DEFAULT_ENTRY_POINT: &'static str = "main";  // TODO: configurarlo in un build script
 
-    pub(crate) fn new(module: &'a wgpu::ShaderModule) -> &mut Self {
-        &mut Self {
+    pub(crate) fn new(module: &'a wgpu::ShaderModule) -> Self {
+        Self {
             vertex_state: wgpu::VertexState {
                 module,
                 entry_point: VertexStateBuilder::DEFAULT_ENTRY_POINT,
@@ -119,8 +115,8 @@ impl<'a> FragmentStateBuilder<'a> {
         write_mask: wgpu::ColorWrite::ALL,
     };
 
-    pub(crate) fn new(module: &'a wgpu::ShaderModule) -> &mut Self {
-        &mut Self {
+    pub(crate) fn new(module: &'a wgpu::ShaderModule) -> Self {
+        Self {
             fragment_state: wgpu::FragmentState {
                 module,
                 entry_point: FragmentStateBuilder::DEFAULT_ENTRY_POINT,

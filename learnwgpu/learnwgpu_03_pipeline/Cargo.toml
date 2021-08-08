@@ -6,8 +6,9 @@ edition = "2018"
 description = "based on https://github.com/sotrh/learn-wgpu/tree/0.8/code/beginner/tutorial2-swapchain"
 
 [dependencies]
-env_logger = "0.8"
-wgpu = "0.8"
+env_logger = "0.9"
+log = "0.4"
+wgpu = "0.9"
 winit = "0.25"
 
 [dependencies.irid]

@@ -111,7 +111,7 @@ impl Renderer {
     //- Pipeline Methods ---------------------------------------------------------------------------
 
     ///
-    pub fn add_pipeline(&mut self, pipeline: crate::renderer::RenderPipeline) {
+    pub(crate) fn add_pipeline(&mut self, pipeline: crate::renderer::RenderPipeline) {
         self.pipelines.push(pipeline);
     }
 

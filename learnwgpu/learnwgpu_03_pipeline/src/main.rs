@@ -2,6 +2,7 @@
 //= USES ===========================================================================================
 
 use std::collections::HashMap;
+use std::fs::read_to_string;
 
 use irid::app::{Application, Config, Listener};
 use wgpu::Color;
@@ -39,7 +40,7 @@ impl Listener for GameListener {
 
 fn main() {
     env_logger::init();
-    log::set_max_level(LevelFilter::Debug);
+    log::set_max_level(log::LevelFilter::Debug);
 
     let listener: &'static GameListener = &GameListener { };
 
@@ -52,8 +53,9 @@ fn main() {
     };
 
     const SHADER_WGSL_FILENAME: &str = "shader.wgsl";
-    let mut shaders: HashMap<String, String> = HashMap::new();
-    shaders.insert(SHADER_WGSL_FILENAME.to_string(), include_str!(SHADER_WGSL_FILENAME).to_string());
+    let mut shaders: HashMap<String, &'static String> = HashMap::new();
+    let frag_wgsl = &read_to_string(SHADER_WGSL_FILENAME).unwrap();
+    shaders.insert(SHADER_WGSL_FILENAME.to_string(), frag_wgsl);
 
     let app = Application::new(config, shaders);
     app.start(listener);
