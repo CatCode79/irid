@@ -1,6 +1,6 @@
 //= USES ===========================================================================================
 
-use std::borrow::Cow;
+//use std::borrow::Cow;
 
 
 //= PIPELINE LAYOUT ================================================================================
@@ -224,6 +224,7 @@ impl RenderPipeline {
 
         let primitive_state = PrimitiveStateBuilder::new().build();
 
+        // Fare il Builder di sta roba
         let multisample = wgpu::MultisampleState {
             count: 1,
             mask: !0,
@@ -242,5 +243,9 @@ impl RenderPipeline {
             device: std::rc::Rc::clone(&device),
             wrapped_render_pipeline: render_pipeline,
         }
+    }
+
+    pub(crate) fn expose_wrapped_render_pipeline(&self) -> &wgpu::RenderPipeline {
+        &self.wrapped_render_pipeline
     }
 }

@@ -115,53 +115,6 @@ impl Renderer {
         self.pipelines.push(pipeline);
     }
 
-    ///
-    /*pub fn create_render_pipeline(
-        &self,
-        label_text: &str,
-        render_pipeline_layout: &wgpu::PipelineLayout,
-        vs_module: &wgpu::ShaderModule,
-        fs_module: &wgpu::ShaderModule
-    ) -> wgpu::RenderPipeline {
-        self.device.create_render_pipeline(
-            &wgpu::RenderPipelineDescriptor {
-                label: Some(label_text),
-                layout: Some(&render_pipeline_layout),
-                vertex: wgpu::VertexState {
-                    module: &vs_module,
-                    entry_point: "main",
-                    buffers: &[crate::vertex::Vertex::desc(), crate::instance::InstanceRaw::desc()],
-                },
-                fragment: Some(wgpu::FragmentState {
-                    module: &fs_module,
-                    entry_point: "main",
-                    targets: &[wgpu::ColorTargetState {
-                        format: self.swap_chain_desc.format,
-                        write_mask: wgpu::ColorWrite::ALL,
-                        blend: Option::from(wgpu::BlendState::REPLACE),
-                    }],
-                }),
-                primitive: wgpu::PrimitiveState {
-                    topology: wgpu::PrimitiveTopology::TriangleList,
-                    strip_index_format: None,
-                    front_face: wgpu::FrontFace::Ccw,
-                    cull_mode: Option::from(wgpu::Face::Back),
-                    clamp_depth: false,
-                    // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
-                    polygon_mode: wgpu::PolygonMode::Fill,
-                    conservative: false,
-                },
-                depth_stencil: None,
-                multisample: wgpu::MultisampleState {
-                    count: 1,
-                    mask: !0,
-                    alpha_to_coverage_enabled: false,
-                },
-            }
-        )
-    }*/
-
-
     //- Queue Methods ------------------------------------------------------------------------------
 
     ///
@@ -201,7 +154,7 @@ impl Renderer {
             let mut encoder = self.create_command_encoder("Render Encoder");
 
             {
-                let mut _render_pass = encoder.begin_render_pass(
+                let mut render_pass = encoder.begin_render_pass(
                     &wgpu::RenderPassDescriptor {
                         label: Some("Render Pass"),
                         color_attachments: &[wgpu::RenderPassColorAttachment {
@@ -215,6 +168,9 @@ impl Renderer {
                         depth_stencil_attachment: None,
                     }
                 );
+
+                render_pass.set_pipeline(self.pipelines.get(0).unwrap().expose_wrapped_render_pipeline());  // TODO: avoid get and unwrap
+                render_pass.draw(0..3, 0..1); // 3.
             }
 
             self.queue.submit(std::iter::once(encoder.finish()));

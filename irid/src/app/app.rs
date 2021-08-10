@@ -41,7 +41,7 @@ impl Application {
         let mut renderer = crate::renderer::Renderer::new(&window, &self.config);
         let pipeline = crate::renderer::RenderPipeline::new(
             &renderer.device,
-            Box::new(wgpu::ShaderSource::Wgsl(Cow::Borrowed(self.shaders.get("shader.wgsl").unwrap())))  // TODO: forse ora il box non serve più
+            Box::new(wgpu::ShaderSource::Wgsl(Cow::Owned(self.shaders.get("shader.wgsl").unwrap().clone())))  // TODO: forse ora il box non serve più, controllare poi come togliere il clone (forse con un iteratore)
         );
         renderer.add_pipeline(pipeline);
 

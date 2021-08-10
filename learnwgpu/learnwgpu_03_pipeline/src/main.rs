@@ -53,8 +53,13 @@ fn main() {
     };
 
     const SHADER_WGSL_FILENAME: &str = "shader.wgsl";
-    let mut shaders: HashMap<String, &'static String> = HashMap::new();
-    let frag_wgsl = &read_to_string(SHADER_WGSL_FILENAME).unwrap();
+    const SHADER_WGSL_FILEPATH: &str = "D:/_BLACK_ABYSS_DUNGEON/_BAD/bad/learnwgpu/learnwgpu_03_pipeline/assets/shader.wgsl";
+
+    let mut shaders: HashMap<String, String> = HashMap::new();
+    let frag_wgsl = match read_to_string(SHADER_WGSL_FILEPATH) {
+        Ok(file) => file.clone(),  // TODO: cercare di rimuovere il clone
+        Err(why) => panic!("couldn't open {} file: {}", SHADER_WGSL_FILENAME, why),
+    };
     shaders.insert(SHADER_WGSL_FILENAME.to_string(), frag_wgsl);
 
     let app = Application::new(config, shaders);
