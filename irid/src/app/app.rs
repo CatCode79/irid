@@ -12,35 +12,43 @@ use std::collections::HashMap;
 //= APPLICATION STRUCT =============================================================================
 
 #[derive(Default)]
-pub struct Application<'a> {
+pub struct Application {
     config: std::rc::Rc<crate::app::Config>,
     shaders: HashMap<String, String>,  // cambiarla in vettore o altro
-    vertices: &'a [crate::vertex::Vertex],
 }
 
 
-impl<'a> Application<'a> {
+impl Application {
     /// Create a new plain App struct.
     // todo: different from ::default
     // todo: after configured the App must be started with start method
-    pub fn new(config: crate::app::Config, shaders: HashMap<String, String>, vertices: &'a [crate::vertex::Vertex]) -> Self {
+    pub fn new(config: crate::app::Config, shaders: HashMap<String, String>) -> Self {
         Self {
             config: std::rc::Rc::new(config),
             shaders,
-            vertices,
         }
     }
 
     /// Starts the event loop.
     /// The event loop is winit based.
     // todo: parameter explication
-    pub fn start<L: crate::app::Listener>(self, listener: &'static L) {
+    pub fn start<L: crate::app::Listener>(
+        self,
+        listener: &'static L,
+        vertices: &[crate::vertex::Vertex],
+        indices: &[u16]
+    ) {
         let mut event_loop = winit::event_loop::EventLoop::new();
         let window = winit::window::WindowBuilder::new()
             .build(&event_loop)
             .unwrap();  // TODO check OsError
 
-        let mut renderer = crate::renderer::Renderer::new(&window, &self.config, self.vertices);
+        let mut renderer = crate::renderer::Renderer::new(
+            &window,
+            &self.config,
+            vertices,
+            indices
+        );
         let pipeline = crate::renderer::RenderPipeline::new(
             &renderer.device,
             Box::new(wgpu::ShaderSource::Wgsl(Cow::Owned(self.shaders.get("shader.wgsl").unwrap().clone())))  // TODO: forse ora il box non serve più, controllare poi come togliere il clone (forse con un iteratore)

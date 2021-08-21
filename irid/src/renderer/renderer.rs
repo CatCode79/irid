@@ -11,7 +11,8 @@ pub struct Renderer {
     pub(crate) swap_chains: Vec<crate::renderer::SwapChain>,
     pub(crate) pipelines: Vec<crate::renderer::RenderPipeline>,
     vertex_buffer: wgpu::Buffer,  // TODO forse questo devo spostarlo in render_pass o pipeline
-    num_vertices: u32,
+    index_buffer: wgpu::Buffer,
+    num_indices: u32,
 }
 
 
@@ -19,7 +20,8 @@ impl Renderer {
     pub fn new(
         window: &winit::window::Window,
         config: &std::rc::Rc<crate::app::Config>,
-        vertices: &[crate::vertex::Vertex]
+        vertices: &[crate::vertex::Vertex],
+        indices: &[u16]
     ) -> Self {
         //window.fullscreen  TODO
         let size = window.inner_size();
@@ -80,7 +82,15 @@ impl Renderer {
             }
         );
 
-        let num_vertices = vertices.len() as u32;
+        let index_buffer = rc_device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Index Buffer"),
+                contents: bytemuck::cast_slice(indices),
+                usage: wgpu::BufferUsage::INDEX,
+            }
+        );
+
+        let num_indices = indices.len() as u32;
 
         Self {
             config: std::rc::Rc::clone(&config),
@@ -91,7 +101,8 @@ impl Renderer {
             swap_chains: vec![swap_chain],
             pipelines: vec![],
             vertex_buffer,
-            num_vertices,
+            index_buffer,
+            num_indices,
         }
     }
 
@@ -194,7 +205,8 @@ impl Renderer {
 
                 render_pass.set_pipeline(self.pipelines.get(0).unwrap().expose_wrapped_render_pipeline());  // TODO: avoid get and unwrap
                 render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-                render_pass.draw(0..3, 0..1);
+                render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+                render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
             }
 
             self.queue.submit(std::iter::once(encoder.finish()));
