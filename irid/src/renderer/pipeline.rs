@@ -215,11 +215,11 @@ impl RenderPipeline {
     pub fn new(device: &std::rc::Rc<wgpu::Device>, shader_source: Box<wgpu::ShaderSource<'static>>) -> Self {
         let pipeline_layout = PipelineLayoutBuilder::new().build(&device);
 
-        let buffs = &[crate::vertex::Vertex::desc()];
+        let buffers = &[crate::vertex::Vertex::desc()];
         let shader_module = crate::renderer::ShaderModuleBuilder::new(shader_source)
             .build(&device);
         let vertex_state = crate::renderer::VertexStateBuilder::new(&shader_module)
-            .buffers(buffs)
+            .buffers(buffers)
             .build();
         let fragment_state = crate::renderer::FragmentStateBuilder::new(&shader_module).build();
 

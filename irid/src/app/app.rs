@@ -14,7 +14,6 @@ use std::collections::HashMap;
 #[derive(Default)]
 pub struct Application {
     config: std::rc::Rc<crate::app::Config>,
-    shaders: HashMap<String, String>,  // cambiarla in vettore o altro
 }
 
 
@@ -22,10 +21,9 @@ impl Application {
     /// Create a new plain App struct.
     // todo: different from ::default
     // todo: after configured the App must be started with start method
-    pub fn new(config: crate::app::Config, shaders: HashMap<String, String>) -> Self {
+    pub fn new(config: crate::app::Config) -> Self {
         Self {
             config: std::rc::Rc::new(config),
-            shaders,
         }
     }
 
@@ -35,6 +33,7 @@ impl Application {
     pub fn start<L: crate::app::Listener>(
         self,
         listener: &'static L,
+        shaders: HashMap<String, String>,
         vertices: &[crate::vertex::Vertex],
         indices: &[u16]
     ) {
@@ -51,7 +50,7 @@ impl Application {
         );
         let pipeline = crate::renderer::RenderPipeline::new(
             &renderer.device,
-            Box::new(wgpu::ShaderSource::Wgsl(Cow::Owned(self.shaders.get("shader.wgsl").unwrap().clone())))  // TODO: forse ora il box non serve più, controllare poi come togliere il clone (forse con un iteratore)
+            Box::new(wgpu::ShaderSource::Wgsl(Cow::Owned(shaders.get("shader.wgsl").unwrap().clone())))  // TODO: forse ora il box non serve più, controllare poi come togliere il clone (forse con un iteratore)
         );
         renderer.add_pipeline(pipeline);
 
