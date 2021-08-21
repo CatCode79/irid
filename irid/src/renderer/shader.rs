@@ -1,13 +1,13 @@
 
 //= SHADER MODULE ==================================================================================
 
-pub(crate) struct ShaderModuleBuilder<'a> {
+pub struct ShaderModuleBuilder<'a> {
     shader_module_desc: wgpu::ShaderModuleDescriptor<'a>,
 }
 
 
 impl<'a> ShaderModuleBuilder<'a> {
-    pub(crate) fn new(source: Box<wgpu::ShaderSource<'static>>) -> Self {
+    pub fn new(source: Box<wgpu::ShaderSource<'static>>) -> Self {
         #[cfg(feature = "debug_label")]
         let label = Some("Render Pipeline Descriptor Default Label");
         #[cfg(not(feature = "debug_label"))]
@@ -22,7 +22,7 @@ impl<'a> ShaderModuleBuilder<'a> {
         }
     }
 
-    pub(crate) fn label(&mut self, label_text: &'a str) -> &mut Self {
+    pub fn label(&mut self, label_text: &'a str) -> &mut Self {
         self.shader_module_desc.label = if label_text.is_empty() {
             wgpu::Label::default()
         } else {
@@ -31,21 +31,21 @@ impl<'a> ShaderModuleBuilder<'a> {
         self
     }
 
-    pub(crate) fn source(&mut self, source: wgpu::ShaderSource<'static>) -> &mut Self {
+    pub fn source(&mut self, source: wgpu::ShaderSource<'static>) -> &mut Self {
         self.shader_module_desc.source = source;
         self
     }
 
-    pub(crate) fn flags(&mut self, flags: wgpu::ShaderFlags) -> &mut Self {
+    pub fn flags(&mut self, flags: wgpu::ShaderFlags) -> &mut Self {
         self.shader_module_desc.flags = flags;
         self
     }
 
-    pub(crate) fn expose_wrapped_desc(&self) -> &wgpu::ShaderModuleDescriptor {
+    pub fn expose_wrapped_desc(&self) -> &wgpu::ShaderModuleDescriptor {
         &self.shader_module_desc
     }
 
-    pub(crate) fn build(self, device: &std::rc::Rc<wgpu::Device>) -> wgpu::ShaderModule {
+    pub fn build(self, device: &std::rc::Rc<wgpu::Device>) -> wgpu::ShaderModule {
         device.create_shader_module(&self.shader_module_desc)
     }
 }
@@ -53,15 +53,16 @@ impl<'a> ShaderModuleBuilder<'a> {
 
 //= VERTEX STATE ===================================================================================
 
-pub(crate) struct VertexStateBuilder<'a> {
+#[derive(Clone, Debug)]
+pub struct VertexStateBuilder<'a> {
     vertex_state: wgpu::VertexState<'a>
 }
 
 
 impl<'a> VertexStateBuilder<'a> {
-    pub(crate) const DEFAULT_ENTRY_POINT: &'static str = "main";  // TODO: configurarlo in un build script
+    pub const DEFAULT_ENTRY_POINT: &'static str = "main";  // TODO: configurarlo in un build script
 
-    pub(crate) fn new(module: &'a wgpu::ShaderModule) -> Self {
+    pub fn new(module: &'a wgpu::ShaderModule) -> Self {
         Self {
             vertex_state: wgpu::VertexState {
                 module,
@@ -71,12 +72,12 @@ impl<'a> VertexStateBuilder<'a> {
         }
     }
 
-    pub(crate) fn module(&mut self, module: &'a wgpu::ShaderModule) -> &mut Self {
+    pub fn module(&mut self, module: &'a wgpu::ShaderModule) -> &mut Self {
         self.vertex_state.module = module;
         self
     }
 
-    pub(crate) fn entry_point(&mut self, entry_point: &'a str) -> &mut Self {
+    pub fn entry_point(&mut self, entry_point: &'a str) -> &mut Self {
         self.vertex_state.entry_point = if entry_point.is_empty() {
             VertexStateBuilder::DEFAULT_ENTRY_POINT
         } else {
@@ -85,12 +86,12 @@ impl<'a> VertexStateBuilder<'a> {
         self
     }
 
-    pub(crate) fn buffers(&mut self, buffers: &'a [wgpu::VertexBufferLayout]) -> &mut Self {
+    pub fn buffers(mut self, buffers: &'a [wgpu::VertexBufferLayout]) -> Self {
         self.vertex_state.buffers = buffers;
         self
     }
 
-    pub(crate) fn build(self) -> wgpu::VertexState<'a> {
+    pub fn build(self) -> wgpu::VertexState<'a> {
         self.vertex_state
     }
 }
@@ -98,15 +99,15 @@ impl<'a> VertexStateBuilder<'a> {
 
 //= FRAGMENT STATE ============================================================================
 
-pub(crate) struct FragmentStateBuilder<'a> {
+pub struct FragmentStateBuilder<'a> {
     fragment_state: wgpu::FragmentState<'a>,
 }
 
 
 impl<'a> FragmentStateBuilder<'a> {
-    pub(crate) const DEFAULT_ENTRY_POINT: &'static str = "main";  // TODO: configurarlo in un build script
+    pub const DEFAULT_ENTRY_POINT: &'static str = "main";  // TODO: configurarlo in un build script
 
-    pub(crate) const DEFAULT_COLOR_TARGET_STATE: wgpu::ColorTargetState = wgpu::ColorTargetState {
+    pub const DEFAULT_COLOR_TARGET_STATE: wgpu::ColorTargetState = wgpu::ColorTargetState {
         format: crate::texture::PREFERRED_TEXTURE_FORMAT,
         blend: Some(wgpu::BlendState {
             color: wgpu::BlendComponent::REPLACE,
@@ -115,7 +116,7 @@ impl<'a> FragmentStateBuilder<'a> {
         write_mask: wgpu::ColorWrite::ALL,
     };
 
-    pub(crate) fn new(module: &'a wgpu::ShaderModule) -> Self {
+    pub fn new(module: &'a wgpu::ShaderModule) -> Self {
         Self {
             fragment_state: wgpu::FragmentState {
                 module,
@@ -125,12 +126,12 @@ impl<'a> FragmentStateBuilder<'a> {
         }
     }
 
-    pub(crate) fn module(&mut self, module: &'a wgpu::ShaderModule) -> &mut Self {
+    pub fn module(&mut self, module: &'a wgpu::ShaderModule) -> &mut Self {
         self.fragment_state.module = module;
         self
     }
 
-    pub(crate) fn entry_point(&mut self, entry_point: &'a str) -> &mut Self {
+    pub fn entry_point(&mut self, entry_point: &'a str) -> &mut Self {
         self.fragment_state.entry_point = if entry_point.is_empty() {
             VertexStateBuilder::DEFAULT_ENTRY_POINT
         } else {
@@ -139,12 +140,12 @@ impl<'a> FragmentStateBuilder<'a> {
         self
     }
 
-    pub(crate) fn targets(&mut self, targets: &'a [wgpu::ColorTargetState]) -> &mut Self {
+    pub fn targets(&mut self, targets: &'a [wgpu::ColorTargetState]) -> &mut Self {
         self.fragment_state.targets = targets;
         self
     }
 
-    pub(crate) fn build(self) -> wgpu::FragmentState<'a> {
+    pub fn build(self) -> wgpu::FragmentState<'a> {
         self.fragment_state
     }
 }

@@ -1,12 +1,12 @@
 [package]
 name = "irid"
-version = "0.0.19"
+version = "0.0.20"
 authors = ["CatCode <andrea.postal@gmail.com>"]
 edition = "2018"
 
 [dependencies]
 anyhow = "1.0"  # It have the no_std feature
-bytemuck = { version = "1.5", features = ["derive"] }
+bytemuck = { version = "1.7", features = ["derive"] }
 cgmath = "0.18"
 futures = "0.3"
 image = "0.23"

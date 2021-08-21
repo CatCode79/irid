@@ -12,20 +12,22 @@ use std::collections::HashMap;
 //= APPLICATION STRUCT =============================================================================
 
 #[derive(Default)]
-pub struct Application {
-    pub config: std::rc::Rc<crate::app::Config>,
-    pub shaders: HashMap<String, String>,  // TODO: static no good! prob il casino avviene dal fatto che tanti valori vengono droppati a fine start per via della event loop
+pub struct Application<'a> {
+    config: std::rc::Rc<crate::app::Config>,
+    shaders: HashMap<String, String>,  // cambiarla in vettore o altro
+    vertices: &'a [crate::vertex::Vertex],
 }
 
 
-impl Application {
+impl<'a> Application<'a> {
     /// Create a new plain App struct.
     // todo: different from ::default
     // todo: after configured the App must be started with start method
-    pub fn new(config: crate::app::Config, shaders: HashMap<String, String>) -> Self {
+    pub fn new(config: crate::app::Config, shaders: HashMap<String, String>, vertices: &'a [crate::vertex::Vertex]) -> Self {
         Self {
             config: std::rc::Rc::new(config),
             shaders,
+            vertices,
         }
     }
 
@@ -33,19 +35,24 @@ impl Application {
     /// The event loop is winit based.
     // todo: parameter explication
     pub fn start<L: crate::app::Listener>(self, listener: &'static L) {
-        let event_loop = winit::event_loop::EventLoop::new();
+        let mut event_loop = winit::event_loop::EventLoop::new();
         let window = winit::window::WindowBuilder::new()
             .build(&event_loop)
             .unwrap();  // TODO check OsError
 
-        let mut renderer = crate::renderer::Renderer::new(&window, &self.config);
+        let mut renderer = crate::renderer::Renderer::new(&window, &self.config, self.vertices);
         let pipeline = crate::renderer::RenderPipeline::new(
             &renderer.device,
             Box::new(wgpu::ShaderSource::Wgsl(Cow::Owned(self.shaders.get("shader.wgsl").unwrap().clone())))  // TODO: forse ora il box non serve più, controllare poi come togliere il clone (forse con un iteratore)
         );
         renderer.add_pipeline(pipeline);
 
-        event_loop.run(move |event, _, control_flow| match event {
+        // I know I should use run method instead of de run_return,
+        // but all those static variables are a bore to handle.
+        // To remember that the resize is not managed perfectly with run_return:
+        // https://docs.rs/winit/0.25.0/winit/platform/run_return/trait.EventLoopExtRunReturn.html
+        use winit::platform::run_return::EventLoopExtRunReturn;
+        event_loop.run_return(move |event, _, control_flow| match event {
             winit::event::Event::NewEvents(start_cause) => {
                 self.on_new_events(listener, start_cause);
             },

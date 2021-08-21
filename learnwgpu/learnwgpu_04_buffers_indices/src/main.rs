@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::fs::read_to_string;
 
 use irid::app::{Application, Config, Listener};
+use irid::vertex::Vertex;
 use wgpu::Color;
 use winit::dpi::PhysicalSize;
 
@@ -42,7 +43,7 @@ fn main() {
     env_logger::init();
     log::set_max_level(log::LevelFilter::Debug);
 
-    let listener: &'static GameListener = &GameListener { };
+    let listener: &GameListener = &GameListener { };
 
     let mut config = Config::default();
     config.clear_color = Color {
@@ -53,7 +54,7 @@ fn main() {
     };
 
     const SHADER_WGSL_FILENAME: &str = "shader.wgsl";
-    const SHADER_WGSL_FILEPATH: &str = "D:/_BLACK_ABYSS_DUNGEON/_BAD/bad/learnwgpu/learnwgpu_03_pipeline/assets";
+    const SHADER_WGSL_FILEPATH: &str = "D:/_BLACK_ABYSS_DUNGEON/_BAD/bad/learnwgpu/learnwgpu_04_buffers_indices/assets/shader.wgsl";
 
     // TODO: Passare solo la path o il nome file
     let mut shaders: HashMap<String, String> = HashMap::new();
@@ -63,6 +64,16 @@ fn main() {
     };
     shaders.insert(SHADER_WGSL_FILENAME.to_string(), frag_wgsl);
 
-    let app = Application::new(config, shaders, []);
+    // We arrange the vertices in counter clockwise order: top, bottom left, bottom right.
+    // We do it this way partially out of tradition, but mostly because we specified in the
+    // rasterization_state of the render_pipeline that we want the front_face of our triangle
+    // to be wgpu::FrontFace::Ccw so that we cull the back face.
+    const VERTICES: &[Vertex] = &[
+        Vertex { position: [ 0.0,  0.5, 0.0], color: [1.0, 0.0, 0.0] },
+        Vertex { position: [-0.5, -0.5, 0.0], color: [0.0, 1.0, 0.0] },
+        Vertex { position: [ 0.5, -0.5, 0.0], color: [0.0, 0.0, 1.0] },
+    ];
+
+    let app: Application = Application::new(config, shaders, VERTICES);
     app.start(listener);
 }

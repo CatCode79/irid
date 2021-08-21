@@ -10,11 +10,17 @@ pub struct Renderer {
     pub(crate) queue: wgpu::Queue,
     pub(crate) swap_chains: Vec<crate::renderer::SwapChain>,
     pub(crate) pipelines: Vec<crate::renderer::RenderPipeline>,
+    vertex_buffer: wgpu::Buffer,  // TODO forse questo devo spostarlo in render_pass o pipeline
+    num_vertices: u32,
 }
 
 
 impl Renderer {
-    pub fn new(window: &winit::window::Window, config: &std::rc::Rc<crate::app::Config>) -> Self {
+    pub fn new(
+        window: &winit::window::Window,
+        config: &std::rc::Rc<crate::app::Config>,
+        vertices: &[crate::vertex::Vertex]
+    ) -> Self {
         //window.fullscreen  TODO
         let size = window.inner_size();
 
@@ -65,6 +71,17 @@ impl Renderer {
 
         let swap_chain = crate::renderer::SwapChain::new(&rc_device, &surface, swap_chain_desc);
 
+        use wgpu::util::DeviceExt;
+        let vertex_buffer = rc_device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Vertex Buffer"),
+                contents: bytemuck::cast_slice(vertices),
+                usage: wgpu::BufferUsage::VERTEX,
+            }
+        );
+
+        let num_vertices = vertices.len() as u32;
+
         Self {
             config: std::rc::Rc::clone(&config),
             size,
@@ -73,6 +90,8 @@ impl Renderer {
             queue,
             swap_chains: vec![swap_chain],
             pipelines: vec![],
+            vertex_buffer,
+            num_vertices,
         }
     }
 
@@ -115,6 +134,9 @@ impl Renderer {
         self.pipelines.push(pipeline);
     }
 
+    //- Buffer's Methods ---------------------------------------------------------------------------
+
+
     //- Queue Methods ------------------------------------------------------------------------------
 
     ///
@@ -127,6 +149,7 @@ impl Renderer {
     ) {
         self.queue.write_buffer(&uniform_buffer, offset, bytemuck::cast_slice(&[uniforms]));
     }
+
 
     ///
     #[inline]
@@ -170,7 +193,8 @@ impl Renderer {
                 );
 
                 render_pass.set_pipeline(self.pipelines.get(0).unwrap().expose_wrapped_render_pipeline());  // TODO: avoid get and unwrap
-                render_pass.draw(0..3, 0..1); // 3.
+                render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+                render_pass.draw(0..3, 0..1);
             }
 
             self.queue.submit(std::iter::once(encoder.finish()));
