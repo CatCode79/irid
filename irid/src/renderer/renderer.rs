@@ -1,102 +1,56 @@
 
 //= RENDERER STRUCT ================================================================================
 
+use std::rc::Rc;
+
 ///
-pub struct Renderer {
+pub struct Renderer<'a> {
     config: std::rc::Rc<crate::app::Config>,
     size: winit::dpi::PhysicalSize<u32>,
-    surface: wgpu::Surface,
-    pub(crate) device: std::rc::Rc<wgpu::Device>,
+    pub(crate) device: crate::renderer::Device<'a>,
     pub(crate) queue: wgpu::Queue,
-    pub(crate) swap_chains: Vec<crate::renderer::SwapChain>,
-    pub(crate) pipelines: Vec<crate::renderer::RenderPipeline>,
+    pub(crate) swap_chains: Vec<crate::renderer::SwapChain<'a>>,
+    pub(crate) pipelines: Vec<crate::renderer::RenderPipeline<'a>>,
     vertex_buffer: wgpu::Buffer,  // TODO forse questo devo spostarlo in render_pass o pipeline
     index_buffer: wgpu::Buffer,
     num_indices: u32,
 }
 
 
-impl Renderer {
+impl<'a> Renderer<'a> {
     pub fn new(
         window: &winit::window::Window,
-        config: &std::rc::Rc<crate::app::Config>,
+        config: &Rc<crate::app::Config>,
+        texture_path: &str,
         vertices: &[crate::vertex::Vertex],
         indices: &[u16]
     ) -> Self {
         //window.fullscreen  TODO
         let size = window.inner_size();
 
-        // Context for all other wgpu objects
-        let instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
+        let (device, queue) = crate::renderer::Device::new(window);
 
-        // Handle to a presentable surface onto which rendered images
-        let surface = unsafe { instance.create_surface(window) };
+        let swap_chain = device.create_swap_chain(size);
 
-        // The device is an open connection to a graphics and/or compute device responsible
-        // for the creation of most rendering and compute resources.
-        // The queue executes recorded CommandBuffer and writes to buffers and textures.
-        let (device, queue) = {
-            // For debug purpose prints on console all the available adapters
-            enumerate_all_adapters(&instance);
+        let texture = crate::renderer::Texture::new(&device, texture_path);
 
-            // Adapter can be used to open a connection to the corresponding graphical device
-            let adapter = futures::executor::block_on(async {
-                instance.request_adapter(
-                    &wgpu::RequestAdapterOptions {
-                        power_preference: wgpu::PowerPreference::HighPerformance,
-                        compatible_surface: Some(&surface),
-                    }
-                ).await
-            }).unwrap();  // todo Result check
-
-            futures::executor::block_on(async {
-                adapter.request_device(
-                    &wgpu::DeviceDescriptor {
-                        label: Some("New Device & Queue"),
-                        features: wgpu::Features::empty(),
-                        limits: wgpu::Limits::default(),
-                    },
-                    None, // Trace path
-                ).await
-            }).unwrap() // todo Result check
-        };
-
-        let rc_device = std::rc::Rc::new(device);
-
-        let swap_chain_desc = wgpu::SwapChainDescriptor {
-            usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
-            format: crate::texture::PREFERRED_TEXTURE_FORMAT,
-            width: size.width,
-            height: size.height,
-            present_mode: wgpu::PresentMode::Fifo,
-        };
-
-        let swap_chain = crate::renderer::SwapChain::new(&rc_device, &surface, swap_chain_desc);
-
-        use wgpu::util::DeviceExt;
-        let vertex_buffer = rc_device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(vertices),
-                usage: wgpu::BufferUsage::VERTEX,
-            }
+        // TODO decisamente bisognerà fare qualche cosa con questi passaggi di parametri e clones
+        queue.write_texture(
+            texture.texture.clone(),
+            texture.get_data(),
+            texture.data_layout.clone(),
+            texture.size.clone()
         );
 
-        let index_buffer = rc_device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Index Buffer"),
-                contents: bytemuck::cast_slice(indices),
-                usage: wgpu::BufferUsage::INDEX,
-            }
-        );
+        let vertex_buffer = device.create_vertex_buffer_init("Vertex Buffer", vertices);
+        let index_buffer = device.create_indices_buffer_init("Index Buffer", indices);
 
         let num_indices = indices.len() as u32;
 
         Self {
             config: std::rc::Rc::clone(&config),
             size,
-            surface,
-            device: rc_device,
+            device,
             queue,
             swap_chains: vec![swap_chain],
             pipelines: vec![],
@@ -134,14 +88,14 @@ impl Renderer {
 
     pub(crate) fn refresh_current_size(&mut self) {
         for sc in self.swap_chains.iter_mut() {
-            sc.update(&self.surface, self.size);
+            sc.update(&self.device.surface, self.size);
         }
     }
 
     //- Pipeline Methods ---------------------------------------------------------------------------
 
     ///
-    pub(crate) fn add_pipeline(&mut self, pipeline: crate::renderer::RenderPipeline) {
+    pub(crate) fn add_pipeline(&mut self, pipeline: crate::renderer::RenderPipeline<'a>) {
         self.pipelines.push(pipeline);
     }
 
@@ -172,7 +126,7 @@ impl Renderer {
 
     ///
     pub fn create_command_encoder(&self, label_text: &str) -> wgpu::CommandEncoder {
-        self.device.create_command_encoder(
+        self.device.expose_wgpu_device().create_command_encoder(
             &wgpu::CommandEncoderDescriptor {
                 label: Some(label_text),
             }
@@ -213,16 +167,5 @@ impl Renderer {
         }
 
         Ok(())
-    }
-}
-
-
-/// Show all the adapters information for debug.
-//#[cfg(debug_assertions)]
-fn enumerate_all_adapters(instance: &wgpu::Instance) {
-    instance.poll_all(true);
-    for adapter in instance.enumerate_adapters(wgpu::BackendBit::all()) {
-        use log::info;
-        info!("{:#?}\n", adapter.get_info())
     }
 }

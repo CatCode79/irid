@@ -24,26 +24,6 @@ impl Instance {
 }
 
 
-/**
- *
- */
-pub fn create_buffer_init(
-    renderer: &crate::renderer::Renderer,
-    label_text: &str,
-    instances: &[Instance]
-) -> wgpu::Buffer {
-    use wgpu::util::DeviceExt;
-    let instance_data = instances.iter().map(crate::instance::Instance::to_raw).collect::<Vec<_>>();
-    renderer.device.create_buffer_init(
-        &wgpu::util::BufferInitDescriptor {
-            label: Some(label_text),
-            contents: bytemuck::cast_slice(&instance_data),
-            usage: wgpu::BufferUsage::VERTEX,
-        }
-    )
-}
-
-
 //= INSTANCE FOR GLSL SHADER =======================================================================
 
 /**

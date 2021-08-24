@@ -86,10 +86,10 @@ impl State {
 
 		let diffuse_texture = {
 			let diffuse_bytes = include_bytes!("assets/textures/happy-tree.png");
-			irid::texture::Texture::from_bytes(&renderer, diffuse_bytes, "happy-tree.png").unwrap()
+			irid::renderer::_old_texture::Texture::from_bytes(&renderer, diffuse_bytes, "happy-tree.png").unwrap()
 		};
 
-		let texture_bind_group_layout = irid::texture::create_bind_group_layout(
+		let texture_bind_group_layout = irid::renderer::_old_texture::create_bind_group_layout(
 			&renderer,
 			"Texture Bind Group Layout"
 		);

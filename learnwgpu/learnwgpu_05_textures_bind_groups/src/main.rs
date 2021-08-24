@@ -43,8 +43,6 @@ fn main() {
     env_logger::init();
     log::set_max_level(log::LevelFilter::Debug);
 
-    let listener: &GameListener = &GameListener { };
-
     let mut config = Config::default();
     config.clear_color = Color {
         r: 0.1,
@@ -52,6 +50,8 @@ fn main() {
         b: 0.3,
         a: 1.0,
     };
+
+    let listener: &GameListener = &GameListener { };
 
     const SHADER_WGSL_FILENAME: &str = "shader.wgsl";
     const SHADER_WGSL_FILEPATH: &str = "D:/_BLACK_ABYSS_DUNGEON/_BAD/bad/learnwgpu/learnwgpu_04_buffers_indices/assets/shader.wgsl";
@@ -63,6 +63,8 @@ fn main() {
         Err(why) => panic!("couldn't open {} file: {}", SHADER_WGSL_FILENAME, why),
     };
     shaders.insert(SHADER_WGSL_FILENAME.to_string(), frag_wgsl);
+
+    const TREE_FILEPATH: &str = "D:/_BLACK_ABYSS_DUNGEON/_BAD/bad/learnwgpu/learnwgpu_05_textures_bind_groups/assets/happy-tree.png";
 
     // We arrange the vertices in counter clockwise order: top, bottom left, bottom right.
     // We do it this way partially out of tradition, but mostly because we specified in the
@@ -84,5 +86,5 @@ fn main() {
     ];
 
     let app: Application = Application::new(config);
-    app.start(listener, shaders, VERTICES, INDICES);
+    app.start(listener, shaders, TREE_FILEPATH, VERTICES, INDICES);
 }

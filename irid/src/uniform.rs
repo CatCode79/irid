@@ -81,7 +81,7 @@ pub fn create_buffer_init(
     uniforms: Uniforms
 )-> wgpu::Buffer {
     use wgpu::util::DeviceExt;
-    renderer.device.create_buffer_init(
+    renderer.device.expose_wgpu_device().create_buffer_init(
         &wgpu::util::BufferInitDescriptor {
             label: Some(label_text),
             contents: bytemuck::cast_slice(&[uniforms]),
@@ -95,7 +95,7 @@ pub fn create_bind_group_layout(
     renderer: &crate::renderer::Renderer,
     label_text: &str
 )-> wgpu::BindGroupLayout {
-    renderer.device.create_bind_group_layout(
+    renderer.device.expose_wgpu_device().create_bind_group_layout(
         &wgpu::BindGroupLayoutDescriptor {
             label: Some(label_text),
             entries: &[
@@ -125,7 +125,7 @@ pub fn create_bind_group(
     layout: &wgpu::BindGroupLayout,
     buffer: &wgpu::Buffer
 ) -> wgpu::BindGroup {
-    renderer.device.create_bind_group(
+    renderer.device.expose_wgpu_device().create_bind_group(
         &wgpu::BindGroupDescriptor {
             label: Some(label_text),
             layout: &layout,

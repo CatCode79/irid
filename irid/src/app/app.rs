@@ -34,6 +34,7 @@ impl Application {
         self,
         listener: &'static L,
         shaders: HashMap<String, String>,
+        texture_path: &str,
         vertices: &[crate::vertex::Vertex],
         indices: &[u16]
     ) {
@@ -45,6 +46,7 @@ impl Application {
         let mut renderer = crate::renderer::Renderer::new(
             &window,
             &self.config,
+            texture_path,
             vertices,
             indices
         );

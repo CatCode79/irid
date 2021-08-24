@@ -45,7 +45,7 @@ impl<'a> ShaderModuleBuilder<'a> {
         &self.shader_module_desc
     }
 
-    pub fn build(self, device: &std::rc::Rc<wgpu::Device>) -> wgpu::ShaderModule {
+    pub fn build(self, device: &wgpu::Device) -> wgpu::ShaderModule {
         device.create_shader_module(&self.shader_module_desc)
     }
 }
@@ -108,7 +108,7 @@ impl<'a> FragmentStateBuilder<'a> {
     pub const DEFAULT_ENTRY_POINT: &'static str = "main";  // TODO: configurarlo in un build script
 
     pub const DEFAULT_COLOR_TARGET_STATE: wgpu::ColorTargetState = wgpu::ColorTargetState {
-        format: crate::texture::PREFERRED_TEXTURE_FORMAT,
+        format: crate::renderer::PREFERRED_TEXTURE_FORMAT,
         blend: Some(wgpu::BlendState {
             color: wgpu::BlendComponent::REPLACE,
             alpha: wgpu::BlendComponent::REPLACE,

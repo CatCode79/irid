@@ -53,7 +53,7 @@ impl<'a> PipelineLayoutBuilder<'a> {
         &self.pipeline_layout_desc
     }
 
-    pub fn build(self, device: &std::rc::Rc<wgpu::Device>) -> wgpu::PipelineLayout {
+    pub fn build(self, device: &wgpu::Device) -> wgpu::PipelineLayout {
         device.create_pipeline_layout(&self.pipeline_layout_desc)
     }
 }
@@ -194,7 +194,7 @@ impl<'a> RenderPipelineBuilder<'a> {
         &self.render_pipeline_desc
     }
 
-    pub fn build(&mut self, device: &std::rc::Rc<wgpu::Device>) -> wgpu::RenderPipeline {
+    pub fn build(&mut self, device: &wgpu::Device) -> wgpu::RenderPipeline {
         device.create_render_pipeline(&self.render_pipeline_desc)
     }
 }
@@ -205,19 +205,21 @@ impl<'a> RenderPipelineBuilder<'a> {
 /// Wrapper to the wgpu handle's rendering graphics pipeline.
 ///
 /// See [`wgpu::RenderPipeline`](wgpu::RenderPipeline).
-pub struct RenderPipeline {
-    _device: std::rc::Rc<wgpu::Device>,
-    wrapped_render_pipeline: wgpu::RenderPipeline,
+pub struct RenderPipeline<'a> {
+    device: &'a crate::renderer::Device<'a>,
+    wgpu_render_pipeline: wgpu::RenderPipeline,
 }
 
 
-impl RenderPipeline {
-    pub fn new(device: &std::rc::Rc<wgpu::Device>, shader_source: Box<wgpu::ShaderSource<'static>>) -> Self {
-        let pipeline_layout = PipelineLayoutBuilder::new().build(&device);
+impl<'a> RenderPipeline<'a> {
+    pub fn new(device: &'a crate::renderer::Device, shader_source: Box<wgpu::ShaderSource<'static>>) -> Self {
+        let wgpu_device = device.expose_wgpu_device();
+
+        let pipeline_layout = PipelineLayoutBuilder::new().build(wgpu_device);
 
         let buffers = &[crate::vertex::Vertex::desc()];
         let shader_module = crate::renderer::ShaderModuleBuilder::new(shader_source)
-            .build(&device);
+            .build(wgpu_device);
         let vertex_state = crate::renderer::VertexStateBuilder::new(&shader_module)
             .buffers(buffers)
             .build();
@@ -238,15 +240,15 @@ impl RenderPipeline {
             .fragment(fragment_state)
             .primitive(primitive_state)
             .multisample(multisample)
-            .build(&device);
+            .build(wgpu_device);
 
         Self {
-            _device: std::rc::Rc::clone(&device),
-            wrapped_render_pipeline: render_pipeline,
+            device,
+            wgpu_render_pipeline: render_pipeline,
         }
     }
 
     pub fn expose_wrapped_render_pipeline(&self) -> &wgpu::RenderPipeline {
-        &self.wrapped_render_pipeline
+        &self.wgpu_render_pipeline
     }
 }
