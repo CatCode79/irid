@@ -5,7 +5,6 @@ todo link to examples
 
 //= USES ===========================================================================================
 
-use std::borrow::Cow;
 use std::collections::HashMap;
 
 
@@ -46,15 +45,11 @@ impl Application {
         let mut renderer = crate::renderer::Renderer::new(
             &window,
             &self.config,
+            shaders.get("shader.wgsl").unwrap().clone(),// TODO: controllare poi come togliere il clone (forse con un iteratore)
             texture_path,
             vertices,
             indices
         );
-        let pipeline = crate::renderer::RenderPipeline::new(
-            &renderer.device,
-            Box::new(wgpu::ShaderSource::Wgsl(Cow::Owned(shaders.get("shader.wgsl").unwrap().clone())))  // TODO: forse ora il box non serve più, controllare poi come togliere il clone (forse con un iteratore)
-        );
-        renderer.add_pipeline(pipeline);
 
         // I know I should use run method instead of de run_return,
         // but all those static variables are a bore to handle.

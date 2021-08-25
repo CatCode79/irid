@@ -15,7 +15,7 @@ impl Instance {
     /**
      * Convert an Instance to a structure GPU readable.
      */
-    pub(crate) fn to_raw(&self) -> InstanceRaw {
+    pub(crate) fn _to_raw(&self) -> InstanceRaw {
         InstanceRaw {
             model: (cgmath::Matrix4::from_translation(self.position)
                   * cgmath::Matrix4::from(self.rotation)).into(),

@@ -4,23 +4,24 @@
 use std::rc::Rc;
 
 ///
-pub struct Renderer<'a> {
+pub struct Renderer {
     config: std::rc::Rc<crate::app::Config>,
     size: winit::dpi::PhysicalSize<u32>,
-    pub(crate) device: crate::renderer::Device<'a>,
+    pub(crate) device: crate::renderer::Device,
     pub(crate) queue: wgpu::Queue,
-    pub(crate) swap_chains: Vec<crate::renderer::SwapChain<'a>>,
-    pub(crate) pipelines: Vec<crate::renderer::RenderPipeline<'a>>,
+    pub(crate) swap_chains: Vec<crate::renderer::SwapChain>,
+    pub(crate) pipelines: Vec<crate::renderer::RenderPipeline>,
     vertex_buffer: wgpu::Buffer,  // TODO forse questo devo spostarlo in render_pass o pipeline
     index_buffer: wgpu::Buffer,
     num_indices: u32,
 }
 
 
-impl<'a> Renderer<'a> {
+impl Renderer {
     pub fn new(
         window: &winit::window::Window,
         config: &Rc<crate::app::Config>,
+        shader_source: String,
         texture_path: &str,
         vertices: &[crate::vertex::Vertex],
         indices: &[u16]
@@ -30,7 +31,12 @@ impl<'a> Renderer<'a> {
 
         let (device, queue) = crate::renderer::Device::new(window);
 
-        let swap_chain = device.create_swap_chain(size);
+        let swap_chain = crate::renderer::SwapChain::new(&device, size);
+
+        let pipeline = crate::renderer::RenderPipeline::new(
+            &device,
+            shader_source
+        );
 
         let texture = crate::renderer::Texture::new(&device, texture_path);
 
@@ -39,7 +45,7 @@ impl<'a> Renderer<'a> {
             texture.texture.clone(),
             texture.get_data(),
             texture.data_layout.clone(),
-            texture.size.clone()
+            crate::renderer::DEFAULT_TEXTURE_SIZE
         );
 
         let vertex_buffer = device.create_vertex_buffer_init("Vertex Buffer", vertices);
@@ -53,7 +59,7 @@ impl<'a> Renderer<'a> {
             device,
             queue,
             swap_chains: vec![swap_chain],
-            pipelines: vec![],
+            pipelines: vec![pipeline],
             vertex_buffer,
             index_buffer,
             num_indices,
@@ -95,7 +101,8 @@ impl<'a> Renderer<'a> {
     //- Pipeline Methods ---------------------------------------------------------------------------
 
     ///
-    pub(crate) fn add_pipeline(&mut self, pipeline: crate::renderer::RenderPipeline<'a>) {
+    #[allow(dead_code)]
+    pub(crate) fn add_pipeline(&mut self, pipeline: crate::renderer::RenderPipeline) {
         self.pipelines.push(pipeline);
     }
 

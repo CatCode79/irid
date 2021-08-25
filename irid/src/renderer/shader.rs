@@ -7,7 +7,7 @@ pub struct ShaderModuleBuilder<'a> {
 
 
 impl<'a> ShaderModuleBuilder<'a> {
-    pub fn new(source: Box<wgpu::ShaderSource<'static>>) -> Self {
+    pub fn new(source: wgpu::ShaderSource<'static>) -> Self {
         #[cfg(feature = "debug_label")]
         let label = Some("Render Pipeline Descriptor Default Label");
         #[cfg(not(feature = "debug_label"))]
@@ -16,7 +16,7 @@ impl<'a> ShaderModuleBuilder<'a> {
         Self {
             shader_module_desc: wgpu::ShaderModuleDescriptor {
                 label,
-                source: *source,
+                source,
                 flags: wgpu::ShaderFlags::VALIDATION | wgpu::ShaderFlags::EXPERIMENTAL_TRANSLATION
             },
         }

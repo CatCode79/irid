@@ -131,6 +131,7 @@ pub struct RenderPipelineBuilder<'a> {
 }
 
 
+// TODO: qui devo creare direttamente una pipeline irid e non wgpu
 impl<'a> RenderPipelineBuilder<'a> {
     pub fn new(vertex: wgpu::VertexState<'a>) -> Self {
         #[cfg(feature = "debug_label")]
@@ -205,21 +206,23 @@ impl<'a> RenderPipelineBuilder<'a> {
 /// Wrapper to the wgpu handle's rendering graphics pipeline.
 ///
 /// See [`wgpu::RenderPipeline`](wgpu::RenderPipeline).
-pub struct RenderPipeline<'a> {
-    device: &'a crate::renderer::Device<'a>,
+pub struct RenderPipeline {
+    #[allow(dead_code)]
+    wgpu_device: std::rc::Rc<wgpu::Device>,
     wgpu_render_pipeline: wgpu::RenderPipeline,
 }
 
 
-impl<'a> RenderPipeline<'a> {
-    pub fn new(device: &'a crate::renderer::Device, shader_source: Box<wgpu::ShaderSource<'static>>) -> Self {
+impl RenderPipeline {
+    pub fn new(device: &crate::renderer::Device, shader_source: String) -> Self {
         let wgpu_device = device.expose_wgpu_device();
 
         let pipeline_layout = PipelineLayoutBuilder::new().build(wgpu_device);
 
         let buffers = &[crate::vertex::Vertex::desc()];
-        let shader_module = crate::renderer::ShaderModuleBuilder::new(shader_source)
-            .build(wgpu_device);
+        let shader_module = crate::renderer::ShaderModuleBuilder::new(
+            wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(shader_source))
+        ).build(wgpu_device);
         let vertex_state = crate::renderer::VertexStateBuilder::new(&shader_module)
             .buffers(buffers)
             .build();
@@ -235,7 +238,7 @@ impl<'a> RenderPipeline<'a> {
         };
 
         // TODO: ATTENZIONE! depth_stencil: None  come default
-        let render_pipeline = RenderPipelineBuilder::new(vertex_state)
+        let wgpu_render_pipeline = RenderPipelineBuilder::new(vertex_state)
             .layout(&pipeline_layout)
             .fragment(fragment_state)
             .primitive(primitive_state)
@@ -243,8 +246,8 @@ impl<'a> RenderPipeline<'a> {
             .build(wgpu_device);
 
         Self {
-            device,
-            wgpu_render_pipeline: render_pipeline,
+            wgpu_device: std::rc::Rc::clone(wgpu_device),
+            wgpu_render_pipeline,
         }
     }
 

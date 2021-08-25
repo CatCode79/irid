@@ -1,6 +1,24 @@
-//= STATIC VARIABLES ===============================================================================
 
-use crate::renderer::SwapChain;
+//= CONSTS =========================================================================================
+
+// TODO farlo come funzione per ricavare, anche solo per debug, che cosa è preferito dal device
+// Most images are stored using sRGB so we need to reflect that here.
+pub(crate) const PREFERRED_TEXTURE_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8UnormSrgb;
+
+// TODO: questa è una di quelle parti di codice da cambiare per rendere il framework più usabile;
+//  l'idea di fondo cmq mi piace perchè migliora le prestazioni durante la creazione delle texture.
+pub const DEFAULT_TEXTURE_WIDTH: u32 = 256;
+pub const DEFAULT_TEXTURE_HEIGHT: u32 = 256;
+
+pub(crate) const DEFAULT_TEXTURE_SIZE: wgpu::Extent3d = wgpu::Extent3d {
+    width: DEFAULT_TEXTURE_WIDTH,
+    height: DEFAULT_TEXTURE_HEIGHT,
+    // All textures are stored as 3D, we represent our 2D texture by setting depth to 1
+    depth_or_array_layers: 1,
+};
+
+
+//= STATIC VARIABLES ===============================================================================
 
 static mut SAMPLER: Option<wgpu::Sampler> = None;
 
@@ -8,12 +26,14 @@ static mut SAMPLER: Option<wgpu::Sampler> = None;
 //= DEVICE WRAPPER =================================================================================
 
 ///
-pub struct Device<'a> {
+pub struct Device {
+    pub texture: wgpu::Texture,
     pub surface: wgpu::Surface,
-    wgpu_device: &'a wgpu::Device,
+    wgpu_device: std::rc::Rc<wgpu::Device>,
 }
 
-impl<'a> Device<'a> {
+
+impl Device {
     /// The device is an open connection to a graphics and/or compute device responsible
     /// for the creation of most rendering and compute resources.
     /// The queue executes recorded CommandBuffer and writes to buffers and textures.
@@ -48,27 +68,26 @@ impl<'a> Device<'a> {
             ).await
         }).unwrap(); // todo Result check
 
+        let texture = wgpu_device.create_texture(
+            &wgpu::TextureDescriptor {
+                size: DEFAULT_TEXTURE_SIZE,
+                mip_level_count: 1,
+                sample_count: 1,
+                dimension: wgpu::TextureDimension::D2,
+                format: PREFERRED_TEXTURE_FORMAT,
+                // SAMPLED tells wgpu that we want to use this texture in shaders
+                // COPY_DST means that we want to copy data to this texture
+                usage: wgpu::TextureUsage::SAMPLED | wgpu::TextureUsage::COPY_DST,
+                label: Some("Diffuse Texture"),
+            }
+        );
+
         let device = Self {
+            texture,
             surface,
-            wgpu_device: &wgpu_device,
+            wgpu_device: std::rc::Rc::new(wgpu_device),
         };
         (device, queue)
-    }
-
-    ///
-    pub fn create_swap_chain(&self, size: winit::dpi::PhysicalSize<u32>) -> SwapChain {
-        let swap_chain_desc = wgpu::SwapChainDescriptor {
-            usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
-            format: crate::renderer::PREFERRED_TEXTURE_FORMAT,
-            width: size.width,
-            height: size.height,
-            // Fifo is "vsync on". Immediate is "vsync off". Mailbox is a hybrid between the two
-            // (gpu doesn't block if running faster than the display, but screen tearing doesn't happen)
-            // TODO far scegliere al giocatore prima dell'avvio del gioco
-            present_mode: wgpu::PresentMode::Fifo,
-        };
-
-        crate::renderer::SwapChain::new(&self, swap_chain_desc)
     }
 
     ///
@@ -100,8 +119,8 @@ impl<'a> Device<'a> {
     }
 
     ///
-    pub fn expose_wgpu_device(&self) -> &wgpu::Device {
-        self.wgpu_device
+    pub fn expose_wgpu_device(&self) -> &std::rc::Rc<wgpu::Device> {
+        &self.wgpu_device
     }
 }
 
