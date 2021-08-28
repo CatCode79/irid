@@ -23,7 +23,7 @@ impl Renderer {
         config: &Rc<crate::app::Config>,
         shader_source: String,
         texture_path: &str,
-        vertices: &[crate::vertex::Vertex],
+        vertices: &[crate::meshes::Vertex],
         indices: &[u16]
     ) -> Self {
         //window.fullscreen  TODO
@@ -117,7 +117,7 @@ impl Renderer {
         &self,
         uniform_buffer: &wgpu::Buffer,
         offset: u64,
-        uniforms: crate::uniform::Uniforms
+        uniforms: crate::meshes::Uniforms
     ) {
         self.queue.write_buffer(&uniform_buffer, offset, bytemuck::cast_slice(&[uniforms]));
     }
@@ -164,9 +164,11 @@ impl Renderer {
                     }
                 );
 
-                render_pass.set_pipeline(self.pipelines.get(0).unwrap().expose_wrapped_render_pipeline());  // TODO: avoid get and unwrap
+                render_pass.set_pipeline(self.pipelines.get(0).unwrap().expose_wrapped_render_pipeline());  // TODO: avoid get and unwrap overhead
+                render_pass.set_bind_group(0, &self.device.diffuse_bind_group, &[]);
                 render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
                 render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+
                 render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
             }
 

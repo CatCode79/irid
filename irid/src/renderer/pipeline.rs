@@ -11,7 +11,7 @@ pub struct PipelineLayoutBuilder<'a> {
 impl<'a> PipelineLayoutBuilder<'a> {
     pub fn new() -> Self {
         #[cfg(feature = "debug_label")]
-        let label = Some("Pipeline Layout Descriptor Default Label");
+        let label = Some("Pipeline Layout Default Label");
         #[cfg(not(feature = "debug_label"))]
         let label = wgpu::Label.default();
 
@@ -24,7 +24,7 @@ impl<'a> PipelineLayoutBuilder<'a> {
         }
     }
 
-    pub fn label(&mut self, label_text: &'a str) -> &mut Self {
+    pub fn label(mut self, label_text: &'a str) -> Self {
         self.pipeline_layout_desc.label = if label_text.is_empty() {
             wgpu::Label::default()
         } else {
@@ -34,17 +34,17 @@ impl<'a> PipelineLayoutBuilder<'a> {
     }
 
     pub fn bind_group_layouts(
-        &mut self,
+        mut self,
         bind_group_layouts: &'a [&wgpu::BindGroupLayout]
-    ) -> &mut Self {
+    ) -> Self {
         self.pipeline_layout_desc.bind_group_layouts = bind_group_layouts;
         self
     }
 
     pub fn push_constant_ranges(
-        &mut self,
+        mut self,
         push_constant_ranges: &'a [wgpu::PushConstantRange]
-    ) -> &mut Self {
+    ) -> Self {
         self.pipeline_layout_desc.push_constant_ranges = push_constant_ranges;
         self
     }
@@ -135,7 +135,7 @@ pub struct RenderPipelineBuilder<'a> {
 impl<'a> RenderPipelineBuilder<'a> {
     pub fn new(vertex: wgpu::VertexState<'a>) -> Self {
         #[cfg(feature = "debug_label")]
-        let label = Some("Render Pipeline Descriptor Default Label");
+        let label = Some("Render Pipeline Default Label");
         #[cfg(not(feature = "debug_label"))]
         let label = None;
 
@@ -217,9 +217,11 @@ impl RenderPipeline {
     pub fn new(device: &crate::renderer::Device, shader_source: String) -> Self {
         let wgpu_device = device.expose_wgpu_device();
 
-        let pipeline_layout = PipelineLayoutBuilder::new().build(wgpu_device);
+        let pipeline_layout = PipelineLayoutBuilder::new()
+            .bind_group_layouts(&[&device.texture_bind_group_layout])
+            .build(wgpu_device);
 
-        let buffers = &[crate::vertex::Vertex::desc()];
+        let buffers = &[crate::meshes::Vertex::desc()];
         let shader_module = crate::renderer::ShaderModuleBuilder::new(
             wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(shader_source))
         ).build(wgpu_device);

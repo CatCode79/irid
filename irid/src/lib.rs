@@ -7,5 +7,4 @@ pub mod index;
 pub mod instance;
 pub mod renderer;
 pub mod shader;
-pub mod uniform;
-pub mod vertex;
+pub mod meshes;

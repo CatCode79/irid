@@ -1,6 +1,8 @@
 
 //= CONSTS =========================================================================================
 
+use wgpu::TextureAspect;
+
 // TODO farlo come funzione per ricavare, anche solo per debug, che cosa è preferito dal device
 // Most images are stored using sRGB so we need to reflect that here.
 pub(crate) const PREFERRED_TEXTURE_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8UnormSrgb;
@@ -18,18 +20,17 @@ pub(crate) const DEFAULT_TEXTURE_SIZE: wgpu::Extent3d = wgpu::Extent3d {
 };
 
 
-//= STATIC VARIABLES ===============================================================================
-
-static mut SAMPLER: Option<wgpu::Sampler> = None;
-
-
 //= DEVICE WRAPPER =================================================================================
 
 ///
 pub struct Device {
-    pub texture: wgpu::Texture,
     pub surface: wgpu::Surface,
     wgpu_device: std::rc::Rc<wgpu::Device>,
+    pub diffuse_texture: wgpu::Texture,
+    diffuse_sampler: wgpu::Sampler,
+    diffuse_texture_view: wgpu::TextureView,
+    pub texture_bind_group_layout: wgpu::BindGroupLayout,
+    pub diffuse_bind_group: wgpu::BindGroup,  // TODO: questo campo ha più senso in RenderPass, credo, oppure direttamente in Renderer
 }
 
 
@@ -68,24 +69,102 @@ impl Device {
             ).await
         }).unwrap(); // todo Result check
 
-        let texture = wgpu_device.create_texture(
-            &wgpu::TextureDescriptor {
-                size: DEFAULT_TEXTURE_SIZE,
-                mip_level_count: 1,
-                sample_count: 1,
-                dimension: wgpu::TextureDimension::D2,
-                format: PREFERRED_TEXTURE_FORMAT,
-                // SAMPLED tells wgpu that we want to use this texture in shaders
-                // COPY_DST means that we want to copy data to this texture
-                usage: wgpu::TextureUsage::SAMPLED | wgpu::TextureUsage::COPY_DST,
-                label: Some("Diffuse Texture"),
+        let diffuse_texture = wgpu_device.create_texture(&wgpu::TextureDescriptor {
+            size: DEFAULT_TEXTURE_SIZE,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: PREFERRED_TEXTURE_FORMAT,
+            // SAMPLED tells wgpu that we want to use this texture in shaders
+            // COPY_DST means that we want to copy data to this texture
+            usage: wgpu::TextureUsage::SAMPLED | wgpu::TextureUsage::COPY_DST,
+            label: Some("Device Diffuse Texture"),
+        });
+
+        let diffuse_sampler = wgpu_device.create_sampler(&wgpu::SamplerDescriptor {
+            label: Some("Device Texture Sampler"),
+            address_mode_u: wgpu::AddressMode::ClampToEdge,  // TODO: probabilmente meglio utilizzare MirrorRepeated per evitare le Bleeding Textures
+            address_mode_v: wgpu::AddressMode::ClampToEdge,
+            address_mode_w: wgpu::AddressMode::ClampToEdge,
+            mag_filter: wgpu::FilterMode::Linear,
+            min_filter: wgpu::FilterMode::Nearest,
+            mipmap_filter: wgpu::FilterMode::Nearest,
+            lod_min_clamp: 0.0,
+            lod_max_clamp: 0.0,
+            compare: None,
+            anisotropy_clamp: None,
+            border_color: None
+        });
+
+        let diffuse_texture_view = diffuse_texture.create_view(
+                &wgpu::TextureViewDescriptor {
+                label: Some("Device Texture View"),
+                format: None,
+                dimension: None,
+                aspect: TextureAspect::All,
+                base_mip_level: 0,
+                mip_level_count: None,
+                base_array_layer: 0,
+                array_layer_count: None
+            }
+        );
+
+        let texture_bind_group_layout = wgpu_device.create_bind_group_layout(
+            &wgpu::BindGroupLayoutDescriptor {
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStage::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            multisampled: false,
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStage::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler {
+                            // This is only for TextureSampleType::Depth
+                            comparison: false,
+                            // This should be true if the sample_type of the texture is:
+                            //     TextureSampleType::Float { filterable: true }
+                            // Otherwise you'll get an error.
+                            filtering: true,
+                        },
+                        count: None,
+                    },
+                ],
+                label: Some("Device Texture Bind Group Layout"),
+            }
+        );
+
+        let diffuse_bind_group = wgpu_device.create_bind_group(
+            &wgpu::BindGroupDescriptor {
+                layout: &texture_bind_group_layout,
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: wgpu::BindingResource::TextureView(&diffuse_texture_view),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: wgpu::BindingResource::Sampler(&diffuse_sampler),
+                    }
+                ],
+                label: Some("Diffuse Bind Group"),
             }
         );
 
         let device = Self {
-            texture,
             surface,
             wgpu_device: std::rc::Rc::new(wgpu_device),
+            diffuse_texture,
+            diffuse_sampler,
+            diffuse_texture_view,
+            texture_bind_group_layout,
+            diffuse_bind_group,
         };
         (device, queue)
     }
@@ -94,7 +173,7 @@ impl Device {
     pub fn create_vertex_buffer_init(
         &self,
         label_text: &str,
-        vertices: &[crate::vertex::Vertex]
+        vertices: &[crate::meshes::Vertex]
     ) -> wgpu::Buffer {
         use wgpu::util::DeviceExt;
         self.wgpu_device.create_buffer_init(

@@ -34,7 +34,7 @@ impl Application {
         listener: &'static L,
         shaders: HashMap<String, String>,
         texture_path: &str,
-        vertices: &[crate::vertex::Vertex],
+        vertices: &[crate::meshes::Vertex],
         indices: &[u16]
     ) {
         let mut event_loop = winit::event_loop::EventLoop::new();

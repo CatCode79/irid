@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::fs::read_to_string;
 
 use irid::app::{Application, Config, Listener};
-use irid::vertex::Vertex;
+use irid::meshes::Vertex;
 use wgpu::Color;
 use winit::dpi::PhysicalSize;
 
