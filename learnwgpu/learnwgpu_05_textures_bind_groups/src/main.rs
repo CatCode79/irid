@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::fs::read_to_string;
 
 use irid::app::{Application, Config, Listener};
-use irid::meshes::Vertex;
+use irid::meshes::VertexTexture;
 use wgpu::Color;
 use winit::dpi::PhysicalSize;
 
@@ -54,7 +54,7 @@ fn main() {
     let listener: &GameListener = &GameListener { };
 
     const SHADER_WGSL_FILENAME: &str = "shader.wgsl";
-    const SHADER_WGSL_FILEPATH: &str = "D:/_BLACK_ABYSS_DUNGEON/_BAD/bad/learnwgpu/learnwgpu_04_buffers_indices/assets/shader.wgsl";
+    const SHADER_WGSL_FILEPATH: &str = "D:/_BLACK_ABYSS_DUNGEON/_BAD/bad/learnwgpu/learnwgpu_05_textures_bind_groups/assets/shader.wgsl";
 
     // TODO: Passare solo la path o il nome file
     let mut shaders: HashMap<String, String> = HashMap::new();
@@ -70,12 +70,12 @@ fn main() {
     // We do it this way partially out of tradition, but mostly because we specified in the
     // rasterization_state of the render_pipeline that we want the front_face of our triangle
     // to be wgpu::FrontFace::Ccw so that we cull the back face.
-    const VERTICES: &[Vertex] = &[
-        Vertex { position: [-0.08682410,  0.49240386, 0.0], color: [0.5, 0.0, 0.5] },
-        Vertex { position: [-0.49513406,  0.06958647, 0.0], color: [0.5, 0.0, 0.5] },
-        Vertex { position: [-0.21918549, -0.44939706, 0.0], color: [0.5, 0.0, 0.5] },
-        Vertex { position: [ 0.35966998, -0.34732910, 0.0], color: [0.5, 0.0, 0.5] },
-        Vertex { position: [ 0.44147372,  0.23473590, 0.0], color: [0.5, 0.0, 0.5] },
+    const VERTICES: &[VertexTexture] = &[
+        VertexTexture { position: [-0.08682410,  0.49240386, 0.0], tex_coords: [0.4131759000, 0.00759614], },
+        VertexTexture { position: [-0.49513406,  0.06958647, 0.0], tex_coords: [0.0048659444, 0.43041354], },
+        VertexTexture { position: [-0.21918549, -0.44939706, 0.0], tex_coords: [0.2808145300, 0.94939700], },
+        VertexTexture { position: [ 0.35966998, -0.34732910, 0.0], tex_coords: [0.8596700000, 0.84732914], },
+        VertexTexture { position: [ 0.44147372,  0.23473590, 0.0], tex_coords: [0.9414737000, 0.26526410], },
     ];
 
     const INDICES: &[u16] = &[

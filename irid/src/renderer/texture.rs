@@ -1,23 +1,184 @@
+//= USES ===========================================================================================
+
+use anyhow::*;
+
+
 //= CONSTS =========================================================================================
 
-const DATA_LAYOUT: wgpu::ImageDataLayout = wgpu::ImageDataLayout {
-    offset: 0,
-    bytes_per_row: std::num::NonZeroU32::new(4 * crate::renderer::DEFAULT_TEXTURE_WIDTH),
-    rows_per_image: std::num::NonZeroU32::new(crate::renderer::DEFAULT_TEXTURE_HEIGHT),
-};
+// TODO: ricavarlo a runtime, anche solo per debug, dal device. Ci sono delle perplessità
+//  relativamente alla uniformità dei valori floati cui colori si comportano.
+// Most images are stored using sRGB so we need to reflect that here.
+pub(crate) const PREFERRED_TEXTURE_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8UnormSrgb;
+
+pub const DEFAULT_TEXTURE_WIDTH: u32 = 256;
+pub const DEFAULT_TEXTURE_HEIGHT: u32 = 256;
 
 
-//= Texture ========================================================================================
+//= TEXTURE UTILS ==================================================================================
 
-pub struct Texture<'a> {
-    diffuse_image: image::DynamicImage,
+pub struct TextureMetaDatas<'a> {
+    // Used on queue.write_texture()
     pub texture: wgpu::ImageCopyTexture<'a>,
-    pub data_layout: wgpu::ImageDataLayout,
+    pub image_data_layout: wgpu::ImageDataLayout,
+    pub size: wgpu::Extent3d,
+
+    pub diffuse_texture: wgpu::Texture,
+    pub texture_bind_group_layout: wgpu::BindGroupLayout,
+    pub diffuse_bind_group: wgpu::BindGroup,
+}
+
+impl<'a> TextureMetaDatas<'a> {
+    pub fn new(
+        device: &'a crate::renderer::Device,
+        width: u32,
+        height: u32
+    ) -> Self {
+        let wgpu_device = device.expose_wgpu_device();
+
+        let size = wgpu::Extent3d {
+            width,
+            height,
+            // All textures are stored as 3D, we represent our 2D texture by setting depth to 1
+            depth_or_array_layers: 1,
+        };
+
+        let diffuse_texture = wgpu_device.create_texture(&wgpu::TextureDescriptor {
+            size,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: PREFERRED_TEXTURE_FORMAT,
+            // SAMPLED tells wgpu that we want to use this texture in shaders
+            // COPY_DST means that we want to copy data to this texture
+            usage: wgpu::TextureUsage::SAMPLED | wgpu::TextureUsage::COPY_DST,
+            label: Some("Diffuse Texture"),
+        });
+
+        let texture_bind_group_layout = wgpu_device.create_bind_group_layout(
+            &wgpu::BindGroupLayoutDescriptor {
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStage::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            multisampled: false,
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStage::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler {
+                            // This is only for TextureSampleType::Depth
+                            comparison: false,
+                            // This should be true if the sample_type of the texture is:
+                            //     TextureSampleType::Float { filterable: true }
+                            // Otherwise you'll get an error.
+                            filtering: true,
+                        },
+                        count: None,
+                    },
+                ],
+                label: Some("Texture Bind Group Layout"),
+            }
+        );
+
+        let diffuse_bind_group = {
+            let diffuse_sampler = wgpu_device.create_sampler(
+                &wgpu::SamplerDescriptor {
+                    label: Some("Texture Sampler"),
+                    // TODO: probabilmente meglio utilizzare MirrorRepeated per evitare le Bleeding Textures
+                    address_mode_u: wgpu::AddressMode::ClampToEdge,
+                    address_mode_v: wgpu::AddressMode::ClampToEdge,
+                    address_mode_w: wgpu::AddressMode::ClampToEdge,
+                    mag_filter: wgpu::FilterMode::Linear,
+                    min_filter: wgpu::FilterMode::Nearest,
+                    mipmap_filter: wgpu::FilterMode::Nearest,
+                    lod_min_clamp: 0.0,
+                    lod_max_clamp: 0.0,
+                    compare: None,
+                    anisotropy_clamp: None,
+                    border_color: None
+                }
+            );
+
+            let diffuse_texture_view = diffuse_texture.create_view(
+                &wgpu::TextureViewDescriptor {
+                    label: Some("Diffuse Texture View"),
+                    format: None,
+                    dimension: None,
+                    aspect: wgpu::TextureAspect::All,
+                    base_mip_level: 0,
+                    mip_level_count: None,
+                    base_array_layer: 0,
+                    array_layer_count: None
+                }
+            );
+
+            wgpu_device.create_bind_group(
+                &wgpu::BindGroupDescriptor {
+                    layout: &texture_bind_group_layout,
+                    entries: &[
+                        wgpu::BindGroupEntry {
+                            binding: 0,
+                            resource: wgpu::BindingResource::TextureView(&diffuse_texture_view),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 1,
+                            resource: wgpu::BindingResource::Sampler(&diffuse_sampler),
+                        }
+                    ],
+                    label: Some("Diffuse Bind Group"),
+                }
+            )
+        };
+
+        Self {
+            texture: wgpu::ImageCopyTexture {
+                texture: &diffuse_texture,
+                mip_level: 0,
+                origin: wgpu::Origin3d::ZERO,
+            },
+            image_data_layout: wgpu::ImageDataLayout {
+                offset: 0,
+                bytes_per_row: std::num::NonZeroU32::new(4 * width),
+                rows_per_image: std::num::NonZeroU32::new(height),
+            },
+            size,
+            diffuse_texture,
+            texture_bind_group_layout,
+            diffuse_bind_group,
+        }
+    }
+
+    // TODO: cambiare con as_image_copy nella versione wgpu 0.10.x
+    /*#[inline]
+    pub fn as_image_copy(&diffuse_texture: wgpu::Texture) -> wgpu::ImageCopyTexture {
+        wgpu::ImageCopyTexture {
+            texture: diffuse_texture,
+            mip_level: 0,
+            origin: wgpu::Origin3d::ZERO,
+            //aspect: wgpu::TextureAspect::All,
+        }
+    }*/
+
+    #[inline]
+    pub fn new_default_size(device: &'a crate::renderer::Device) -> Self {
+        Self::new(device, DEFAULT_TEXTURE_WIDTH, DEFAULT_TEXTURE_HEIGHT)
+    }
 }
 
 
-impl<'a> Texture<'a> {
-    pub fn new(device: &'a crate::renderer::Device, filepath: &str) -> Self{
+//= TEXTURE HANDLER ================================================================================
+
+pub struct Texture {
+    diffuse_image: image::DynamicImage,
+}
+
+impl Texture {
+    pub fn new(filepath: &str) -> Self{
         // TODO: potrebbe servirmi ancora per controllare che la diffuse_image sia effettivamente
         //  grande come le struct di default create da Device, prob. tale check è fatto da wgpu
         /*let image_dimensions = {
@@ -25,15 +186,9 @@ impl<'a> Texture<'a> {
             diffuse_image.dimensions()
         };*/
 
+        // TODO: controllare l'esistenza del file
         Self {
-            diffuse_image: image::io::Reader::open(filepath).unwrap().decode().unwrap(),  // TODO: controllare l'esistenza del file
-            // TODO: cambiare con as_image_copy nella versione 10 e provare a spostarla in Device
-            texture: wgpu::ImageCopyTexture {
-                texture: &device.diffuse_texture,
-                mip_level: 0,
-                origin: wgpu::Origin3d::ZERO,
-            },
-            data_layout: DATA_LAYOUT,  // TODO: potrebbe non essere il caso di salvarselo nella struct
+            diffuse_image: image::io::Reader::open(filepath).unwrap().decode().unwrap(),
         }
     }
 

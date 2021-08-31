@@ -2,28 +2,30 @@
 //= RENDERER STRUCT ================================================================================
 
 use std::rc::Rc;
+use crate::renderer::TextureMetaDatas;
 
 ///
-pub struct Renderer {
+pub struct Renderer<'a> {
     config: std::rc::Rc<crate::app::Config>,
     size: winit::dpi::PhysicalSize<u32>,
     pub(crate) device: crate::renderer::Device,
     pub(crate) queue: wgpu::Queue,
     pub(crate) swap_chains: Vec<crate::renderer::SwapChain>,
     pub(crate) pipelines: Vec<crate::renderer::RenderPipeline>,
+    texture_meta_datas: TextureMetaDatas<'a>,
     vertex_buffer: wgpu::Buffer,  // TODO forse questo devo spostarlo in render_pass o pipeline
     index_buffer: wgpu::Buffer,
     num_indices: u32,
 }
 
 
-impl Renderer {
+impl<'a> Renderer<'a> {
     pub fn new(
         window: &winit::window::Window,
         config: &Rc<crate::app::Config>,
         shader_source: String,
         texture_path: &str,
-        vertices: &[crate::meshes::Vertex],
+        vertices: &[crate::meshes::VertexTexture],
         indices: &[u16]
     ) -> Self {
         //window.fullscreen  TODO
@@ -33,19 +35,23 @@ impl Renderer {
 
         let swap_chain = crate::renderer::SwapChain::new(&device, size);
 
+        let texture_meta_datas =
+            crate::renderer::TextureMetaDatas::new_default_size(&device);
+
         let pipeline = crate::renderer::RenderPipeline::new(
             &device,
+            &texture_meta_datas,
             shader_source
         );
 
-        let texture = crate::renderer::Texture::new(&device, texture_path);
+        let texture = crate::renderer::Texture::new(texture_path);
 
         // TODO decisamente bisognerà fare qualche cosa con questi passaggi di parametri e clones
         queue.write_texture(
-            texture.texture.clone(),
+            texture_meta_datas.texture.clone(),
             texture.get_data(),
-            texture.data_layout.clone(),
-            crate::renderer::DEFAULT_TEXTURE_SIZE
+            texture_meta_datas.image_data_layout.clone(),
+            texture_meta_datas.size.clone()
         );
 
         let vertex_buffer = device.create_vertex_buffer_init("Vertex Buffer", vertices);
@@ -60,6 +66,7 @@ impl Renderer {
             queue,
             swap_chains: vec![swap_chain],
             pipelines: vec![pipeline],
+            texture_meta_datas,
             vertex_buffer,
             index_buffer,
             num_indices,
@@ -165,7 +172,7 @@ impl Renderer {
                 );
 
                 render_pass.set_pipeline(self.pipelines.get(0).unwrap().expose_wrapped_render_pipeline());  // TODO: avoid get and unwrap overhead
-                render_pass.set_bind_group(0, &self.device.diffuse_bind_group, &[]);
+                render_pass.set_bind_group(0, &self.texture_meta_datas.diffuse_bind_group, &[]);
                 render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
                 render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
 

@@ -208,20 +208,24 @@ impl<'a> RenderPipelineBuilder<'a> {
 /// See [`wgpu::RenderPipeline`](wgpu::RenderPipeline).
 pub struct RenderPipeline {
     #[allow(dead_code)]
-    wgpu_device: std::rc::Rc<wgpu::Device>,
+    wgpu_device: std::rc::Rc<wgpu::Device>,  // TODO forse non serve realmente
     wgpu_render_pipeline: wgpu::RenderPipeline,
 }
 
 
 impl RenderPipeline {
-    pub fn new(device: &crate::renderer::Device, shader_source: String) -> Self {
+    pub fn new(
+        device: &crate::renderer::Device,
+        texture_meta_datas: &crate::renderer::TextureMetaDatas,
+        shader_source: String
+    ) -> Self {
         let wgpu_device = device.expose_wgpu_device();
 
         let pipeline_layout = PipelineLayoutBuilder::new()
-            .bind_group_layouts(&[&device.texture_bind_group_layout])
+            .bind_group_layouts(&[&texture_meta_datas.texture_bind_group_layout])
             .build(wgpu_device);
 
-        let buffers = &[crate::meshes::Vertex::desc()];
+        let buffers = &[crate::meshes::VertexTexture::desc()];
         let shader_module = crate::renderer::ShaderModuleBuilder::new(
             wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(shader_source))
         ).build(wgpu_device);
