@@ -1,19 +1,16 @@
 
 //= RENDERER STRUCT ================================================================================
 
-use std::rc::Rc;
-use crate::renderer::TextureMetaDatas;
-
 ///
 pub struct Renderer<'a> {
     config: std::rc::Rc<crate::app::Config>,
     size: winit::dpi::PhysicalSize<u32>,
     pub(crate) device: crate::renderer::Device,
     pub(crate) queue: wgpu::Queue,
-    pub(crate) swap_chains: Vec<crate::renderer::SwapChain>,
+    pub(crate) swap_chains: Vec<crate::renderer::SwapChain>,  // TODO: usare smallvec o simile, anche quello sotto
     pub(crate) pipelines: Vec<crate::renderer::RenderPipeline>,
-    texture_meta_datas: TextureMetaDatas<'a>,
-    vertex_buffer: wgpu::Buffer,  // TODO forse questo devo spostarlo in render_pass o pipeline
+    texture_meta_datas: crate::renderer::TextureMetaDatas<'a>,
+    vertex_buffer: wgpu::Buffer,  // TODO: forse questo devo spostarlo in render_pass o pipeline, anche quello sotto
     index_buffer: wgpu::Buffer,
     num_indices: u32,
 }
@@ -22,7 +19,7 @@ pub struct Renderer<'a> {
 impl<'a> Renderer<'a> {
     pub fn new(
         window: &winit::window::Window,
-        config: &Rc<crate::app::Config>,
+        config: &std::rc::Rc<crate::app::Config>,
         shader_source: String,
         texture_path: &str,
         vertices: &[crate::meshes::VertexTexture],
@@ -48,10 +45,10 @@ impl<'a> Renderer<'a> {
 
         // TODO decisamente bisognerà fare qualche cosa con questi passaggi di parametri e clones
         queue.write_texture(
-            texture_meta_datas.texture.clone(),
+            texture_meta_datas.image_copy.clone(),
             texture.get_data(),
             texture_meta_datas.image_data_layout.clone(),
-            texture_meta_datas.size.clone()
+            texture_meta_datas.image_size.clone()
         );
 
         let vertex_buffer = device.create_vertex_buffer_init("Vertex Buffer", vertices);
@@ -172,7 +169,7 @@ impl<'a> Renderer<'a> {
                 );
 
                 render_pass.set_pipeline(self.pipelines.get(0).unwrap().expose_wrapped_render_pipeline());  // TODO: avoid get and unwrap overhead
-                render_pass.set_bind_group(0, &self.texture_meta_datas.diffuse_bind_group, &[]);
+                render_pass.set_bind_group(0, &self.texture_meta_datas.bind_group, &[]);
                 render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
                 render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
 

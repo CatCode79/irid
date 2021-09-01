@@ -207,8 +207,6 @@ impl<'a> RenderPipelineBuilder<'a> {
 ///
 /// See [`wgpu::RenderPipeline`](wgpu::RenderPipeline).
 pub struct RenderPipeline {
-    #[allow(dead_code)]
-    wgpu_device: std::rc::Rc<wgpu::Device>,  // TODO forse non serve realmente
     wgpu_render_pipeline: wgpu::RenderPipeline,
 }
 
@@ -222,7 +220,7 @@ impl RenderPipeline {
         let wgpu_device = device.expose_wgpu_device();
 
         let pipeline_layout = PipelineLayoutBuilder::new()
-            .bind_group_layouts(&[&texture_meta_datas.texture_bind_group_layout])
+            .bind_group_layouts(&[&texture_meta_datas.bind_group_layout])
             .build(wgpu_device);
 
         let buffers = &[crate::meshes::VertexTexture::desc()];
@@ -236,14 +234,13 @@ impl RenderPipeline {
 
         let primitive_state = PrimitiveStateBuilder::new().build();
 
-        // TODO: Fare il Builder di 'sta roba
+        // TODO: fare il Builder di 'sta roba?
         let multisample = wgpu::MultisampleState {
             count: 1,
             mask: !0,
             alpha_to_coverage_enabled: false,
         };
 
-        // TODO: ATTENZIONE! depth_stencil: None  come default
         let wgpu_render_pipeline = RenderPipelineBuilder::new(vertex_state)
             .layout(&pipeline_layout)
             .fragment(fragment_state)
@@ -252,7 +249,6 @@ impl RenderPipeline {
             .build(wgpu_device);
 
         Self {
-            wgpu_device: std::rc::Rc::clone(wgpu_device),
             wgpu_render_pipeline,
         }
     }
