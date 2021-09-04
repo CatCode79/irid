@@ -254,14 +254,14 @@ impl Application {
                 Ok(_) => {},
                 Err(error) => match error {
                     // These errors should be resolved by the next frame
-                    wgpu::SwapChainError::Timeout | wgpu::SwapChainError::Outdated =>
+                    wgpu::SurfaceError::Timeout | wgpu::SurfaceError::Outdated =>
                         eprintln!("{:?}", error),  // todo
 
                     // Recreate the swap chain if lost
-                    wgpu::SwapChainError::Lost => renderer.refresh_current_size(),
+                    wgpu::SurfaceError::Lost => renderer.refresh_current_size(),
 
                     // The system is out of memory, we should probably quit
-                    wgpu::SwapChainError::OutOfMemory =>
+                    wgpu::SurfaceError::OutOfMemory =>
                         *control_flow = winit::event_loop::ControlFlow::Exit,
                 }
             }

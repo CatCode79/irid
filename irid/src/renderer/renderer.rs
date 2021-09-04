@@ -1,14 +1,28 @@
 
+//= CONSTS =========================================================================================
+
+const FRAME_TEXTURE_VIEW: wgpu::TextureViewDescriptor = wgpu::TextureViewDescriptor {
+    label: None,
+    format: None,
+    dimension: None,
+    aspect: wgpu::TextureAspect::All,
+    base_mip_level: 0,
+    mip_level_count: None,
+    base_array_layer: 0,
+    array_layer_count: None
+};
+
+
 //= RENDERER STRUCT ================================================================================
 
 ///
 pub struct Renderer<'a> {
     config: std::rc::Rc<crate::app::Config>,
     size: winit::dpi::PhysicalSize<u32>,
+    pub(crate) surface: crate::renderer::Surface,
     pub(crate) device: crate::renderer::Device,
     pub(crate) queue: wgpu::Queue,
-    pub(crate) swap_chains: Vec<crate::renderer::SwapChain>,  // TODO: usare smallvec o simile, anche quello sotto
-    pub(crate) pipelines: Vec<crate::renderer::RenderPipeline>,
+    pub(crate) pipeline: crate::renderer::RenderPipeline,
     texture_meta_datas: crate::renderer::TextureMetaDatas<'a>,
     vertex_buffer: wgpu::Buffer,  // TODO: forse questo devo spostarlo in render_pass o pipeline, anche quello sotto
     index_buffer: wgpu::Buffer,
@@ -25,12 +39,11 @@ impl<'a> Renderer<'a> {
         vertices: &[crate::meshes::VertexTexture],
         indices: &[u16]
     ) -> Self {
-        //window.fullscreen  TODO
-        let size = window.inner_size();
+        let size = window.inner_size();  // TODO: window.fullscreen at startup
 
-        let (device, queue) = crate::renderer::Device::new(window);
+        let surface = crate::renderer::Surface::new(window, size);
 
-        let swap_chain = crate::renderer::SwapChain::new(&device, size);
+        let (device, queue) = crate::renderer::Device::new(&surface);
 
         let texture_meta_datas =
             crate::renderer::TextureMetaDatas::new_default_size(&device);
@@ -59,10 +72,10 @@ impl<'a> Renderer<'a> {
         Self {
             config: std::rc::Rc::clone(&config),
             size,
+            surface,
             device,
             queue,
-            swap_chains: vec![swap_chain],
-            pipelines: vec![pipeline],
+            pipeline,
             texture_meta_datas,
             vertex_buffer,
             index_buffer,
@@ -70,18 +83,12 @@ impl<'a> Renderer<'a> {
         }
     }
 
-    //- Window Inner Size Methods ------------------------------------------------------------------
+    //- Size Methods -------------------------------------------------------------------------------
 
     /// Getter for the windows's physical size attribute.
     #[inline]
     pub fn get_size(&self) -> winit::dpi::PhysicalSize<u32> {
         self.size
-    }
-
-    /// Setter for the windows's physical size attribute.
-    #[inline]
-    pub fn set_size(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
-        self.size = new_size;
     }
 
     /// Calculate the aspect ratio of the window's inner size.
@@ -91,27 +98,15 @@ impl<'a> Renderer<'a> {
     }
 
     /// Resize the renderer window.
-    pub(crate) fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
-        self.set_size(new_size);
+    pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
+        self.size = new_size;
         self.refresh_current_size();
     }
 
+    #[inline]
     pub(crate) fn refresh_current_size(&mut self) {
-        for sc in self.swap_chains.iter_mut() {
-            sc.update(&self.device.surface, self.size);
-        }
+        self.surface.update(&self.device, self.size);
     }
-
-    //- Pipeline Methods ---------------------------------------------------------------------------
-
-    ///
-    #[allow(dead_code)]
-    pub(crate) fn add_pipeline(&mut self, pipeline: crate::renderer::RenderPipeline) {
-        self.pipelines.push(pipeline);
-    }
-
-    //- Buffer's Methods ---------------------------------------------------------------------------
-
 
     //- Queue Methods ------------------------------------------------------------------------------
 
@@ -146,38 +141,37 @@ impl<'a> Renderer<'a> {
 
     //- Rendering Methods --------------------------------------------------------------------------
 
-    pub(crate) fn redraw(&self) -> Result<(), wgpu::SwapChainError> {
-        for sc in self.swap_chains.iter() {
-            let frame = sc.get_current_frame()?.output;
+    pub(crate) fn redraw(&self) -> Result<(), wgpu::SurfaceError> {
+        let frame_view = self.surface.get_current_frame()?
+            .output.texture.create_view(&FRAME_TEXTURE_VIEW);
 
-            let mut encoder = self.create_command_encoder("Render Encoder");
+        let mut encoder = self.create_command_encoder("Render Encoder");
 
-            {
-                let mut render_pass = encoder.begin_render_pass(
-                    &wgpu::RenderPassDescriptor {
-                        label: Some("Render Pass"),
-                        color_attachments: &[wgpu::RenderPassColorAttachment {
-                            view: &frame.view,
-                            resolve_target: None,
-                            ops: wgpu::Operations {
-                                load: wgpu::LoadOp::Clear(self.config.clear_color),
-                                store: true,
-                            },
-                        }],
-                        depth_stencil_attachment: None,
-                    }
-                );
+        {
+            let mut render_pass = encoder.begin_render_pass(
+                &wgpu::RenderPassDescriptor {
+                    label: Some("Render Pass"),
+                    color_attachments: &[wgpu::RenderPassColorAttachment {
+                        view: &frame_view,
+                        resolve_target: None,
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(self.config.clear_color),
+                            store: true,
+                        },
+                    }],
+                    depth_stencil_attachment: None,
+                }
+            );
 
-                render_pass.set_pipeline(self.pipelines.get(0).unwrap().expose_wrapped_render_pipeline());  // TODO: avoid get and unwrap overhead
-                render_pass.set_bind_group(0, &self.texture_meta_datas.bind_group, &[]);
-                render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-                render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            render_pass.set_pipeline(self.pipeline.expose_wrapped_render_pipeline());
+            render_pass.set_bind_group(0, &self.texture_meta_datas.bind_group, &[]);
+            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
 
-                render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
-            }
-
-            self.queue.submit(std::iter::once(encoder.finish()));
+            render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
         }
+
+        self.queue.submit(std::iter::once(encoder.finish()));
 
         Ok(())
     }

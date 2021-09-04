@@ -1,27 +1,35 @@
 //= USES ===========================================================================================
 
-use anyhow::*;
+//use anyhow::*;
 
 
 //= CONSTS =========================================================================================
-
-// TODO: ricavarlo a runtime, anche solo per debug, dal device. Ci sono delle perplessità
-//  relativamente alla uniformità dei valori floati cui colori si comportano.
-// Most images are stored using sRGB so we need to reflect that here.
-pub(crate) const PREFERRED_TEXTURE_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8UnormSrgb;
 
 pub const DEFAULT_TEXTURE_WIDTH: u32 = 256;
 pub const DEFAULT_TEXTURE_HEIGHT: u32 = 256;
 
 
-//= TEXTURE UTILS ==================================================================================
+//= TEXTURE META DATAS =============================================================================
 
-/// Used on queue.write_texture()
+pub struct TextureMetaDatasBuilder<'a> {
+    image_copy: Option<wgpu::ImageCopyTexture<'a>>,
+    image_data_layout: Option<wgpu::ImageDataLayout>,
+    image_size: Option<wgpu::Extent3d>,
+    bind_group_layout: Option<wgpu::BindGroupLayout>,
+    bind_group: Option<wgpu::BindGroup>,
+}
+/*
+impl<'a> TextureMetaDatasBuilder<'a> {
+
+}*/
+
+
+/// Struct containing values used by queue.write_texture()
 pub struct TextureMetaDatas<'a> {
+    //texture: wgpu::Texture,
     pub image_copy: wgpu::ImageCopyTexture<'a>,
     pub image_data_layout: wgpu::ImageDataLayout,
     pub image_size: wgpu::Extent3d,
-
     pub bind_group_layout: wgpu::BindGroupLayout,
     pub bind_group: wgpu::BindGroup,
 }
@@ -41,20 +49,31 @@ impl<'a> TextureMetaDatas<'a> {
             depth_or_array_layers: 1,
         };
 
-        let image_copy = wgpu::ImageCopyTexture {
-            texture: &wgpu_device.create_texture(&wgpu::TextureDescriptor {
+        let texture = wgpu_device.create_texture(
+            &wgpu::TextureDescriptor {
                 size: image_size,
                 mip_level_count: 1,
                 sample_count: 1,
                 dimension: wgpu::TextureDimension::D2,
-                format: PREFERRED_TEXTURE_FORMAT,
-                // SAMPLED tells wgpu that we want to use this texture in shaders
+                format: crate::renderer::PREFERRED_TEXTURE_FORMAT,
+                // TEXTURE_BINDING tells wgpu that we want to use this texture in shaders
                 // COPY_DST means that we want to copy data to this texture
-                usage: wgpu::TextureUsage::SAMPLED | wgpu::TextureUsage::COPY_DST,
+                usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
                 label: Some("Diffuse Texture"),
-            }),
+            }
+        );
+
+        let image_copy = wgpu::ImageCopyTexture {
+            texture: &texture,
             mip_level: 0,
             origin: wgpu::Origin3d::ZERO,
+            aspect: wgpu::TextureAspect::All,
+        };
+
+        let image_data_layout = wgpu::ImageDataLayout {
+            offset: 0,
+            bytes_per_row: std::num::NonZeroU32::new(4 * width),
+            rows_per_image: std::num::NonZeroU32::new(height),
         };
 
         let bind_group_layout = TextureMetaDatas::create_bind_group_layout(wgpu_device);
@@ -94,13 +113,9 @@ impl<'a> TextureMetaDatas<'a> {
         };
 
         Self {
-            // TODO: cambiare con as_image_copy nella versione wgpu 0.10.x
+            //texture,
             image_copy,
-            image_data_layout: wgpu::ImageDataLayout {
-                offset: 0,
-                bytes_per_row: std::num::NonZeroU32::new(4 * width),
-                rows_per_image: std::num::NonZeroU32::new(height),
-            },
+            image_data_layout,
             image_size,
             bind_group_layout,
             bind_group,
@@ -120,7 +135,7 @@ impl<'a> TextureMetaDatas<'a> {
                 entries: &[
                     wgpu::BindGroupLayoutEntry {
                         binding: 0,
-                        visibility: wgpu::ShaderStage::FRAGMENT,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Texture {
                             multisampled: false,
                             view_dimension: wgpu::TextureViewDimension::D2,
@@ -130,7 +145,7 @@ impl<'a> TextureMetaDatas<'a> {
                     },
                     wgpu::BindGroupLayoutEntry {
                         binding: 1,
-                        visibility: wgpu::ShaderStage::FRAGMENT,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Sampler {
                             // This is only for TextureSampleType::Depth
                             comparison: false,

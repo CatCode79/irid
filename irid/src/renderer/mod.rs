@@ -1,7 +1,7 @@
 //= MODS ===========================================================================================
 
 mod renderer;
-mod swap_chain;
+mod surface;
 mod pipeline;
 mod shader;
 mod texture;
@@ -14,5 +14,5 @@ pub use crate::renderer::device::*;
 pub use crate::renderer::pipeline::*;
 pub use crate::renderer::renderer::*;
 pub use crate::renderer::shader::*;
-pub use crate::renderer::swap_chain::*;
+pub use crate::renderer::surface::*;
 pub use crate::renderer::texture::*;

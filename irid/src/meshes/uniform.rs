@@ -85,7 +85,7 @@ pub fn create_buffer_init(
         &wgpu::util::BufferInitDescriptor {
             label: Some(label_text),
             contents: bytemuck::cast_slice(&[uniforms]),
-            usage: wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         }
     )
 }
@@ -103,7 +103,7 @@ pub fn create_bind_group_layout(
                     binding: 0,
                     // Because we only really need camera information in the vertex shader,
                     // as that's what we'll use to manipulate our vertices
-                    visibility: wgpu::ShaderStage::VERTEX,
+                    visibility: wgpu::ShaderStages::VERTEX,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         // The dynamic field indicates whether this buffer will change size or not.

@@ -17,7 +17,6 @@ impl<'a> ShaderModuleBuilder<'a> {
             shader_module_desc: wgpu::ShaderModuleDescriptor {
                 label,
                 source,
-                flags: wgpu::ShaderFlags::VALIDATION | wgpu::ShaderFlags::EXPERIMENTAL_TRANSLATION
             },
         }
     }
@@ -33,11 +32,6 @@ impl<'a> ShaderModuleBuilder<'a> {
 
     pub fn source(&mut self, source: wgpu::ShaderSource<'static>) -> &mut Self {
         self.shader_module_desc.source = source;
-        self
-    }
-
-    pub fn flags(&mut self, flags: wgpu::ShaderFlags) -> &mut Self {
-        self.shader_module_desc.flags = flags;
         self
     }
 
@@ -113,7 +107,7 @@ impl<'a> FragmentStateBuilder<'a> {
             color: wgpu::BlendComponent::REPLACE,
             alpha: wgpu::BlendComponent::REPLACE,
         }),
-        write_mask: wgpu::ColorWrite::ALL,
+        write_mask: wgpu::ColorWrites::ALL,
     };
 
     pub fn new(module: &'a wgpu::ShaderModule) -> Self {
