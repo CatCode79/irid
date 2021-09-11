@@ -1,6 +1,7 @@
 //= MODS ===========================================================================================
 
 pub mod app;
+pub mod assets;
 pub mod camera;
 pub mod file;
 pub mod index;

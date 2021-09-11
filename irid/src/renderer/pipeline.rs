@@ -214,13 +214,13 @@ pub struct RenderPipeline {
 impl RenderPipeline {
     pub fn new(
         device: &crate::renderer::Device,
-        texture_meta_datas: &crate::renderer::TextureMetaDatas,
+        texture_metadatas: &crate::renderer::TextureMetadatas,
         shader_source: String
     ) -> Self {
         let wgpu_device = device.expose_wgpu_device();
 
         let pipeline_layout = PipelineLayoutBuilder::new()
-            .bind_group_layouts(&[&texture_meta_datas.bind_group_layout])
+            .bind_group_layouts(&[&texture_metadatas.bind_group_layout()])
             .build(wgpu_device);
 
         let buffers = &[crate::meshes::VertexTexture::desc()];

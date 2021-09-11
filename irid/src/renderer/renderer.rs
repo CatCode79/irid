@@ -23,7 +23,7 @@ pub struct Renderer<'a> {
     pub(crate) device: crate::renderer::Device,
     pub(crate) queue: wgpu::Queue,
     pub(crate) pipeline: crate::renderer::RenderPipeline,
-    texture_meta_datas: crate::renderer::TextureMetaDatas<'a>,
+    texture_metadatas: crate::renderer::TextureMetadatas<'a>,
     vertex_buffer: wgpu::Buffer,  // TODO: forse questo devo spostarlo in render_pass o pipeline, anche quello sotto
     index_buffer: wgpu::Buffer,
     num_indices: u32,
@@ -45,23 +45,23 @@ impl<'a> Renderer<'a> {
 
         let (device, queue) = crate::renderer::Device::new(&surface);
 
-        let texture_meta_datas =
-            crate::renderer::TextureMetaDatas::new_default_size(&device);
+        let texture_metadatas =
+            crate::renderer::TextureMetadatas::new_default_size(&device);
 
         let pipeline = crate::renderer::RenderPipeline::new(
             &device,
-            &texture_meta_datas,
+            &texture_metadatas,
             shader_source
         );
 
-        let texture = crate::renderer::Texture::new(texture_path);
+        let texture = crate::assets::DynamicImage::new(texture_path);
 
         // TODO decisamente bisognerà fare qualche cosa con questi passaggi di parametri e clones
         queue.write_texture(
-            texture_meta_datas.image_copy.clone(),
+            texture_metadatas.image_copy().clone(),
             texture.get_data(),
-            texture_meta_datas.image_data_layout.clone(),
-            texture_meta_datas.image_size.clone()
+            texture_metadatas.image_data_layout().clone(),
+            texture_metadatas.image_size().clone()
         );
 
         let vertex_buffer = device.create_vertex_buffer_init("Vertex Buffer", vertices);
@@ -76,7 +76,7 @@ impl<'a> Renderer<'a> {
             device,
             queue,
             pipeline,
-            texture_meta_datas,
+            texture_metadatas,
             vertex_buffer,
             index_buffer,
             num_indices,
@@ -164,7 +164,7 @@ impl<'a> Renderer<'a> {
             );
 
             render_pass.set_pipeline(self.pipeline.expose_wrapped_render_pipeline());
-            render_pass.set_bind_group(0, &self.texture_meta_datas.bind_group, &[]);
+            render_pass.set_bind_group(0, &self.texture_metadatas.bind_group(), &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
 
