@@ -1,9 +1,10 @@
 
 //= DYNAMIC IMAGE ==================================================================================
 
+//use image::{ImageBuffer, Rgba};
+
 pub struct DynamicImage(image::DynamicImage);
 
-// TODO: cercare di fare a meno degli unwrap
 impl DynamicImage {
     pub fn new(filepath: &str) -> Self {
         // TODO: potrebbe servirmi ancora per controllare che la diffuse_image sia effettivamente
@@ -15,12 +16,22 @@ impl DynamicImage {
         };*/
 
         Self {
-            0: image::io::Reader::open(filepath).unwrap().decode().unwrap(),
+            0: image::io::Reader::open(filepath).unwrap().decode().unwrap(),  // TODO: cercare di fare a meno degli unwrap
         }
     }
 
-    pub fn get_data(&self) -> &[u8] {
+    pub fn as_bytes(&self) -> Option<&[u8]> {
         use image::EncodableLayout;
-        self.0.as_rgba8().unwrap().as_bytes()
+        match self.0.as_rgba8() {
+            None => { None }
+            Some(rgba8) => { Some(rgba8.as_bytes()) }
+        }
+    }
+
+    pub fn dimensions(&self) -> Option<(u32, u32)> {
+        match self.0.as_rgba8() {
+            None => { None }
+            Some(rgba8) => { Some(rgba8.dimensions()) }
+        }
     }
 }

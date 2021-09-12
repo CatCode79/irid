@@ -16,21 +16,21 @@ const FRAME_TEXTURE_VIEW: wgpu::TextureViewDescriptor = wgpu::TextureViewDescrip
 //= RENDERER STRUCT ================================================================================
 
 ///
-pub struct Renderer<'a> {
+pub struct Renderer {
     config: std::rc::Rc<crate::app::Config>,
     size: winit::dpi::PhysicalSize<u32>,
     pub(crate) surface: crate::renderer::Surface,
     pub(crate) device: crate::renderer::Device,
     pub(crate) queue: wgpu::Queue,
     pub(crate) pipeline: crate::renderer::RenderPipeline,
-    texture_metadatas: crate::renderer::TextureMetadatas<'a>,
+    texture_metadatas: crate::renderer::TextureMetadatas,
     vertex_buffer: wgpu::Buffer,  // TODO: forse questo devo spostarlo in render_pass o pipeline, anche quello sotto
     index_buffer: wgpu::Buffer,
     num_indices: u32,
 }
 
 
-impl<'a> Renderer<'a> {
+impl Renderer {
     pub fn new(
         window: &winit::window::Window,
         config: &std::rc::Rc<crate::app::Config>,
@@ -45,8 +45,17 @@ impl<'a> Renderer<'a> {
 
         let (device, queue) = crate::renderer::Device::new(&surface);
 
+        surface.configure(&device);
+
+        let diffuse_image = crate::assets::DynamicImage::new(texture_path);
+
+        let (diffuse_image_width, diffuse_image_height) = {
+            let dimensions = diffuse_image.dimensions().unwrap();
+            (dimensions.0, dimensions.1)
+        };
+
         let texture_metadatas =
-            crate::renderer::TextureMetadatas::new_default_size(&device);
+            crate::renderer::TextureMetadatas::new(&device, diffuse_image_width, diffuse_image_height);
 
         let pipeline = crate::renderer::RenderPipeline::new(
             &device,
@@ -54,14 +63,12 @@ impl<'a> Renderer<'a> {
             shader_source
         );
 
-        let texture = crate::assets::DynamicImage::new(texture_path);
-
         // TODO decisamente bisognerà fare qualche cosa con questi passaggi di parametri e clones
         queue.write_texture(
-            texture_metadatas.image_copy().clone(),
-            texture.get_data(),
-            texture_metadatas.image_data_layout().clone(),
-            texture_metadatas.image_size().clone()
+            texture_metadatas.new_image_copy(),
+            diffuse_image.as_bytes().unwrap(),  // TODO: piace poco l'unwrap
+            texture_metadatas.clone_image_data_layout(),
+            texture_metadatas.clone_image_size()
         );
 
         let vertex_buffer = device.create_vertex_buffer_init("Vertex Buffer", vertices);
@@ -122,15 +129,10 @@ impl<'a> Renderer<'a> {
     }
 
 
-    ///
-    #[inline]
-    pub fn submit_command_buffers(&self, encoder: wgpu::CommandEncoder) {
-        self.queue.submit(std::iter::once(encoder.finish()));
-    }
-
     //- Command Encoder Methods --------------------------------------------------------------------
 
     ///
+    #[inline(always)]
     pub fn create_command_encoder(&self, label_text: &str) -> wgpu::CommandEncoder {
         self.device.expose_wgpu_device().create_command_encoder(
             &wgpu::CommandEncoderDescriptor {
@@ -142,8 +144,10 @@ impl<'a> Renderer<'a> {
     //- Rendering Methods --------------------------------------------------------------------------
 
     pub(crate) fn redraw(&self) -> Result<(), wgpu::SurfaceError> {
-        let frame_view = self.surface.get_current_frame()?
-            .output.texture.create_view(&FRAME_TEXTURE_VIEW);
+        let output = self.surface.get_current_frame()?.output;  // Must be let binded!
+        let frame_view = output
+            .texture.create_view(&FRAME_TEXTURE_VIEW);
+            //.texture.create_view(&wgpu::TextureViewDescriptor::default());  // (TT)
 
         let mut encoder = self.create_command_encoder("Render Encoder");
 

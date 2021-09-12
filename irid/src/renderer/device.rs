@@ -2,9 +2,7 @@
 //= DEVICE WRAPPER =================================================================================
 
 ///
-pub struct Device {
-    wgpu_device: std::rc::Rc<wgpu::Device>,
-}
+pub struct Device(wgpu::Device);
 
 
 impl Device {
@@ -24,7 +22,7 @@ impl Device {
         }).unwrap(); // todo Result check
 
         let device = Self {
-            wgpu_device: std::rc::Rc::new(wgpu_device),
+            0: wgpu_device,
         };
         (device, queue)
     }
@@ -36,7 +34,7 @@ impl Device {
         vertices: &[crate::meshes::VertexTexture]
     ) -> wgpu::Buffer {
         use wgpu::util::DeviceExt;
-        self.wgpu_device.create_buffer_init(
+        self.0.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: Some(label_text),
                 contents: bytemuck::cast_slice(vertices),
@@ -48,7 +46,7 @@ impl Device {
     ///
     pub fn create_indices_buffer_init(&self, label_text: &str, indices: &[u16]) -> wgpu::Buffer {
         use wgpu::util::DeviceExt;
-        self.wgpu_device.create_buffer_init(
+        self.0.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: Some(label_text),
                 contents: bytemuck::cast_slice(indices),
@@ -58,7 +56,8 @@ impl Device {
     }
 
     ///
-    pub fn expose_wgpu_device(&self) -> &std::rc::Rc<wgpu::Device> {
-        &self.wgpu_device
+    #[inline]
+    pub fn expose_wgpu_device(&self) -> &wgpu::Device {
+        &self.0
     }
 }

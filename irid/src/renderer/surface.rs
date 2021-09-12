@@ -43,6 +43,7 @@ impl Surface {
 
         let configuration = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            //format: wgpu_surface.get_preferred_format(&adapter).unwrap(),  // TODO: mi ha dato problemi
             format: crate::renderer::PREFERRED_TEXTURE_FORMAT,
             width: size.width,
             height: size.height,
@@ -60,16 +61,28 @@ impl Surface {
     }
 
     ///
+    pub fn configure(&self, device: &crate::renderer::Device) {
+        self.0.configure(device.expose_wgpu_device(), &self.2);
+    }
+
+    ///
     pub fn update(&mut self, device: &crate::renderer::Device, size: winit::dpi::PhysicalSize<u32>) {
-        self.2.width = size.width;
-        self.2.height = size.height;
-        self.0.configure(&device.expose_wgpu_device(), &self.2);
+        if size.width > 0 && size.height > 0 {
+            self.2.width = size.width;
+            self.2.height = size.height;
+            self.0.configure(&device.expose_wgpu_device(), &self.2);
+        }
     }
 
     ///
     #[inline(always)]
     pub fn get_current_frame(&self) -> Result<wgpu::SurfaceFrame, wgpu::SurfaceError> {
         self.0.get_current_frame()
+    }
+
+    ///
+    pub fn expose_wgpu_surface(&self) -> &wgpu::Surface {
+        return &self.0
     }
 
     /// Adapter can be used to open a connection to the corresponding graphical device.

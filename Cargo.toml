@@ -8,5 +8,6 @@ members = [
     "learnwgpu/learnwgpu_03_pipeline",
     "learnwgpu/learnwgpu_04_buffers_indices",
     "learnwgpu/learnwgpu_05_textures_bind_groups",
+    "learnwgpu/learnwgpu_06_uniform_buffers_3d_camera",
     "learnwgpu/learnwgpu_07_instancing",
 ]

@@ -7,15 +7,82 @@ pub const DEFAULT_TEXTURE_HEIGHT: u32 = 256;
 
 //= TEXTURE METADATAS ==============================================================================
 
-pub struct TextureMetadatas<'a> {
-    //texture: wgpu::Texture,
-    image_metadatas: TextureImageMetadatas<'a>,
+pub struct TextureMetadatas {
+    image_metadatas: TextureImageMetadatas,
     bind_group_metadatas: TextureBindGroupMetadatas,
 }
 
-impl<'a> TextureMetadatas<'a> {
+impl TextureMetadatas {
     pub fn new(
         device: &crate::renderer::Device, width: u32, height: u32
+    ) -> Self {
+        let image_metadatas = TextureImageMetadatas::new(
+            device, width, height
+        );
+
+        let bind_group_metadatas = TextureBindGroupMetadatas::new(
+            device, &image_metadatas
+        );
+
+        Self {
+            //texture,
+            image_metadatas,
+            bind_group_metadatas,
+        }
+    }
+
+    #[inline]
+    pub fn new_default_size(device: &crate::renderer::Device) -> Self {
+        Self::new(device, DEFAULT_TEXTURE_WIDTH, DEFAULT_TEXTURE_HEIGHT)
+    }
+
+    //- Getters ------------------------------------------------------------------------------------
+
+    pub fn new_image_copy(&self) -> wgpu::ImageCopyTexture {
+        wgpu::ImageCopyTexture {
+            texture: &self.image_metadatas.texture,  // TODO: odio questa &, creare una wgpu personale senza?
+            mip_level: 0,
+            origin: wgpu::Origin3d::ZERO,
+            aspect: wgpu::TextureAspect::All,
+        }
+    }
+
+    #[inline]
+    pub fn clone_image_data_layout(&self) -> wgpu::ImageDataLayout {
+        self.image_metadatas.image_data_layout.clone()
+    }
+
+    #[inline]
+    pub fn clone_image_size(&self) -> wgpu::Extent3d {
+        self.image_metadatas.image_size.clone()
+    }
+
+    #[inline]
+    pub fn bind_group_layout(&self) -> &wgpu::BindGroupLayout {
+        &self.bind_group_metadatas.bind_group_layout
+    }
+
+    #[inline]
+    pub fn bind_group(&self) -> &wgpu::BindGroup {
+        &self.bind_group_metadatas.bind_group
+    }
+}
+
+
+//= TEXTURE IMAGE METADATAS ========================================================================
+
+/// Struct containing values used by queue.write_texture()
+struct TextureImageMetadatas {
+    texture: wgpu::Texture,
+    image_data_layout: wgpu::ImageDataLayout,
+    image_size: wgpu::Extent3d,
+}
+
+impl TextureImageMetadatas {
+    pub fn new(
+        device: &crate::renderer::Device,
+        width: u32,
+        height: u32,
     ) -> Self {
         let wgpu_device = device.expose_wgpu_device();
 
@@ -40,79 +107,6 @@ impl<'a> TextureMetadatas<'a> {
             }
         );
 
-        let image_metadatas = TextureImageMetadatas::new(
-            width, height, &texture
-        );
-
-        let bind_group_metadatas = TextureBindGroupMetadatas::new(
-            wgpu_device, &image_metadatas
-        );
-
-        Self {
-            //texture,
-            image_metadatas,
-            bind_group_metadatas,
-        }
-    }
-
-    #[inline]
-    pub fn new_default_size(device: &crate::renderer::Device) -> Self {
-        Self::new(device, DEFAULT_TEXTURE_WIDTH, DEFAULT_TEXTURE_HEIGHT)
-    }
-
-    //- Getters ------------------------------------------------------------------------------------
-
-    pub fn image_copy(&self) -> &wgpu::ImageCopyTexture {
-        &self.image_metadatas.image_copy
-    }
-
-    pub fn image_data_layout(&self) -> &wgpu::ImageDataLayout {
-        &self.image_metadatas.image_data_layout
-    }
-
-    pub fn image_size(&self) -> &wgpu::Extent3d {
-        &self.image_metadatas.image_size
-    }
-
-    pub fn bind_group_layout(&self) -> &wgpu::BindGroupLayout {
-        &self.bind_group_metadatas.bind_group_layout
-    }
-
-    pub fn bind_group(&self) -> &wgpu::BindGroup {
-        &self.bind_group_metadatas.bind_group
-    }
-}
-
-
-//= TEXTURE IMAGE METADATAS ========================================================================
-
-/// Struct containing values used by queue.write_texture()
-struct TextureImageMetadatas<'a> {
-    image_copy: wgpu::ImageCopyTexture<'a>,
-    image_data_layout: wgpu::ImageDataLayout,
-    image_size: wgpu::Extent3d,
-}
-
-impl<'a> TextureImageMetadatas<'a> {
-    pub fn new(
-        width: u32,
-        height: u32,
-        texture: &'a wgpu::Texture
-    ) -> Self {
-        let image_size = wgpu::Extent3d {
-            width,
-            height,
-            // All textures are stored as 3D, we represent our 2D texture by setting depth to 1
-            depth_or_array_layers: 1,
-        };
-
-        let image_copy = wgpu::ImageCopyTexture {
-            texture: &texture,
-            mip_level: 0,
-            origin: wgpu::Origin3d::ZERO,
-            aspect: wgpu::TextureAspect::All,
-        };
-
         let image_data_layout = wgpu::ImageDataLayout {
             offset: 0,
             bytes_per_row: std::num::NonZeroU32::new(4 * width),
@@ -120,7 +114,7 @@ impl<'a> TextureImageMetadatas<'a> {
         };
 
         Self {
-            image_copy,
+            texture,
             image_data_layout,
             image_size,
         }
@@ -137,8 +131,11 @@ struct TextureBindGroupMetadatas {
 
 impl TextureBindGroupMetadatas {
     pub fn new(
-        wgpu_device: &std::rc::Rc<wgpu::Device>, image_metadatas: &TextureImageMetadatas
+        device: &crate::renderer::Device,
+        image_metadatas: &TextureImageMetadatas
     ) -> Self {
+        let wgpu_device = device.expose_wgpu_device();
+
         let bind_group_layout = TextureBindGroupMetadatas::create_bind_group_layout(
             wgpu_device
         );
@@ -171,7 +168,7 @@ impl TextureBindGroupMetadatas {
     }
 
     fn create_bind_group_layout(
-        wgpu_device: &std::rc::Rc<wgpu::Device>
+        wgpu_device: &wgpu::Device
     ) -> wgpu::BindGroupLayout {
         wgpu_device.create_bind_group_layout(
             &wgpu::BindGroupLayoutDescriptor {
@@ -206,7 +203,7 @@ impl TextureBindGroupMetadatas {
     }
 
     fn create_texture_view(image_metadatas: &TextureImageMetadatas) -> wgpu::TextureView {
-        image_metadatas.image_copy.texture.create_view(
+        image_metadatas.texture.create_view(
             &wgpu::TextureViewDescriptor {
                 label: Some("Diffuse Texture View"),
                 format: None,
@@ -220,7 +217,7 @@ impl TextureBindGroupMetadatas {
         )
     }
 
-    fn create_sampler(wgpu_device: &std::rc::Rc<wgpu::Device>) -> wgpu::Sampler {
+    fn create_sampler(wgpu_device: &wgpu::Device) -> wgpu::Sampler {
         wgpu_device.create_sampler(
             &wgpu::SamplerDescriptor {
                 label: Some("Diffuse Texture Sampler"),
