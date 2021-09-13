@@ -19,11 +19,13 @@ const FRAME_TEXTURE_VIEW: wgpu::TextureViewDescriptor = wgpu::TextureViewDescrip
 pub struct Renderer {
     config: std::rc::Rc<crate::app::Config>,
     size: winit::dpi::PhysicalSize<u32>,
-    pub(crate) surface: crate::renderer::Surface,
-    pub(crate) device: crate::renderer::Device,
-    pub(crate) queue: wgpu::Queue,
-    pub(crate) pipeline: crate::renderer::RenderPipeline,
+    surface: crate::renderer::Surface,
+    device: crate::renderer::Device,
+    queue: wgpu::Queue,
     texture_metadatas: crate::renderer::TextureMetadatas,
+    camera: crate::renderer::Camera,
+    camera_metadatas: crate::renderer::CameraMetadatas,
+    pipeline: crate::renderer::RenderPipeline,
     vertex_buffer: wgpu::Buffer,  // TODO: forse questo devo spostarlo in render_pass o pipeline, anche quello sotto
     index_buffer: wgpu::Buffer,
     num_indices: u32,
@@ -47,21 +49,33 @@ impl Renderer {
 
         surface.configure(&device);
 
+        //- Texture --------------------------------------------------------------------------------
+
         let diffuse_image = crate::assets::DynamicImage::new(texture_path);
 
-        let (diffuse_image_width, diffuse_image_height) = {
+        let (image_width, image_height) = {
             let dimensions = diffuse_image.dimensions().unwrap();
             (dimensions.0, dimensions.1)
         };
 
         let texture_metadatas =
-            crate::renderer::TextureMetadatas::new(&device, diffuse_image_width, diffuse_image_height);
+            crate::renderer::TextureMetadatas::new(&device, image_width, image_height);
+
+        //- Camera ---------------------------------------------------------------------------------
+
+        let camera = crate::renderer::Camera::new(size.width as f32, size.height as f32);
+        let camera_metadatas = camera.create_metadatas(&device);
+
+        //- Pipeline -------------------------------------------------------------------------------
 
         let pipeline = crate::renderer::RenderPipeline::new(
             &device,
-            &texture_metadatas,
+            texture_metadatas.bind_group_layout(),
+            camera_metadatas.bind_group_layout(),
             shader_source
         );
+
+        //- Queue Schedule -------------------------------------------------------------------------
 
         // TODO decisamente bisognerà fare qualche cosa con questi passaggi di parametri e clones
         queue.write_texture(
@@ -71,10 +85,14 @@ impl Renderer {
             texture_metadatas.clone_image_size()
         );
 
+        //- Vertex and Index Buffers ---------------------------------------------------------------
+
         let vertex_buffer = device.create_vertex_buffer_init("Vertex Buffer", vertices);
         let index_buffer = device.create_indices_buffer_init("Index Buffer", indices);
 
         let num_indices = indices.len() as u32;
+
+        //- Renderer Creation ----------------------------------------------------------------------
 
         Self {
             config: std::rc::Rc::clone(&config),
@@ -82,8 +100,10 @@ impl Renderer {
             surface,
             device,
             queue,
-            pipeline,
             texture_metadatas,
+            camera,
+            camera_metadatas,
+            pipeline,
             vertex_buffer,
             index_buffer,
             num_indices,
@@ -115,26 +135,12 @@ impl Renderer {
         self.surface.update(&self.device, self.size);
     }
 
-    //- Queue Methods ------------------------------------------------------------------------------
-
-    ///
-    #[inline]
-    pub fn add_buffer_to_queue(
-        &self,
-        uniform_buffer: &wgpu::Buffer,
-        offset: u64,
-        uniforms: crate::meshes::Uniforms
-    ) {
-        self.queue.write_buffer(&uniform_buffer, offset, bytemuck::cast_slice(&[uniforms]));
-    }
-
-
     //- Command Encoder Methods --------------------------------------------------------------------
 
     ///
     #[inline(always)]
     pub fn create_command_encoder(&self, label_text: &str) -> wgpu::CommandEncoder {
-        self.device.expose_wgpu_device().create_command_encoder(
+        self.device.expose_wgpu_device().create_command_encoder(  // TODO: probabilmente è meglio spostarlo in device
             &wgpu::CommandEncoderDescriptor {
                 label: Some(label_text),
             }
@@ -144,10 +150,22 @@ impl Renderer {
     //- Rendering Methods --------------------------------------------------------------------------
 
     pub(crate) fn redraw(&self) -> Result<(), wgpu::SurfaceError> {
-        let output = self.surface.get_current_frame()?.output;  // Must be let binded!
-        let frame_view = output
-            .texture.create_view(&FRAME_TEXTURE_VIEW);
-            //.texture.create_view(&wgpu::TextureViewDescriptor::default());  // (TT)
+        //- ¡WARNING STARTS! -----------------------------------------------------------------------
+        // output variable must be let binded and not used inline or it give me a validation error:
+        /*
+[2021-09-12T18:39:07Z ERROR wgpu_hal::vulkan::instance] VALIDATION [VUID-VkPresentInfoKHR-pImageIndices-01296 (0xc7aabc16)]
+    	Validation Error: [ VUID-VkPresentInfoKHR-pImageIndices-01296 ] Object 0: handle = 0x21511202e68, type = VK_OBJECT_TYPE_QUEUE; | MessageID = 0xc7aabc16 | vkQueuePresentKHR(): pSwapchains[0] images passed to present must be in layout VK_IMAGE_LAYOUT_PRESENT_SRC_KHR or VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR but is in VK_IMAGE_LAYOUT_UNDEFINED. The Vulkan spec states: Each element of pImageIndices must be the index of a presentable image acquired from the swapchain specified by the corresponding element of the pSwapchains array, and the presented image subresource must be in the VK_IMAGE_LAYOUT_PRESENT_SRC_KHR layout at the time the operation is executed on a VkDevice (https://github.com/KhronosGroup/Vulkan-Docs/search?q=)VUID-VkPresentInfoKHR-pImageIndices-01296)
+[2021-09-12T18:39:07Z ERROR wgpu_hal::vulkan::instance] 	objects: (type: QUEUE, hndl: 0x21511202e68, name: ?)
+thread 'main' panicked at 'Texture[1] does not exist', C:\Users\DarkWolf\.cargo\registry\src\github.com-1ecc6299db9ec823\wgpu-core-0.10.1\src\hub.rs:129:32
+        */
+        // Also if I move those two lines inside the render_pass scope I still have the error.
+        // I suspect a bug inside the wgpu. I found this on wgpu v0.10.
+        // (I should probably mention it as an issue on the official github repo but I'm a lazy cat)
+        // TODO: test results with wgpu 0.11: NO TEST PERFORMED
+
+        let output = self.surface.get_current_frame()?.output;
+        let frame_view = output.texture.create_view(&FRAME_TEXTURE_VIEW);
+        //- ¡WARNING ENDS! -------------------------------------------------------------------------
 
         let mut encoder = self.create_command_encoder("Render Encoder");
 
@@ -169,6 +187,7 @@ impl Renderer {
 
             render_pass.set_pipeline(self.pipeline.expose_wrapped_render_pipeline());
             render_pass.set_bind_group(0, &self.texture_metadatas.bind_group(), &[]);
+            render_pass.set_bind_group(1, &self.camera_metadatas.bind_group(), &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
 

@@ -49,9 +49,9 @@ impl<'a> PipelineLayoutBuilder<'a> {
         self
     }
 
-    pub fn expose_wrapped_desc(&self) -> &wgpu::PipelineLayoutDescriptor {
+    /*pub fn expose_wrapped_desc(&self) -> &wgpu::PipelineLayoutDescriptor {
         &self.pipeline_layout_desc
-    }
+    }*/
 
     pub fn build(self, device: &wgpu::Device) -> wgpu::PipelineLayout {
         device.create_pipeline_layout(&self.pipeline_layout_desc)
@@ -214,13 +214,14 @@ pub struct RenderPipeline {
 impl RenderPipeline {
     pub fn new(
         device: &crate::renderer::Device,
-        texture_metadatas: &crate::renderer::TextureMetadatas,
+        texture_bind_group_layout: &wgpu::BindGroupLayout,
+        camera_bind_group_layout: &wgpu::BindGroupLayout,
         shader_source: String
     ) -> Self {
         let wgpu_device = device.expose_wgpu_device();
 
         let pipeline_layout = PipelineLayoutBuilder::new()
-            .bind_group_layouts(&[&texture_metadatas.bind_group_layout()])
+            .bind_group_layouts(&[texture_bind_group_layout, camera_bind_group_layout])
             .build(wgpu_device);
 
         let buffers = &[crate::meshes::VertexTexture::desc()];
@@ -234,7 +235,6 @@ impl RenderPipeline {
 
         let primitive_state = PrimitiveStateBuilder::new().build();
 
-        // TODO: fare il Builder di 'sta roba?
         let multisample = wgpu::MultisampleState {
             count: 1,
             mask: !0,

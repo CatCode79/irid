@@ -1,7 +1,7 @@
 
 //= USES ===========================================================================================
 
-use crate::camera::{Camera, OPENGL_TO_WGPU_MATRIX};
+use crate::renderer::{Camera, OPENGL_TO_WGPU_MATRIX};
 
 
 //= UNIFORMS =======================================================================================
@@ -101,7 +101,7 @@ pub fn create_bind_group_layout(
             entries: &[
                 wgpu::BindGroupLayoutEntry {
                     binding: 0,
-                    // Because we only really need camera information in the vertex shader,
+                    // Because we only really need camer information in the vertex shader,
                     // as that's what we'll use to manipulate our vertices
                     visibility: wgpu::ShaderStages::VERTEX,
                     ty: wgpu::BindingType::Buffer {

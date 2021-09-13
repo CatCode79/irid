@@ -1,15 +1,18 @@
 //= MODS ===========================================================================================
 
-mod renderer;
-mod surface;
-mod pipeline;
-mod shader;
-mod texture;
+mod camera;
 mod device;
+mod pipeline;
+mod renderer;
+mod shader;
+mod surface;
+mod texture;
+mod instance;
 
 
 //= USES ===========================================================================================
 
+pub use crate::renderer::camera::*;
 pub use crate::renderer::device::*;
 pub use crate::renderer::pipeline::*;
 pub use crate::renderer::renderer::*;

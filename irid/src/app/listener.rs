@@ -173,7 +173,7 @@ pub trait Listener {
     /// * `position` - (x,y) coords in pixels relative to the top-left corner of the window.
     /// Because the range of this data is limited by the display area and it may have been
     /// transformed by the OS to implement effects such as cursor acceleration,
-    /// it should not be used to implement non-cursor-like interactions such as 3D camera control.
+    /// it should not be used to implement non-cursor-like interactions such as 3D camer control.
     #[allow(unused_variables)]
     fn on_window_cursor_move(
         &self,
