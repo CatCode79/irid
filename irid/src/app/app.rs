@@ -107,7 +107,9 @@ impl Application {
                         input,
                         is_synthetic,
                     } => if !is_synthetic && input.virtual_keycode.is_some() {
-                        self.on_window_keyboard_input(listener, control_flow, device_id, input);
+                        self.on_window_keyboard_input(
+                            listener, control_flow, device_id, &mut renderer, &input
+                        );
                     },
 
                     winit::event::WindowEvent::ModifiersChanged(state) => {
@@ -361,7 +363,8 @@ impl Application {
         listener: &L,
         control_flow: &mut winit::event_loop::ControlFlow,
         device_id: winit::event::DeviceId,
-        input: winit::event::KeyboardInput
+        renderer: &mut crate::renderer::Renderer,
+        input: &winit::event::KeyboardInput
     ) {
         // First call a generic method to manage the key events
         let use_default_behaviour = listener.on_window_keyboard_input(
@@ -372,6 +375,9 @@ impl Application {
 
         // Then check the input's type for default behaviours
         if use_default_behaviour {
+            // Check the camera controller
+            renderer.process_camera_events(input);  // TODO: migliorare il sistema, per ora lo sto facendo solo funzionare
+
             match input {
                 // Esc key pressed
                 winit::event::KeyboardInput {

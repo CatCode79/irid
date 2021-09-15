@@ -25,6 +25,7 @@ pub struct Renderer {
     texture_metadatas: crate::renderer::TextureMetadatas,
     camera: crate::renderer::Camera,
     camera_metadatas: crate::renderer::CameraMetadatas,
+    camera_controller: crate::renderer::CameraController,
     pipeline: crate::renderer::RenderPipeline,
     vertex_buffer: wgpu::Buffer,  // TODO: forse questo devo spostarlo in render_pass o pipeline, anche quello sotto
     index_buffer: wgpu::Buffer,
@@ -65,6 +66,7 @@ impl Renderer {
 
         let camera = crate::renderer::Camera::new(size.width as f32, size.height as f32);
         let camera_metadatas = camera.create_metadatas(&device);
+        let camera_controller = crate::renderer::CameraController::new(0.2);
 
         //- Pipeline -------------------------------------------------------------------------------
 
@@ -103,6 +105,7 @@ impl Renderer {
             texture_metadatas,
             camera,
             camera_metadatas,
+            camera_controller,
             pipeline,
             vertex_buffer,
             index_buffer,
@@ -135,6 +138,13 @@ impl Renderer {
         self.surface.update(&self.device, self.size);
     }
 
+    //- Camera Methods -----------------------------------------------------------------------------
+
+    #[inline(always)]
+    pub fn process_camera_events(&mut self, input: &winit::event::KeyboardInput) -> bool {
+        self.camera_controller.process_events(input)
+    }
+
     //- Command Encoder Methods --------------------------------------------------------------------
 
     ///
@@ -149,7 +159,16 @@ impl Renderer {
 
     //- Rendering Methods --------------------------------------------------------------------------
 
-    pub(crate) fn redraw(&self) -> Result<(), wgpu::SurfaceError> {
+    pub(crate) fn redraw(&mut self) -> Result<(), wgpu::SurfaceError> {
+        self.camera_controller.update_camera(&mut self.camera);
+        let mut camera_uniform = *self.camera_metadatas.uniform();
+        camera_uniform.update_view_proj(&self.camera);
+        self.queue.write_buffer(
+            &self.camera_metadatas.buffer(),
+            0,
+            bytemuck::cast_slice(&[camera_uniform])
+        );
+
         //- ¡WARNING STARTS! -----------------------------------------------------------------------
         // output variable must be let binded and not used inline or it give me a validation error:
         /*
