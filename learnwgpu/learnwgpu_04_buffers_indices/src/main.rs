@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::fs::read_to_string;
 
 use irid::app::{Application, Config, Listener};
-use irid::vertex::Vertex;
+use irid::meshes::VertexColor;
 use wgpu::Color;
 use winit::dpi::PhysicalSize;
 
@@ -69,11 +69,11 @@ fn main() {
     // rasterization_state of the render_pipeline that we want the front_face of our triangle
     // to be wgpu::FrontFace::Ccw so that we cull the back face.
     const VERTICES: &[Vertex] = &[
-        Vertex { position: [-0.08682410,  0.49240386, 0.0], color: [0.5, 0.0, 0.5] },
-        Vertex { position: [-0.49513406,  0.06958647, 0.0], color: [0.5, 0.0, 0.5] },
-        Vertex { position: [-0.21918549, -0.44939706, 0.0], color: [0.5, 0.0, 0.5] },
-        Vertex { position: [ 0.35966998, -0.34732910, 0.0], color: [0.5, 0.0, 0.5] },
-        Vertex { position: [ 0.44147372,  0.23473590, 0.0], color: [0.5, 0.0, 0.5] },
+        VertexColor { position: [-0.08682410,  0.49240386, 0.0], color: [0.5, 0.0, 0.5] },
+        VertexColor { position: [-0.49513406,  0.06958647, 0.0], color: [0.5, 0.0, 0.5] },
+        VertexColor { position: [-0.21918549, -0.44939706, 0.0], color: [0.5, 0.0, 0.5] },
+        VertexColor { position: [ 0.35966998, -0.34732910, 0.0], color: [0.5, 0.0, 0.5] },
+        VertexColor { position: [ 0.44147372,  0.23473590, 0.0], color: [0.5, 0.0, 0.5] },
     ];
 
     const INDICES: &[u16] = &[

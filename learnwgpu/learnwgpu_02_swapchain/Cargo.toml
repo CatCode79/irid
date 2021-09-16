@@ -3,7 +3,7 @@ name = "learnwgpu_02_swapchain"
 version = "0.0.1"
 authors = ["CatCode <andrea.postal@gmail.com>"]
 edition = "2018"
-description = "based on https://github.com/sotrh/learn-wgpu/tree/0.8/code/beginner/tutorial2-swapchain"
+description = "based on https://sotrh.github.io/learn-wgpu/beginner/tutorial2-surface/"
 
 [dependencies]
 env_logger = "0.8"

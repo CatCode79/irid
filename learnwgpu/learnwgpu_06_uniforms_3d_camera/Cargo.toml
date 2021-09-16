@@ -1,9 +1,9 @@
 [package]
-name = "learnwgpu_06_uniform_buffers_3d_camera"
+name = "learnwgpu_06_uniforms_3d_camera"
 version = "0.0.1"
 authors = ["CatCode <andrea.postal@gmail.com>"]
 edition = "2018"
-description = "based on https://sotrh.github.io/learn-wgpu/beginner/tutorial5-textures/#loading-an-image-from-a-file/"
+description = "based on https://sotrh.github.io/learn-wgpu/beginner/tutorial6-uniforms/"
 
 [dependencies]
 env_logger = "0.9"
