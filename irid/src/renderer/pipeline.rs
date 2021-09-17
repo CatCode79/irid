@@ -224,7 +224,8 @@ impl RenderPipeline {
             .bind_group_layouts(&[texture_bind_group_layout, camera_bind_group_layout])
             .build(wgpu_device);
 
-        let buffers = &[crate::meshes::VertexTexture::desc()];
+        let buffers = &[crate::meshes::VertexTexture::desc(),
+            crate::renderer::InstanceRaw::desc()];
         let shader_module = crate::renderer::ShaderModuleBuilder::new(
             wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(shader_source))
         ).build(wgpu_device);

@@ -1,10 +1,8 @@
 
 //= INSTANCE =======================================================================================
 
-/**
- * Instances allows us to draw the same object multiple times with different properties
- * (position, orientation, size, color, etc.).
- */
+/// Instances allows us to draw the same object multiple times with different properties
+/// (position, orientation, size, color, etcetera).
 pub struct Instance {
     pub position: cgmath::Vector3<f32>,
     pub rotation: cgmath::Quaternion<f32>,
@@ -12,10 +10,8 @@ pub struct Instance {
 }
 
 impl Instance {
-    /**
-     * Convert an Instance to a structure GPU readable.
-     */
-    pub(crate) fn _to_raw(&self) -> InstanceRaw {
+    /// Convert an Instance to a structure GPU readable.
+    pub fn to_raw(&self) -> InstanceRaw {
         InstanceRaw {
             model: (cgmath::Matrix4::from_translation(self.position)
                   * cgmath::Matrix4::from(self.rotation)).into(),
@@ -26,33 +22,31 @@ impl Instance {
 
 //= INSTANCE FOR GLSL SHADER =======================================================================
 
-/**
- * This is the data that will go into the wgpu::Buffer.
- * We keep these separate so that we can update the Instance as much as we want without needing
- * to mess with quaternions. We only need to update the raw data before we draw.
- */
+/// This is the data that will go into the wgpu::Buffer.
+/// We keep these separate so that we can update the Instance as much as we want without needing
+/// to mess with quaternions. We only need to update the raw data before we draw.
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct InstanceRaw {
     model: [[f32; 4]; 4],
 }
 
-
 impl InstanceRaw {
-    pub  fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
+    ///
+    pub fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
         use std::mem;
         wgpu::VertexBufferLayout {
             array_stride: mem::size_of::<InstanceRaw>() as wgpu::BufferAddress,
             // We need to switch from using a step mode of Vertex to Instance.
-            // This means that our shaders will only change to use the next
-            // instance when the shader starts processing a new instance.
+            // This means that our shaders will only change to use the next instance
+            // when the shader starts processing a new instance.
             step_mode: wgpu::VertexStepMode::Instance,
             attributes: &[
                 wgpu::VertexAttribute {
                     offset: 0,
                     // While our vertex shader only uses locations 0, and 1 now, in later tutorials
                     // we'll be using 2, 3, and 4, for Vertex.
-                    // We'll start at slot 5 not conflict with them later
+                    // We'll start at slot 5 not conflict with them later.
                     shader_location: 5,
                     format: wgpu::VertexFormat::Float32x4,
                 },

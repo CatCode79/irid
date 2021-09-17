@@ -14,6 +14,7 @@ mod instance;
 
 pub use crate::renderer::camera::*;
 pub use crate::renderer::device::*;
+pub use crate::renderer::instance::*;
 pub use crate::renderer::pipeline::*;
 pub use crate::renderer::renderer::*;
 pub use crate::renderer::shader::*;

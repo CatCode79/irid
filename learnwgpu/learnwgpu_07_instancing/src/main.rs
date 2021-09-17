@@ -54,7 +54,7 @@ fn main() {
     let listener: &GameListener = &GameListener { };
 
     const SHADER_WGSL_FILENAME: &str = "shader.wgsl";
-    const SHADER_WGSL_FILEPATH: &str = "D:/_BLACK_ABYSS_DUNGEON/_BAD/bad/learnwgpu/learnwgpu_06_uniforms_3d_camera/assets/shader.wgsl";
+    const SHADER_WGSL_FILEPATH: &str = "D:/_BLACK_ABYSS_DUNGEON/_BAD/bad/learnwgpu/learnwgpu_07_instancing/assets/shader.wgsl";
 
     // TODO: Passare solo la path o il nome file
     let mut shaders: HashMap<String, String> = HashMap::new();
@@ -64,7 +64,7 @@ fn main() {
     };
     shaders.insert(SHADER_WGSL_FILENAME.to_string(), frag_wgsl);
 
-    const TREE_FILEPATH: &str = "D:/_BLACK_ABYSS_DUNGEON/_BAD/bad/learnwgpu/learnwgpu_06_uniforms_3d_camera/assets/happy-tree.png";
+    const TREE_FILEPATH: &str = "D:/_BLACK_ABYSS_DUNGEON/_BAD/bad/learnwgpu/learnwgpu_07_instancing/assets/happy-tree.png";
 
     // We arrange the vertices in counter clockwise order: top, bottom left, bottom right.
     // We do it this way partially out of tradition, but mostly because we specified in the

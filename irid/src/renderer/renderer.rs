@@ -12,6 +12,14 @@ const FRAME_TEXTURE_VIEW: wgpu::TextureViewDescriptor = wgpu::TextureViewDescrip
     array_layer_count: None
 };
 
+const NUM_INSTANCES_PER_ROW: u32 = 10;
+const NUM_INSTANCES: u32 = NUM_INSTANCES_PER_ROW * NUM_INSTANCES_PER_ROW;
+const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
+    NUM_INSTANCES_PER_ROW as f32 * 0.5,
+    0.0,
+    NUM_INSTANCES_PER_ROW as f32 * 0.5
+);
+
 
 //= RENDERER STRUCT ================================================================================
 
@@ -30,6 +38,8 @@ pub struct Renderer {
     vertex_buffer: wgpu::Buffer,  // TODO: forse questo devo spostarlo in render_pass o pipeline, anche quello sotto
     index_buffer: wgpu::Buffer,
     num_indices: u32,
+    instances: Vec<crate::renderer::Instance>,
+    instance_buffer: wgpu::Buffer,
 }
 
 
@@ -94,6 +104,43 @@ impl Renderer {
 
         let num_indices = indices.len() as u32;
 
+        //- Instances ------------------------------------------------------------------------------
+
+        let instances = (0..NUM_INSTANCES_PER_ROW).flat_map(|z| {
+            use cgmath::{Zero, Rotation3, InnerSpace};
+
+            (0..NUM_INSTANCES_PER_ROW).map(move |x| {
+                let position =
+                    cgmath::Vector3 { x: x as f32, y: 0.0, z: z as f32 } - INSTANCE_DISPLACEMENT;
+
+                let rotation = if position.is_zero() {
+                    // this is needed so an object at (0, 0, 0) won't get scaled to zero
+                    // as Quaternions can effect scale if they're not created correctly
+                    cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(),
+                                                        cgmath::Rad(0.0f32))
+                } else {
+                    cgmath::Quaternion::from_axis_angle(position.normalize(),
+                                                        cgmath::Rad(std::f32::consts::PI / 4.0f32))
+                };
+
+                crate::renderer::Instance {
+                    position,
+                    rotation,
+                }
+            })
+        }).collect::<Vec<_>>();
+
+        let instance_data = instances.iter().map(crate::renderer::Instance::to_raw)
+            .collect::<Vec<_>>();
+        use wgpu::util::DeviceExt;
+        let instance_buffer = device.expose_wgpu_device().create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Instance Buffer"),
+                contents: bytemuck::cast_slice(&instance_data),
+                usage: wgpu::BufferUsages::VERTEX,
+            }
+        );
+
         //- Renderer Creation ----------------------------------------------------------------------
 
         Self {
@@ -110,6 +157,8 @@ impl Renderer {
             vertex_buffer,
             index_buffer,
             num_indices,
+            instances,
+            instance_buffer,
         }
     }
 
@@ -208,9 +257,10 @@ thread 'main' panicked at 'Texture[1] does not exist', C:\Users\DarkWolf\.cargo\
             render_pass.set_bind_group(0, &self.texture_metadatas.bind_group(), &[]);
             render_pass.set_bind_group(1, &self.camera_metadatas.bind_group(), &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
 
-            render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
+            render_pass.draw_indexed(0..self.num_indices, 0, 0..self.instances.len() as _);
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));
