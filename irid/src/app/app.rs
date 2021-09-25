@@ -1,42 +1,74 @@
-/**
-*
-todo link to examples
- */
 
-//= USES ===========================================================================================
+//= APPLICATION BUILDER ============================================================================
 
-use std::collections::HashMap;
+#[derive(Default)]
+pub struct ApplicationBuilder<'a> {
+    config: crate::app::Config,
+    shaders: Option<std::collections::HashMap<String, String>>,
+    texture_path: Option<&'a str>,
+    vertices: Option<&'a [crate::meshes::VertexTexture]>,
+    indices: Option<&'a [u16]>
+}
+
+
+impl<'a> ApplicationBuilder<'a> {
+    /// Create a new plain AppBuilder struct.
+    /// After that you can add the necessary fields or build the app and starts it.
+    pub fn new(config: crate::app::Config) -> Self {
+        Self {
+            config,
+            ..Default::default()
+        }
+    }
+
+    pub fn shaders(mut self, shaders: std::collections::HashMap<String, String>) -> Self {
+        self.shaders = Some(shaders);
+        self
+    }
+
+    pub fn texture_path(mut self, texture_path: &'a str) -> Self {
+        self.texture_path = Some(texture_path);
+        self
+    }
+
+    pub fn vertices(mut self, vertices: &'a [crate::meshes::VertexTexture]) -> Self {
+        self.vertices = Some(vertices);
+        self
+    }
+
+    pub fn indices(mut self, indices: &'a [u16]) -> Self {
+        self.indices = Some(indices);
+        self
+    }
+
+    // TODO: gestirò poi i None a seconda dell'uso che farò con le applicazioni
+    pub fn build(self) -> Application<'a> {
+        Application {
+            config: self.config,
+            shaders: self.shaders.unwrap(),
+            texture_path: self.texture_path.unwrap(),
+            vertices: self.vertices.unwrap(),
+            indices: self.indices.unwrap(),
+        }
+    }
+}
 
 
 //= APPLICATION STRUCT =============================================================================
 
-#[derive(Default)]
-pub struct Application {
-    config: std::rc::Rc<crate::app::Config>,
+pub struct Application<'a> {
+    config: crate::app::Config,
+    shaders: std::collections::HashMap<String, String>,
+    texture_path: &'a str,
+    vertices: &'a [crate::meshes::VertexTexture],
+    indices: &'a [u16]
 }
 
 
-impl Application {
-    /// Create a new plain App struct.
-    // todo: different from ::default
-    // todo: after configured the App must be started with start method
-    pub fn new(config: crate::app::Config) -> Self {
-        Self {
-            config: std::rc::Rc::new(config),
-        }
-    }
-
-    /// Starts the event loop.
-    /// The event loop is winit based.
+impl<'a> Application<'a> {
+    /// Starts the event loop (the event loop is winit based).
     // todo: parameter explication
-    pub fn start<L: crate::app::Listener>(
-        self,
-        listener: &'static L,
-        shaders: HashMap<String, String>,
-        texture_path: &str,
-        vertices: &[crate::meshes::VertexTexture],
-        indices: &[u16]
-    ) {
+    pub fn start<L: crate::app::Listener>(self, listener: &'static L) {
         let mut event_loop = winit::event_loop::EventLoop::new();
         let window = winit::window::WindowBuilder::new()
             .build(&event_loop)
@@ -44,11 +76,10 @@ impl Application {
 
         let mut renderer = crate::renderer::Renderer::new(
             &window,
-            &self.config,
-            shaders.get("shader.wgsl").unwrap().clone(),// TODO: controllare poi come togliere il clone (forse con un iteratore)
-            texture_path,
-            vertices,
-            indices
+            self.shaders.get("shader.wgsl").unwrap().clone(),// TODO: controllare poi come togliere il clone (forse con un iteratore)
+            self.texture_path,
+            self.vertices,
+            self.indices
         );
 
         // I know I should use run method instead of de run_return,
@@ -252,7 +283,7 @@ impl Application {
     ) {
         let use_default_behaviour: bool = listener.on_redraw();
         if use_default_behaviour {
-            match renderer.redraw() {
+            match renderer.redraw(&self.config) {
                 Ok(_) => {},
                 Err(error) => match error {
                     // These errors should be resolved by the next frame

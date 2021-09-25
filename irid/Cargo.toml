@@ -1,6 +1,6 @@
 [package]
 name = "irid"
-version = "0.0.33"
+version = "0.0.34"
 authors = ["CatCode <andrea.postal@gmail.com>"]
 edition = "2018"
 
@@ -8,7 +8,7 @@ edition = "2018"
 #anyhow = "1.0"  # It have the no_std feature
 bytemuck = { version = "1.7", features = ["derive"] }
 cgmath = "0.18"
-futures = "0.3"
+pollster = "0.2"
 image = "0.23"
 log = "0.4"
 wgpu = "0.10"

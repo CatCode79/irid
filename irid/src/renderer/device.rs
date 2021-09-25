@@ -10,7 +10,7 @@ impl Device {
     /// for the creation of most rendering and compute resources.
     /// The queue executes recorded CommandBuffer and writes to buffers and textures.
     pub fn new(surface: &crate::renderer::Surface) -> (Self, wgpu::Queue) {
-        let (wgpu_device, queue) = futures::executor::block_on(async {
+        let (wgpu_device, queue) = pollster::block_on(async {
             surface.get_adapter().request_device(
                 &wgpu::DeviceDescriptor {
                     label: Some("New Device & Queue"),

@@ -7,9 +7,9 @@ pub struct Config {
 }
 
 
+// TODO: serializzare con serde
 impl Config {
     ///
-    // TODO: da fare con serde
     pub fn new(_filename: &String) -> Self {
         Config::default()
     }

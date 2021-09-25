@@ -32,7 +32,7 @@ impl Surface {
         // Handle to a presentable surface onto which rendered images
         let wgpu_surface = unsafe { instance.create_surface(window) };
 
-        let adapter = futures::executor::block_on(async {
+        let adapter = pollster::block_on(async {
             instance.request_adapter(
                 &wgpu::RequestAdapterOptions {
                     power_preference: wgpu::PowerPreference::HighPerformance,
@@ -92,7 +92,7 @@ impl Surface {
 }
 
 
-// TODO: diamine non funziona..
+// TODO: diamine! Non funziona...
 /// Show all the adapters information for debug.
 //#[cfg(debug_assertions)]
 fn enumerate_all_adapters(instance: &wgpu::Instance) {

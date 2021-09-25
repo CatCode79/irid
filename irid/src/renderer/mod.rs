@@ -2,12 +2,12 @@
 
 mod camera;
 mod device;
+mod instance;
 mod pipeline;
 mod renderer;
 mod shader;
 mod surface;
 mod texture;
-mod instance;
 
 
 //= USES ===========================================================================================

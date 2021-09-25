@@ -13,7 +13,6 @@ const FRAME_TEXTURE_VIEW: wgpu::TextureViewDescriptor = wgpu::TextureViewDescrip
 };
 
 const NUM_INSTANCES_PER_ROW: u32 = 10;
-const NUM_INSTANCES: u32 = NUM_INSTANCES_PER_ROW * NUM_INSTANCES_PER_ROW;
 const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
     NUM_INSTANCES_PER_ROW as f32 * 0.5,
     0.0,
@@ -25,7 +24,6 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 
 ///
 pub struct Renderer {
-    config: std::rc::Rc<crate::app::Config>,
     size: winit::dpi::PhysicalSize<u32>,
     surface: crate::renderer::Surface,
     device: crate::renderer::Device,
@@ -46,7 +44,6 @@ pub struct Renderer {
 impl Renderer {
     pub fn new(
         window: &winit::window::Window,
-        config: &std::rc::Rc<crate::app::Config>,
         shader_source: String,
         texture_path: &str,
         vertices: &[crate::meshes::VertexTexture],
@@ -144,7 +141,6 @@ impl Renderer {
         //- Renderer Creation ----------------------------------------------------------------------
 
         Self {
-            config: std::rc::Rc::clone(&config),
             size,
             surface,
             device,
@@ -208,7 +204,7 @@ impl Renderer {
 
     //- Rendering Methods --------------------------------------------------------------------------
 
-    pub(crate) fn redraw(&mut self) -> Result<(), wgpu::SurfaceError> {
+    pub(crate) fn redraw(&mut self, config: &crate::app::Config) -> Result<(), wgpu::SurfaceError> {
         self.camera_controller.update_camera(&mut self.camera);
         let mut camera_uniform = *self.camera_metadatas.uniform();
         camera_uniform.update_view_proj(&self.camera);
@@ -245,7 +241,7 @@ thread 'main' panicked at 'Texture[1] does not exist', C:\Users\DarkWolf\.cargo\
                         view: &frame_view,
                         resolve_target: None,
                         ops: wgpu::Operations {
-                            load: wgpu::LoadOp::Clear(self.config.clear_color),
+                            load: wgpu::LoadOp::Clear(config.clear_color),
                             store: true,
                         },
                     }],

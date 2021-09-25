@@ -4,7 +4,7 @@
 use std::collections::HashMap;
 use std::fs::read_to_string;
 
-use irid::app::{Application, Config, Listener};
+use irid::app::{ApplicationBuilder, Config, Listener};
 use irid::meshes::VertexTexture;
 use wgpu::Color;
 use winit::dpi::PhysicalSize;
@@ -85,6 +85,12 @@ fn main() {
         /* padding */ 0,
     ];
 
-    let app: Application = Application::new(config);
-    app.start(listener, shaders, TREE_FILEPATH, VERTICES, INDICES);
+    let app = ApplicationBuilder::new(config)
+        .shaders(shaders)
+        .texture_path(TREE_FILEPATH)
+        .vertices(VERTICES)
+        .indices(INDICES)
+        .build();
+
+    app.start(listener);
 }
