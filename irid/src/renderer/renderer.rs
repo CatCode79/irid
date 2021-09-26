@@ -24,14 +24,16 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 
 ///
 pub struct Renderer {
-    size: winit::dpi::PhysicalSize<u32>,
+    window_size: winit::dpi::PhysicalSize<u32>,
     surface: crate::renderer::Surface,
     device: crate::renderer::Device,
     queue: wgpu::Queue,
-    texture_metadatas: crate::renderer::TextureMetadatas,
     camera: crate::renderer::Camera,
     camera_metadatas: crate::renderer::CameraMetadatas,
     camera_controller: crate::renderer::CameraController,
+    texture_image_metadatas: crate::renderer::TextureImageMetadatas,
+    texture_bind_group_metadatas: crate::renderer::TextureBindGroupMetadatas,
+    texture_depth_metadatas: crate::renderer::TextureDepthMetadatas,
     pipeline: crate::renderer::RenderPipeline,
     vertex_buffer: wgpu::Buffer,  // TODO: forse questo devo spostarlo in render_pass o pipeline, anche quello sotto
     index_buffer: wgpu::Buffer,
@@ -49,13 +51,19 @@ impl Renderer {
         vertices: &[crate::meshes::VertexTexture],
         indices: &[u16]
     ) -> Self {
-        let size = window.inner_size();  // TODO: window.fullscreen at startup
+        let window_size = window.inner_size();  // TODO: window.fullscreen at startup
 
-        let surface = crate::renderer::Surface::new(window, size);
+        let surface = crate::renderer::Surface::new(window, window_size);
 
         let (device, queue) = crate::renderer::Device::new(&surface);
 
         surface.configure(&device);
+
+        //- Camera ---------------------------------------------------------------------------------
+
+        let camera = crate::renderer::Camera::new(window_size.width as f32, window_size.height as f32);
+        let camera_metadatas = camera.create_metadatas(&device);
+        let camera_controller = crate::renderer::CameraController::new(0.2);
 
         //- Texture --------------------------------------------------------------------------------
 
@@ -66,20 +74,20 @@ impl Renderer {
             (dimensions.0, dimensions.1)
         };
 
-        let texture_metadatas =
-            crate::renderer::TextureMetadatas::new(&device, image_width, image_height);
+        let texture_image_metadatas =
+            crate::renderer::TextureImageMetadatas::new(&device, image_width, image_height);
 
-        //- Camera ---------------------------------------------------------------------------------
+        let texture_bind_group_metadatas=
+            crate::renderer::TextureBindGroupMetadatas::new(&device, &texture_image_metadatas.texture());
 
-        let camera = crate::renderer::Camera::new(size.width as f32, size.height as f32);
-        let camera_metadatas = camera.create_metadatas(&device);
-        let camera_controller = crate::renderer::CameraController::new(0.2);
+        let texture_depth_metadatas=
+            crate::renderer::TextureDepthMetadatas::new(&device, window_size);
 
         //- Pipeline -------------------------------------------------------------------------------
 
         let pipeline = crate::renderer::RenderPipeline::new(
             &device,
-            texture_metadatas.bind_group_layout(),
+            texture_bind_group_metadatas.bind_group_layout(),
             camera_metadatas.bind_group_layout(),
             shader_source
         );
@@ -88,10 +96,10 @@ impl Renderer {
 
         // TODO decisamente bisognerà fare qualche cosa con questi passaggi di parametri e clones
         queue.write_texture(
-            texture_metadatas.new_image_copy(),
+            texture_image_metadatas.create_image_copy(),
             diffuse_image.as_bytes().unwrap(),  // TODO: piace poco l'unwrap
-            texture_metadatas.clone_image_data_layout(),
-            texture_metadatas.clone_image_size()
+            texture_image_metadatas.image_data_layout().clone(),
+            texture_image_metadatas.image_size().clone()
         );
 
         //- Vertex and Index Buffers ---------------------------------------------------------------
@@ -141,11 +149,13 @@ impl Renderer {
         //- Renderer Creation ----------------------------------------------------------------------
 
         Self {
-            size,
+            window_size,
             surface,
             device,
             queue,
-            texture_metadatas,
+            texture_image_metadatas,
+            texture_bind_group_metadatas,
+            texture_depth_metadatas,
             camera,
             camera_metadatas,
             camera_controller,
@@ -163,24 +173,26 @@ impl Renderer {
     /// Getter for the windows's physical size attribute.
     #[inline]
     pub fn get_size(&self) -> winit::dpi::PhysicalSize<u32> {
-        self.size
+        self.window_size
     }
 
     /// Calculate the aspect ratio of the window's inner size.
     #[inline]
     pub fn calc_aspect_ratio(&self) -> f32 {
-        self.size.width as f32 / self.size.height as f32
+        self.window_size.width as f32 / self.window_size.height as f32
     }
 
     /// Resize the renderer window.
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
-        self.size = new_size;
+        self.window_size = new_size;
+        self.texture_depth_metadatas =
+            crate::renderer::TextureDepthMetadatas::new(&self.device, self.window_size);
         self.refresh_current_size();
     }
 
     #[inline]
     pub(crate) fn refresh_current_size(&mut self) {
-        self.surface.update(&self.device, self.size);
+        self.surface.update(&self.device, self.window_size);
     }
 
     //- Camera Methods -----------------------------------------------------------------------------
@@ -245,12 +257,19 @@ thread 'main' panicked at 'Texture[1] does not exist', C:\Users\DarkWolf\.cargo\
                             store: true,
                         },
                     }],
-                    depth_stencil_attachment: None,
+                    depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                        view: &self.texture_depth_metadatas.view(),
+                        depth_ops: Some(wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(1.0),
+                            store: true,
+                        }),
+                        stencil_ops: None,
+                    }),
                 }
             );
 
             render_pass.set_pipeline(self.pipeline.expose_wrapped_render_pipeline());
-            render_pass.set_bind_group(0, &self.texture_metadatas.bind_group(), &[]);
+            render_pass.set_bind_group(0, &self.texture_bind_group_metadatas.bind_group(), &[]);
             render_pass.set_bind_group(1, &self.camera_metadatas.bind_group(), &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));

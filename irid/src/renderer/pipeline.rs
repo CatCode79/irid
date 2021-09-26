@@ -144,13 +144,26 @@ impl<'a> RenderPipelineBuilder<'a> {
                 label,
                 layout: None,
                 vertex,
-                primitive: Default::default(),
-                depth_stencil: None,
-                multisample: Default::default(),
+                primitive: wgpu::PrimitiveState::default(),
+                depth_stencil: Some(RenderPipelineBuilder::create_depth_stencil()),
+                multisample: wgpu::MultisampleState::default(),
                 fragment: None
             },
         }
     }
+
+    #[inline]
+    fn create_depth_stencil() -> wgpu::DepthStencilState {
+        wgpu::DepthStencilState {
+            format: crate::renderer::TextureDepthMetadatas::DEPTH_FORMAT,
+            depth_write_enabled: true,
+            depth_compare: wgpu::CompareFunction::Less,
+            stencil: wgpu::StencilState::default(),
+            bias: wgpu::DepthBiasState::default(),
+        }
+    }
+
+    //- Setters ------------------------------------------------------------------------------------
 
     pub fn label(&mut self, label_text: &'a str) -> &mut Self {
         self.render_pipeline_desc.label = if label_text.is_empty() {
@@ -191,9 +204,7 @@ impl<'a> RenderPipelineBuilder<'a> {
         self
     }
 
-    pub fn expose_wrapped_desc(&self) -> &wgpu::RenderPipelineDescriptor {
-        &self.render_pipeline_desc
-    }
+    //- Build Methods ------------------------------------------------------------------------------
 
     pub fn build(&mut self, device: &wgpu::Device) -> wgpu::RenderPipeline {
         device.create_render_pipeline(&self.render_pipeline_desc)

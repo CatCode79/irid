@@ -10,4 +10,5 @@ members = [
     "learnwgpu/learnwgpu_05_textures_bind_groups",
     "learnwgpu/learnwgpu_06_uniforms_3d_camera",
     "learnwgpu/learnwgpu_07_instancing",
+    "learnwgpu/learnwgpu_08_depth_buffer",
 ]

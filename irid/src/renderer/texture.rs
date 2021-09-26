@@ -4,75 +4,10 @@
 pub const DEFAULT_TEXTURE_WIDTH: u32 = 256;
 pub const DEFAULT_TEXTURE_HEIGHT: u32 = 256;
 
-
-//= TEXTURE METADATAS ==============================================================================
-
-pub struct TextureMetadatas {
-    image_metadatas: TextureImageMetadatas,
-    bind_group_metadatas: TextureBindGroupMetadatas,
-}
-
-impl TextureMetadatas {
-    pub fn new(
-        device: &crate::renderer::Device, width: u32, height: u32
-    ) -> Self {
-        let image_metadatas = TextureImageMetadatas::new(
-            device, width, height
-        );
-
-        let bind_group_metadatas = TextureBindGroupMetadatas::new(
-            device, &image_metadatas
-        );
-
-        Self {
-            //texture,
-            image_metadatas,
-            bind_group_metadatas,
-        }
-    }
-
-    #[inline]
-    pub fn new_default_size(device: &crate::renderer::Device) -> Self {
-        Self::new(device, DEFAULT_TEXTURE_WIDTH, DEFAULT_TEXTURE_HEIGHT)
-    }
-
-    //- Getters ------------------------------------------------------------------------------------
-
-    pub fn new_image_copy(&self) -> wgpu::ImageCopyTexture {
-        wgpu::ImageCopyTexture {
-            texture: &self.image_metadatas.texture,  // TODO: odio questa &, creare una wgpu personale senza?
-            mip_level: 0,
-            origin: wgpu::Origin3d::ZERO,
-            aspect: wgpu::TextureAspect::All,
-        }
-    }
-
-    #[inline]
-    pub fn clone_image_data_layout(&self) -> wgpu::ImageDataLayout {
-        self.image_metadatas.image_data_layout.clone()
-    }
-
-    #[inline]
-    pub fn clone_image_size(&self) -> wgpu::Extent3d {
-        self.image_metadatas.image_size.clone()
-    }
-
-    #[inline]
-    pub fn bind_group_layout(&self) -> &wgpu::BindGroupLayout {
-        &self.bind_group_metadatas.bind_group_layout
-    }
-
-    #[inline]
-    pub fn bind_group(&self) -> &wgpu::BindGroup {
-        &self.bind_group_metadatas.bind_group
-    }
-}
-
-
 //= TEXTURE IMAGE METADATAS ========================================================================
 
 /// Struct containing values used by queue.write_texture()
-struct TextureImageMetadatas {
+pub struct TextureImageMetadatas {
     texture: wgpu::Texture,
     image_data_layout: wgpu::ImageDataLayout,
     image_size: wgpu::Extent3d,
@@ -119,20 +54,45 @@ impl TextureImageMetadatas {
             image_size,
         }
     }
+
+    //- ImageCopyTexture related metghods ----------------------------------------------------------
+
+    pub fn create_image_copy(&self) -> wgpu::ImageCopyTexture {
+        wgpu::ImageCopyTexture {
+            texture: &self.texture,
+            mip_level: 0,
+            origin: wgpu::Origin3d::ZERO,
+            aspect: wgpu::TextureAspect::All,
+        }
+    }
+
+    //- Getters ------------------------------------------------------------------------------------
+
+    pub fn texture(&self) -> &wgpu::Texture {
+        &self.texture
+    }
+
+    pub fn image_data_layout(&self) -> &wgpu::ImageDataLayout {
+        &self.image_data_layout
+    }
+
+    pub fn image_size(&self) -> &wgpu::Extent3d {
+        &self.image_size
+    }
 }
 
 
 //= TEXTURE BIND GROUP METADATAS ===================================================================
 
-struct TextureBindGroupMetadatas {
-    pub bind_group_layout: wgpu::BindGroupLayout,
-    pub bind_group: wgpu::BindGroup,
+pub struct TextureBindGroupMetadatas {
+    bind_group_layout: wgpu::BindGroupLayout,
+    bind_group: wgpu::BindGroup,
 }
 
 impl TextureBindGroupMetadatas {
     pub fn new(
         device: &crate::renderer::Device,
-        image_metadatas: &TextureImageMetadatas
+        texture: &wgpu::Texture
     ) -> Self {
         let wgpu_device = device.expose_wgpu_device();
 
@@ -147,7 +107,7 @@ impl TextureBindGroupMetadatas {
                     wgpu::BindGroupEntry {
                         binding: 0,
                         resource: wgpu::BindingResource::TextureView(
-                            &TextureBindGroupMetadatas::create_texture_view(image_metadatas)
+                            &TextureBindGroupMetadatas::create_texture_view(texture)
                         ),
                     },
                     wgpu::BindGroupEntry {
@@ -202,17 +162,11 @@ impl TextureBindGroupMetadatas {
         )
     }
 
-    fn create_texture_view(image_metadatas: &TextureImageMetadatas) -> wgpu::TextureView {
-        image_metadatas.texture.create_view(
+    fn create_texture_view(texture: &wgpu::Texture) -> wgpu::TextureView {
+        texture.create_view(
             &wgpu::TextureViewDescriptor {
                 label: Some("Diffuse Texture View"),
-                format: None,
-                dimension: None,
-                aspect: wgpu::TextureAspect::All,
-                base_mip_level: 0,
-                mip_level_count: None,
-                base_array_layer: 0,
-                array_layer_count: None
+                ..Default::default()
             }
         )
     }
@@ -227,12 +181,97 @@ impl TextureBindGroupMetadatas {
                 mag_filter: wgpu::FilterMode::Linear,
                 min_filter: wgpu::FilterMode::Nearest,
                 mipmap_filter: wgpu::FilterMode::Nearest,
-                lod_min_clamp: 0.0,
-                lod_max_clamp: 0.0,
-                compare: None,
-                anisotropy_clamp: None,
-                border_color: None
+                ..Default::default()
             }
         )
+    }
+
+    //- Getters ------------------------------------------------------------------------------------
+
+    pub fn bind_group_layout(&self) -> &wgpu::BindGroupLayout {
+        &self.bind_group_layout
+    }
+
+    pub fn bind_group(&self) -> &wgpu::BindGroup {
+        &self.bind_group
+    }
+}
+
+
+//= TEXTURE DEPTH ==================================================================================
+
+pub struct TextureDepthMetadatas {
+    texture: wgpu::Texture,
+    view: wgpu::TextureView,
+    sampler: wgpu::Sampler,
+}
+
+impl TextureDepthMetadatas {
+    pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
+
+    /// Our depth texture needs to be the same size as our screen if we want things
+    /// to render correctly so we give to constructor windows_size value.
+    pub fn new(
+        device: &crate::renderer::Device,
+        window_size: winit::dpi::PhysicalSize<u32>,
+    ) -> Self {
+        let wgpu_device = device.expose_wgpu_device();
+
+        let size = wgpu::Extent3d {
+            width: window_size.width,
+            height: window_size.height,
+            depth_or_array_layers: 1,
+        };
+
+        let desc = wgpu::TextureDescriptor {
+            label: Some("Depth Texture"),
+            size,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: Self::DEPTH_FORMAT,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+        };
+
+        let texture = wgpu_device.create_texture(&desc);
+
+        let view = texture.create_view(
+            &wgpu::TextureViewDescriptor{
+                label: Some("Depth Texture View"),
+                ..Default::default()
+            }
+        );
+
+        // We technically don't need a sampler for a depth texture,
+        // but our Texture struct requires it.
+        // If we do decide to render our depth texture, we need to use CompareFunction::LessEqual.
+        // This is due to how the samplerShadow and sampler2DShadow()
+        // interacts with the texture() function in GLSL.
+        let sampler = wgpu_device.create_sampler(
+            &wgpu::SamplerDescriptor {
+                address_mode_u: wgpu::AddressMode::ClampToEdge,
+                address_mode_v: wgpu::AddressMode::ClampToEdge,
+                address_mode_w: wgpu::AddressMode::ClampToEdge,
+                mag_filter: wgpu::FilterMode::Linear,
+                min_filter: wgpu::FilterMode::Linear,
+                mipmap_filter: wgpu::FilterMode::Nearest,
+                compare: Some(wgpu::CompareFunction::LessEqual),
+                lod_min_clamp: -100.0,
+                lod_max_clamp: 100.0,
+                ..Default::default()
+            }
+        );
+
+        Self {
+            texture,
+            view,
+            sampler,
+        }
+    }
+
+    //- Getters ------------------------------------------------------------------------------------
+
+    pub fn view(&self) -> &wgpu::TextureView {
+        &self.view
     }
 }
