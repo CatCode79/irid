@@ -1,9 +1,9 @@
 [package]
-name = "learnwgpu_08_depth_buffer"
+name = "learnwgpu_09_model_loading"
 version = "0.0.1"
 authors = ["CatCode <andrea.postal@gmail.com>"]
 edition = "2018"
-description = "based on https://sotrh.github.io/learn-wgpu/beginner/tutorial8-depth/"
+description = "based on https://sotrh.github.io/learn-wgpu/beginner/tutorial9-models/"
 
 [dependencies]
 env_logger = "0.9"
