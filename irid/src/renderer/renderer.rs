@@ -31,7 +31,7 @@ pub struct Renderer {
     camera: crate::renderer::Camera,
     camera_metadatas: crate::renderer::CameraMetadatas,
     camera_controller: crate::renderer::CameraController,
-    texture_image_metadatas: crate::renderer::TextureImageMetadatas,
+    _texture_image_metadatas: crate::renderer::TextureImageMetadatas,
     texture_bind_group_metadatas: crate::renderer::TextureBindGroupMetadatas,
     texture_depth_metadatas: crate::renderer::TextureDepthMetadatas,
     pipeline: crate::renderer::RenderPipeline,
@@ -48,7 +48,7 @@ impl Renderer {
         window: &winit::window::Window,
         shader_source: String,
         texture_path: &str,
-        vertices: &[crate::meshes::VertexTexture],
+        vertices: &[crate::renderer::VertexTexture],
         indices: &[u16]
     ) -> Self {
         let window_size = window.inner_size();  // TODO: window.fullscreen at startup
@@ -153,7 +153,7 @@ impl Renderer {
             surface,
             device,
             queue,
-            texture_image_metadatas,
+            _texture_image_metadatas: texture_image_metadatas,
             texture_bind_group_metadatas,
             texture_depth_metadatas,
             camera,

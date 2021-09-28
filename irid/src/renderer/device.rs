@@ -31,7 +31,7 @@ impl Device {
     pub fn create_vertex_buffer_init(
         &self,
         label_text: &str,
-        vertices: &[crate::meshes::VertexTexture]
+        vertices: &[crate::renderer::VertexTexture]
     ) -> wgpu::Buffer {
         use wgpu::util::DeviceExt;
         self.0.create_buffer_init(

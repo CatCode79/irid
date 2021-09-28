@@ -201,9 +201,9 @@ impl TextureBindGroupMetadatas {
 //= TEXTURE DEPTH ==================================================================================
 
 pub struct TextureDepthMetadatas {
-    texture: wgpu::Texture,
+    _texture: wgpu::Texture,
     view: wgpu::TextureView,
-    sampler: wgpu::Sampler,
+    _sampler: wgpu::Sampler,
 }
 
 impl TextureDepthMetadatas {
@@ -263,9 +263,9 @@ impl TextureDepthMetadatas {
         );
 
         Self {
-            texture,
+            _texture: texture,
             view,
-            sampler,
+            _sampler: sampler,
         }
     }
 

@@ -6,7 +6,7 @@ pub struct ApplicationBuilder<'a> {
     config: crate::app::Config,
     shaders: Option<std::collections::HashMap<String, String>>,
     texture_path: Option<&'a str>,
-    vertices: Option<&'a [crate::meshes::VertexTexture]>,
+    vertices: Option<&'a [crate::renderer::VertexTexture]>,
     indices: Option<&'a [u16]>
 }
 
@@ -31,7 +31,7 @@ impl<'a> ApplicationBuilder<'a> {
         self
     }
 
-    pub fn vertices(mut self, vertices: &'a [crate::meshes::VertexTexture]) -> Self {
+    pub fn vertices(mut self, vertices: &'a [crate::renderer::VertexTexture]) -> Self {
         self.vertices = Some(vertices);
         self
     }
@@ -60,7 +60,7 @@ pub struct Application<'a> {
     config: crate::app::Config,
     shaders: std::collections::HashMap<String, String>,
     texture_path: &'a str,
-    vertices: &'a [crate::meshes::VertexTexture],
+    vertices: &'a [crate::renderer::VertexTexture],
     indices: &'a [u16]
 }
 

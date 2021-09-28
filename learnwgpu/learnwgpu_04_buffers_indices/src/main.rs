@@ -54,7 +54,7 @@ fn main() {
     };
 
     const SHADER_WGSL_FILENAME: &str = "shader.wgsl";
-    const SHADER_WGSL_FILEPATH: &str = "D:/_BLACK_ABYSS_DUNGEON/_BAD/bad/learnwgpu/learnwgpu_04_buffers_indices/assets/shader.wgsl";
+    const SHADER_WGSL_FILEPATH: &str = "D:/_BLACK_ABYSS_DUNGEON/_BAD/shaded_sun/learnwgpu/learnwgpu_04_buffers_indices/assets/shader.wgsl";
 
     // TODO: Passare solo la path o il nome file
     let mut shaders: HashMap<String, String> = HashMap::new();
@@ -68,7 +68,7 @@ fn main() {
     // We do it this way partially out of tradition, but mostly because we specified in the
     // rasterization_state of the render_pipeline that we want the front_face of our triangle
     // to be wgpu::FrontFace::Ccw so that we cull the back face.
-    const VERTICES: &[Vertex] = &[
+    const VERTICES: &[VertexColor] = &[
         VertexColor { position: [-0.08682410,  0.49240386, 0.0], color: [0.5, 0.0, 0.5] },
         VertexColor { position: [-0.49513406,  0.06958647, 0.0], color: [0.5, 0.0, 0.5] },
         VertexColor { position: [-0.21918549, -0.44939706, 0.0], color: [0.5, 0.0, 0.5] },
