@@ -1,8 +1,39 @@
 
 //= DEFAULT SIZE CONSTS ============================================================================
 
-pub const DEFAULT_TEXTURE_WIDTH: u32 = 256;
-pub const DEFAULT_TEXTURE_HEIGHT: u32 = 256;
+//pub const DEFAULT_TEXTURE_WIDTH: u32 = 256;
+//pub const DEFAULT_TEXTURE_HEIGHT: u32 = 256;
+
+
+//= DIFFUSE TEXTURE ================================================================================
+
+pub struct DiffuseTexture {
+    dynamic_image: crate::assets::DynamicImage,
+    image_metadatas: TextureImageMetadatas,
+}
+
+impl DiffuseTexture {
+    pub fn load(device: &crate::renderer::Device, filepath: &std::path::Path) -> anyhow::Result<Self> {
+        let dynamic_image = crate::assets::DynamicImage::load(filepath)?;
+
+        // TODO: da finire
+        let _image_metadatas = TextureImageMetadatas::new(
+            device,
+            dynamic_image.width(),
+            dynamic_image.height()
+        );
+
+        Ok(Self {
+            dynamic_image,
+            image_metadatas: _image_metadatas,
+        })
+    }
+
+    pub fn as_bytes(&self) -> Option<&[u8]>{
+        self.dynamic_image.as_bytes()
+    }
+}
+
 
 //= TEXTURE IMAGE METADATAS ========================================================================
 
@@ -54,6 +85,7 @@ impl TextureImageMetadatas {
             image_size,
         }
     }
+
 
     //- ImageCopyTexture related metghods ----------------------------------------------------------
 

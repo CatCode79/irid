@@ -5,9 +5,9 @@
 pub struct ApplicationBuilder<'a> {
     config: crate::app::Config,
     shaders: Option<std::collections::HashMap<String, String>>,
-    texture_path: Option<&'a str>,
-    vertices: Option<&'a [crate::renderer::VertexTexture]>,
-    indices: Option<&'a [u16]>
+    texture_path: Option<&'a std::path::Path>,
+    vertices: Option<&'a [crate::assets::ModelVertex]>,
+    indices: Option<&'a [u32]>
 }
 
 
@@ -26,17 +26,17 @@ impl<'a> ApplicationBuilder<'a> {
         self
     }
 
-    pub fn texture_path(mut self, texture_path: &'a str) -> Self {
+    pub fn texture_path(mut self, texture_path: &'a std::path::Path) -> Self {
         self.texture_path = Some(texture_path);
         self
     }
 
-    pub fn vertices(mut self, vertices: &'a [crate::renderer::VertexTexture]) -> Self {
+    pub fn vertices(mut self, vertices: &'a [crate::assets::ModelVertex]) -> Self {
         self.vertices = Some(vertices);
         self
     }
 
-    pub fn indices(mut self, indices: &'a [u16]) -> Self {
+    pub fn indices(mut self, indices: &'a [u32]) -> Self {
         self.indices = Some(indices);
         self
     }
@@ -59,9 +59,9 @@ impl<'a> ApplicationBuilder<'a> {
 pub struct Application<'a> {
     config: crate::app::Config,
     shaders: std::collections::HashMap<String, String>,
-    texture_path: &'a str,
-    vertices: &'a [crate::renderer::VertexTexture],
-    indices: &'a [u16]
+    texture_path: &'a std::path::Path,
+    vertices: &'a [crate::assets::ModelVertex],
+    indices: &'a [u32]
 }
 
 
@@ -80,7 +80,7 @@ impl<'a> Application<'a> {
             self.texture_path,
             self.vertices,
             self.indices
-        );
+        ).unwrap();
 
         // I know I should use run method instead of de run_return,
         // but all those static variables are a bore to handle.

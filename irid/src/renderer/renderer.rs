@@ -47,10 +47,10 @@ impl Renderer {
     pub fn new(
         window: &winit::window::Window,
         shader_source: String,
-        texture_path: &str,
-        vertices: &[crate::renderer::VertexTexture],
-        indices: &[u16]
-    ) -> Self {
+        texture_path: &std::path::Path,
+        vertices: &[crate::assets::ModelVertex],
+        indices: &[u32]
+    ) -> anyhow::Result<Self> {
         let window_size = window.inner_size();  // TODO: window.fullscreen at startup
 
         let surface = crate::renderer::Surface::new(window, window_size);
@@ -67,15 +67,10 @@ impl Renderer {
 
         //- Texture --------------------------------------------------------------------------------
 
-        let diffuse_image = crate::assets::DynamicImage::new(texture_path);
-
-        let (image_width, image_height) = {
-            let dimensions = diffuse_image.dimensions().unwrap();
-            (dimensions.0, dimensions.1)
-        };
+        let diffuse_image = crate::assets::DynamicImage::load(texture_path)?;
 
         let texture_image_metadatas =
-            crate::renderer::TextureImageMetadatas::new(&device, image_width, image_height);
+            crate::renderer::TextureImageMetadatas::new(&device, diffuse_image.width(), diffuse_image.height());
 
         let texture_bind_group_metadatas=
             crate::renderer::TextureBindGroupMetadatas::new(&device, &texture_image_metadatas.texture());
@@ -148,7 +143,7 @@ impl Renderer {
 
         //- Renderer Creation ----------------------------------------------------------------------
 
-        Self {
+        Ok(Self {
             window_size,
             surface,
             device,
@@ -165,7 +160,7 @@ impl Renderer {
             num_indices,
             instances,
             instance_buffer,
-        }
+        })
     }
 
     //- Size Methods -------------------------------------------------------------------------------
@@ -269,8 +264,8 @@ thread 'main' panicked at 'Texture[1] does not exist', C:\Users\DarkWolf\.cargo\
             );
 
             render_pass.set_pipeline(self.pipeline.expose_wrapped_render_pipeline());
-            render_pass.set_bind_group(0, &self.texture_bind_group_metadatas.bind_group(), &[]);
-            render_pass.set_bind_group(1, &self.camera_metadatas.bind_group(), &[]);
+            render_pass.set_bind_group(0, self.texture_bind_group_metadatas.bind_group(), &[]);
+            render_pass.set_bind_group(1, self.camera_metadatas.bind_group(), &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
@@ -281,5 +276,11 @@ thread 'main' panicked at 'Texture[1] does not exist', C:\Users\DarkWolf\.cargo\
         self.queue.submit(std::iter::once(encoder.finish()));
 
         Ok(())
+    }
+
+    //- Getters ------------------------------------------------------------------------------------
+
+    pub fn texture_bind_group_metadatas(&self) -> &crate::renderer::TextureBindGroupMetadatas {
+        &self.texture_bind_group_metadatas
     }
 }

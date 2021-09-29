@@ -14,3 +14,8 @@ winit = "0.25"
 [dependencies.irid]
 path = "../../irid"
 version = "0.0"
+
+[build-dependencies]
+anyhow = "1.0"
+fs_extra = "1.2"
+glob = "0.3"

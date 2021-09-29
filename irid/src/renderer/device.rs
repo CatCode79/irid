@@ -31,7 +31,7 @@ impl Device {
     pub fn create_vertex_buffer_init(
         &self,
         label_text: &str,
-        vertices: &[crate::renderer::VertexTexture]
+        vertices: &[crate::assets::ModelVertex]
     ) -> wgpu::Buffer {
         use wgpu::util::DeviceExt;
         self.0.create_buffer_init(
@@ -44,7 +44,7 @@ impl Device {
     }
 
     ///
-    pub fn create_indices_buffer_init(&self, label_text: &str, indices: &[u16]) -> wgpu::Buffer {
+    pub fn create_indices_buffer_init(&self, label_text: &str, indices: &[u32]) -> wgpu::Buffer {
         use wgpu::util::DeviceExt;
         self.0.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {

@@ -5,7 +5,6 @@ use std::collections::HashMap;
 use std::fs::read_to_string;
 
 use irid::app::{ApplicationBuilder, Config, Listener};
-use irid::renderer::VertexTexture;
 use wgpu::Color;
 use winit::dpi::PhysicalSize;
 
@@ -70,15 +69,9 @@ fn main() {
     // We do it this way partially out of tradition, but mostly because we specified in the
     // rasterization_state of the render_pipeline that we want the front_face of our triangle
     // to be wgpu::FrontFace::Ccw so that we cull the back face.
-    const VERTICES: &[VertexTexture] = &[
-        VertexTexture { position: [-0.08682410,  0.49240386, 0.0], tex_coords: [0.4131759000, 0.00759614], },
-        VertexTexture { position: [-0.49513406,  0.06958647, 0.0], tex_coords: [0.0048659444, 0.43041354], },
-        VertexTexture { position: [-0.21918549, -0.44939706, 0.0], tex_coords: [0.2808145300, 0.94939700], },
-        VertexTexture { position: [ 0.35966998, -0.34732910, 0.0], tex_coords: [0.8596700000, 0.84732914], },
-        VertexTexture { position: [ 0.44147372,  0.23473590, 0.0], tex_coords: [0.9414737000, 0.26526410], },
-    ];
+    const VERTICES: &[irid::assets::ModelVertex] = &[];
 
-    const INDICES: &[u16] = &[
+    const INDICES: &[u32] = &[
         0, 1, 4,
         1, 2, 4,
         2, 3, 4,
@@ -87,7 +80,7 @@ fn main() {
 
     let app = ApplicationBuilder::new(config)
         .shaders(shaders)
-        .texture_path(TREE_FILEPATH)
+        .texture_path(std::path::Path::new(TREE_FILEPATH))
         .vertices(VERTICES)
         .indices(INDICES)
         .build();

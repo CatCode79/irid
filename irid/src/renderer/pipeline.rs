@@ -217,9 +217,7 @@ impl<'a> RenderPipelineBuilder<'a> {
 /// Wrapper to the wgpu handle's rendering graphics pipeline.
 ///
 /// See [`wgpu::RenderPipeline`](wgpu::RenderPipeline).
-pub struct RenderPipeline {
-    wgpu_render_pipeline: wgpu::RenderPipeline,
-}
+pub struct RenderPipeline(wgpu::RenderPipeline);
 
 
 impl RenderPipeline {
@@ -235,8 +233,12 @@ impl RenderPipeline {
             .bind_group_layouts(&[texture_bind_group_layout, camera_bind_group_layout])
             .build(wgpu_device);
 
-        let buffers = &[crate::renderer::VertexTexture::desc(),
-            crate::renderer::InstanceRaw::desc()];
+        use crate::assets::Vertex;
+        let buffers = &[
+            crate::assets::ModelVertex::desc(),
+            //crate::renderer::VertexTexture::desc(),
+            crate::renderer::InstanceRaw::desc()
+        ];
         let shader_module = crate::renderer::ShaderModuleBuilder::new(
             wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(shader_source))
         ).build(wgpu_device);
@@ -261,11 +263,11 @@ impl RenderPipeline {
             .build(wgpu_device);
 
         Self {
-            wgpu_render_pipeline,
+            0: wgpu_render_pipeline,
         }
     }
 
     pub fn expose_wrapped_render_pipeline(&self) -> &wgpu::RenderPipeline {
-        &self.wgpu_render_pipeline
+        &self.0
     }
 }
