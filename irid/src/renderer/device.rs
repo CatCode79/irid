@@ -1,33 +1,34 @@
 
 //= DEVICE WRAPPER =================================================================================
 
-///
+/// Open connection to a graphics and/or compute device.
 pub struct Device(wgpu::Device);
 
 
 impl Device {
-    /// The device is an open connection to a graphics and/or compute device responsible
-    /// for the creation of most rendering and compute resources.
-    /// The queue executes recorded CommandBuffer and writes to buffers and textures.
-    pub fn new(surface: &crate::renderer::Surface) -> (Self, wgpu::Queue) {
+    /// Create a new Device and Queue given ad adapter.
+    pub fn new(
+        adapter: &crate::renderer::Adapter
+    ) -> anyhow::Result<(Self, wgpu::Queue), wgpu::RequestDeviceError> {
         let (wgpu_device, queue) = pollster::block_on(async {
-            surface.get_adapter().request_device(
+            adapter.request_device(
                 &wgpu::DeviceDescriptor {
                     label: Some("New Device & Queue"),
                     features: wgpu::Features::empty(),
-                    limits: wgpu::Limits::default(),
+                    limits: wgpu::Limits::downlevel_defaults(),  // TODO: farlo configurabile lato utente
                 },
                 None, // Trace path
             ).await
-        }).unwrap(); // todo Result check
+        })?;
 
         let device = Self {
             0: wgpu_device,
         };
-        (device, queue)
+
+        Ok((device, queue))
     }
 
-    ///
+    /// Creates a vertex Buffer with data to initialize it.
     pub fn create_vertex_buffer_init(
         &self,
         label_text: &str,
@@ -43,7 +44,7 @@ impl Device {
         )
     }
 
-    ///
+    /// Creates a indices Buffer with data to initialize it.
     pub fn create_indices_buffer_init(&self, label_text: &str, indices: &[u32]) -> wgpu::Buffer {
         use wgpu::util::DeviceExt;
         self.0.create_buffer_init(

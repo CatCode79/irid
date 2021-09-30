@@ -26,6 +26,7 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 pub struct Renderer {
     window_size: winit::dpi::PhysicalSize<u32>,
     surface: crate::renderer::Surface,
+    adapter: crate::renderer::Adapter,
     device: crate::renderer::Device,
     queue: wgpu::Queue,
     camera: crate::renderer::Camera,
@@ -53,9 +54,10 @@ impl Renderer {
     ) -> anyhow::Result<Self> {
         let window_size = window.inner_size();  // TODO: window.fullscreen at startup
 
-        let surface = crate::renderer::Surface::new(window, window_size);
+        let (surface, adapter) = crate::renderer::Surface::new(window, window_size)?;
+        let adapter = adapter.unwrap();  // TODO: gestire l'adapter NONE e riprovare con una richiesta differente
 
-        let (device, queue) = crate::renderer::Device::new(&surface);
+        let (device, queue) = crate::renderer::Device::new(&adapter)?;
 
         surface.configure(&device);
 
@@ -133,7 +135,7 @@ impl Renderer {
         let instance_data = instances.iter().map(crate::renderer::Instance::to_raw)
             .collect::<Vec<_>>();
         use wgpu::util::DeviceExt;
-        let instance_buffer = device.expose_wgpu_device().create_buffer_init(
+        let instance_buffer = device.expose_wgpu_device().create_buffer_init(  // TODO: quando creerò le generics per i vertici utilizzare quella in device
             &wgpu::util::BufferInitDescriptor {
                 label: Some("Instance Buffer"),
                 contents: bytemuck::cast_slice(&instance_data),
@@ -146,6 +148,7 @@ impl Renderer {
         Ok(Self {
             window_size,
             surface,
+            adapter,
             device,
             queue,
             _texture_image_metadatas: texture_image_metadatas,
@@ -235,7 +238,7 @@ thread 'main' panicked at 'Texture[1] does not exist', C:\Users\DarkWolf\.cargo\
         // TODO: test results with wgpu 0.11: NO TEST PERFORMED
 
         let output = self.surface.get_current_frame()?.output;
-        let frame_view = output.texture.create_view(&FRAME_TEXTURE_VIEW);
+        let frame_view = output.texture.create_view(&FRAME_TEXTURE_VIEW);  // TODO: forse in realtà è più veloce accedervi se si trova nella stessa porzione di codice e non come costante non locale
         //- ¡WARNING ENDS! -------------------------------------------------------------------------
 
         let mut encoder = self.create_command_encoder("Render Encoder");

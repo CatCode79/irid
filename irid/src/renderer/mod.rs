@@ -1,6 +1,7 @@
 
 //= USES ===========================================================================================
 
+pub use crate::renderer::adapter::*;
 pub use crate::renderer::camera::*;
 pub use crate::renderer::device::*;
 pub use crate::renderer::instance::*;
@@ -14,6 +15,7 @@ pub use crate::renderer::vertex::*;
 
 //= MODS ===========================================================================================
 
+mod adapter;
 mod camera;
 mod device;
 mod instance;

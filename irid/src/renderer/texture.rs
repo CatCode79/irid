@@ -1,10 +1,4 @@
 
-//= DEFAULT SIZE CONSTS ============================================================================
-
-//pub const DEFAULT_TEXTURE_WIDTH: u32 = 256;
-//pub const DEFAULT_TEXTURE_HEIGHT: u32 = 256;
-
-
 //= DIFFUSE TEXTURE ================================================================================
 
 pub struct DiffuseTexture {
@@ -17,7 +11,7 @@ impl DiffuseTexture {
         let dynamic_image = crate::assets::DynamicImage::load(filepath)?;
 
         // TODO: da finire
-        let _image_metadatas = TextureImageMetadatas::new(
+        let image_metadatas = TextureImageMetadatas::new(
             device,
             dynamic_image.width(),
             dynamic_image.height()
@@ -25,7 +19,7 @@ impl DiffuseTexture {
 
         Ok(Self {
             dynamic_image,
-            image_metadatas: _image_metadatas,
+            image_metadatas,
         })
     }
 
