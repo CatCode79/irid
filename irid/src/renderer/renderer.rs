@@ -26,7 +26,7 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 pub struct Renderer {
     window_size: winit::dpi::PhysicalSize<u32>,
     surface: crate::renderer::Surface,
-    adapter: crate::renderer::Adapter,
+    _adapter: crate::renderer::Adapter,
     device: crate::renderer::Device,
     queue: wgpu::Queue,
     camera: crate::renderer::Camera,
@@ -54,8 +54,8 @@ impl Renderer {
     ) -> anyhow::Result<Self> {
         let window_size = window.inner_size();  // TODO: window.fullscreen at startup
 
-        let (surface, adapter) = crate::renderer::Surface::new(window, window_size)?;
-        let adapter = adapter.unwrap();  // TODO: gestire l'adapter NONE e riprovare con una richiesta differente
+        let backends = wgpu::Backends::VULKAN | wgpu::Backends::DX12;
+        let (surface, adapter) = crate::renderer::Surface::new(backends, window, window_size)?;
 
         let (device, queue) = crate::renderer::Device::new(&adapter)?;
 
@@ -148,7 +148,7 @@ impl Renderer {
         Ok(Self {
             window_size,
             surface,
-            adapter,
+            _adapter: adapter,
             device,
             queue,
             _texture_image_metadatas: texture_image_metadatas,

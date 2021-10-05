@@ -39,8 +39,8 @@ impl Listener for GameListener {
 //= MAIN ===========================================================================================
 
 fn main() {
+    log::set_max_level(log::LevelFilter::Trace);
     env_logger::init();
-    log::set_max_level(log::LevelFilter::Debug);
 
     let mut config = Config::default();
     config.clear_color = Color {

@@ -1,2 +1,4 @@
-# bad
-Black Abyss Dungeon Game
+# irid
+Irid Framework
+
+Major dependencies

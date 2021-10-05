@@ -69,6 +69,11 @@ impl<'a> Application<'a> {
     /// Starts the event loop (the event loop is winit based).
     // todo: parameter explication
     pub fn start<L: crate::app::Listener>(self, listener: &'static L) {
+        // The env_logger initialization line must be called as soon as possible.
+        // If there is another place to insert it before this one and that it is surely called,
+        // it can be moved.
+        //env_logger::init();
+
         let mut event_loop = winit::event_loop::EventLoop::new();
         let window = winit::window::WindowBuilder::new()
             .build(&event_loop)

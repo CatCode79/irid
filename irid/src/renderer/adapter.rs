@@ -4,7 +4,10 @@
 pub struct Adapter(wgpu::Adapter);
 
 impl Adapter {
-    pub fn new(wgpu_instance: &wgpu::Instance, wgpu_surface: &wgpu::Surface) -> Option<Self> {
+    pub fn new(
+        wgpu_instance: &wgpu::Instance,
+        wgpu_surface: &wgpu::Surface
+    ) -> anyhow::Result<Self> {
         let wgpu_adapter = pollster::block_on(async {
             wgpu_instance.request_adapter(
                 &wgpu::RequestAdapterOptions {
@@ -12,11 +15,14 @@ impl Adapter {
                     compatible_surface: Some(&wgpu_surface),
                 }
             ).await
-        })?;
+        });
 
-        Some(Self {
-            0: wgpu_adapter,
-        })
+        match wgpu_adapter {
+            None => Err(anyhow::anyhow!("An adapter compatible with the given surface could not be obtained")),
+            Some(wgpu_adapter) => Ok(Self {
+                0: wgpu_adapter,
+            })
+        }
     }
 
     /// Requests a connection to a physical device, creating a logical device.
@@ -41,5 +47,10 @@ impl Adapter {
         trace_path: Option<&std::path::Path>
     ) -> impl std::future::Future<Output = anyhow::Result<(wgpu::Device, wgpu::Queue), wgpu::RequestDeviceError>> + Send {
         self.0.request_device(desc, trace_path)
+    }
+
+    /// Get info about the adapter itself.
+    pub fn get_info(&self) -> wgpu::AdapterInfo {
+        self.0.get_info()
     }
 }

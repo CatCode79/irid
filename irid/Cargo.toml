@@ -1,16 +1,17 @@
 [package]
 name = "irid"
-version = "0.0.39"
+version = "0.0.40"
 authors = ["CatCode <andrea.postal@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0"  # It have the no_std feature
-bytemuck = { version = "1.7", features = ["derive"] }
+anyhow = "1.0"  # has the no_std feature
+bytemuck = { version = "1.7", features = ["derive"] }  # it's core only by default
 cgmath = "0.18"
-pollster = "0.2"
+env_logger = "0.9"
 image = "0.23"
 log = "0.4"
+pollster = "0.2"
 tobj = "3.2"
 wgpu = "0.10"
 winit = "0.25"

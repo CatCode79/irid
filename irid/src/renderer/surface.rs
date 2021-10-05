@@ -14,20 +14,14 @@ pub struct Surface(wgpu::Surface, wgpu::SurfaceConfiguration);
 
 
 impl Surface {
-    /// See wgpu::Backends for the complete list.
-    pub const SUPPORTED_BACKENDS: wgpu::Backends =
-        wgpu::Backends::VULKAN /*| wgpu::Backends::DX12 | wgpu::Backends::GL*/;
-
     /// Create a new Surface and a Adapter using a window.
     pub fn new(
+        backends: wgpu::Backends,
         window: &winit::window::Window,
         size: winit::dpi::PhysicalSize<u32>
-    ) -> anyhow::Result<(Self, Option<crate::renderer::Adapter>)> {
+    ) -> anyhow::Result<(Self, crate::renderer::Adapter)> {
         // Context for all other wgpu objects
-        let wgpu_instance = wgpu::Instance::new(Surface::SUPPORTED_BACKENDS);
-
-        // For debug purpose prints on console all the available adapters
-        enumerate_all_adapters(&wgpu_instance);
+        let wgpu_instance = wgpu::Instance::new(backends);
 
         // Handle to a presentable surface onto which rendered images
         let wgpu_surface = unsafe { wgpu_instance.create_surface(window) };
@@ -44,7 +38,13 @@ impl Surface {
             present_mode: wgpu::PresentMode::Fifo,  // TODO: far scegliere al giocatore prima dell'avvio del gioco
         };
 
-        let adapter = crate::renderer::Adapter::new(&wgpu_instance, &wgpu_surface);
+        // For debug purpose prints on console all the available adapters
+        enumerate_all_adapters(backends, &wgpu_instance);
+
+        let adapter = crate::renderer::Adapter::new(&wgpu_instance, &wgpu_surface)?;
+
+        #[cfg(debug_assertions)]
+        println!("Picked Adapter: {:?}", adapter.get_info());
 
         let surface = Self {
             0: wgpu_surface,
@@ -76,13 +76,14 @@ impl Surface {
 }
 
 
-// TODO: diamine! Non funziona...
+//= FUNCTIONS ======================================================================================
+
 /// Show all the adapters information for debug.
-//#[cfg(debug_assertions)]
-fn enumerate_all_adapters(instance: &wgpu::Instance) {
+#[cfg(debug_assertions)]
+fn enumerate_all_adapters(backends: wgpu::Backends, instance: &wgpu::Instance) {
     instance.poll_all(true);
-    for adapter in instance.enumerate_adapters(wgpu::Backends::all()) {
-        use log::info;
-        info!("{:#?}\n", adapter.get_info())
+
+    for adapter in instance.enumerate_adapters(backends) {
+        println!("Adapter found: {:?}", adapter.get_info());
     }
 }
