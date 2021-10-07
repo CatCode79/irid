@@ -82,7 +82,6 @@ impl Surface {
 #[cfg(debug_assertions)]
 fn enumerate_all_adapters(backends: wgpu::Backends, instance: &wgpu::Instance) {
     instance.poll_all(true);
-
     for adapter in instance.enumerate_adapters(backends) {
         println!("Adapter found: {:?}", adapter.get_info());
     }

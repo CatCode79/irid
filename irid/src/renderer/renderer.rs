@@ -251,7 +251,7 @@ thread 'main' panicked at 'Texture[1] does not exist', C:\Users\DarkWolf\.cargo\
                         view: &frame_view,
                         resolve_target: None,
                         ops: wgpu::Operations {
-                            load: wgpu::LoadOp::Clear(config.clear_color),
+                            load: wgpu::LoadOp::Clear(config.clear_color()),
                             store: true,
                         },
                     }],

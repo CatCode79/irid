@@ -4,9 +4,10 @@
 use std::collections::HashMap;
 use std::fs::read_to_string;
 
-use irid::app::{ApplicationBuilder, Config, Listener};
 use wgpu::Color;
 use winit::dpi::PhysicalSize;
+
+use irid::app::{ApplicationBuilder, ConfigBuilder, Listener};
 
 
 //= GAME LOGIC =====================================================================================
@@ -42,13 +43,14 @@ fn main() {
     log::set_max_level(log::LevelFilter::Trace);
     env_logger::init();
 
-    let mut config = Config::default();
-    config.clear_color = Color {
-        r: 0.1,
-        g: 0.2,
-        b: 0.3,
-        a: 1.0,
-    };
+    let config = ConfigBuilder::new()
+        .clear_color(Color {
+            r: 0.1,
+            g: 0.2,
+            b: 0.3,
+            a: 1.0,
+        })
+        .build();
 
     let listener: &GameListener = &GameListener { };
 

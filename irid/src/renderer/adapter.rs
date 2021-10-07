@@ -1,4 +1,9 @@
 
+//= USES ===========================================================================================
+
+use anyhow::anyhow;
+
+
 //= ADAPTER WRAPPER ================================================================================
 
 pub struct Adapter(wgpu::Adapter);
@@ -18,7 +23,7 @@ impl Adapter {
         });
 
         match wgpu_adapter {
-            None => Err(anyhow::anyhow!("An adapter compatible with the given surface could not be obtained")),
+            None => Err(anyhow!("An adapter compatible with the given surface could not be obtained")),
             Some(wgpu_adapter) => Ok(Self {
                 0: wgpu_adapter,
             })

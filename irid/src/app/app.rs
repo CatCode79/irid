@@ -1,7 +1,7 @@
 
 //= APPLICATION BUILDER ============================================================================
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct ApplicationBuilder<'a> {
     config: crate::app::Config,
     shaders: Option<std::collections::HashMap<String, String>>,
@@ -19,6 +19,11 @@ impl<'a> ApplicationBuilder<'a> {
             config,
             ..Default::default()
         }
+    }
+
+    pub fn config(mut self, config: crate::app::Config) -> Self {
+        self.config = config;
+        self
     }
 
     pub fn shaders(mut self, shaders: std::collections::HashMap<String, String>) -> Self {
