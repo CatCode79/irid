@@ -44,7 +44,7 @@ fn main() {
     env_logger::init();
 
     let config = ConfigBuilder::new()
-        .clear_color(Color {
+        .with_clear_color(Color {
             r: 0.1,
             g: 0.2,
             b: 0.3,
@@ -80,12 +80,12 @@ fn main() {
         /* padding */ 0,
     ];
 
-    let app = ApplicationBuilder::new(config)
-        .shaders(shaders)
-        .texture_path(std::path::Path::new(TREE_FILEPATH))
-        .vertices(VERTICES)
-        .indices(INDICES)
+    let app = ApplicationBuilder::new_with_config(config)
+        .with_shaders(shaders)
+        .with_texture_path(std::path::Path::new(TREE_FILEPATH))
+        .with_vertices(VERTICES)
+        .with_indices(INDICES)
         .build();
 
-    app.start(listener);
+    let _ret = app.start(listener);
 }

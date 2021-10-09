@@ -1,9 +1,15 @@
 
+//= USES ===========================================================================================
+
+use crate::app::Config;
+
+
 //= APPLICATION BUILDER ============================================================================
 
 #[derive(Debug, Default)]
 pub struct ApplicationBuilder<'a> {
     config: crate::app::Config,
+    title: Option<String>,
     shaders: Option<std::collections::HashMap<String, String>>,
     texture_path: Option<&'a std::path::Path>,
     vertices: Option<&'a [crate::assets::ModelVertex]>,
@@ -12,36 +18,43 @@ pub struct ApplicationBuilder<'a> {
 
 
 impl<'a> ApplicationBuilder<'a> {
-    /// Create a new plain AppBuilder struct.
-    /// After that you can add the necessary fields or build the app and starts it.
-    pub fn new(config: crate::app::Config) -> Self {
+    /// Create an ApplicationBuilder using a filepath to create a Config struct.
+    pub fn new_with_file(filepath: &std::path::Path) -> Self {
+        Self {
+            config: Config::new(filepath),
+            ..Default::default()
+        }
+    }
+
+    /// Create an ApplicationBuilder using a Config struct.
+    pub fn new_with_config(config: crate::app::Config) -> Self {
         Self {
             config,
             ..Default::default()
         }
     }
 
-    pub fn config(mut self, config: crate::app::Config) -> Self {
-        self.config = config;
-        self
-    }
-
-    pub fn shaders(mut self, shaders: std::collections::HashMap<String, String>) -> Self {
+    pub fn with_shaders(mut self, shaders: std::collections::HashMap<String, String>) -> Self {
         self.shaders = Some(shaders);
         self
     }
 
-    pub fn texture_path(mut self, texture_path: &'a std::path::Path) -> Self {
+    pub fn with_texture_path(mut self, texture_path: &'a std::path::Path) -> Self {
         self.texture_path = Some(texture_path);
         self
     }
 
-    pub fn vertices(mut self, vertices: &'a [crate::assets::ModelVertex]) -> Self {
+    pub fn with_title(mut self, title: String) -> Self {
+        self.title = Some(title);
+        self
+    }
+
+    pub fn with_vertices(mut self, vertices: &'a [crate::assets::ModelVertex]) -> Self {
         self.vertices = Some(vertices);
         self
     }
 
-    pub fn indices(mut self, indices: &'a [u32]) -> Self {
+    pub fn with_indices(mut self, indices: &'a [u32]) -> Self {
         self.indices = Some(indices);
         self
     }
@@ -50,6 +63,8 @@ impl<'a> ApplicationBuilder<'a> {
     pub fn build(self) -> Application<'a> {
         Application {
             config: self.config,
+            title: if self.title.is_some() { self.title.unwrap() }
+                else { "Irid Application".to_string() },
             shaders: self.shaders.unwrap(),
             texture_path: self.texture_path.unwrap(),
             vertices: self.vertices.unwrap(),
@@ -63,6 +78,7 @@ impl<'a> ApplicationBuilder<'a> {
 
 pub struct Application<'a> {
     config: crate::app::Config,
+    title: String,
     shaders: std::collections::HashMap<String, String>,
     texture_path: &'a std::path::Path,
     vertices: &'a [crate::assets::ModelVertex],
@@ -72,17 +88,11 @@ pub struct Application<'a> {
 
 impl<'a> Application<'a> {
     /// Starts the event loop (the event loop is winit based).
-    // todo: parameter explication
-    pub fn start<L: crate::app::Listener>(self, listener: &'static L) {
-        // The env_logger initialization line must be called as soon as possible.
-        // If there is another place to insert it before this one and that it is surely called,
-        // it can be moved.
-        //env_logger::init();
-
+    pub fn start<L: crate::app::Listener>(self, listener: &'static L) -> anyhow::Result<()> {
         let mut event_loop = winit::event_loop::EventLoop::new();
         let window = winit::window::WindowBuilder::new()
-            .build(&event_loop)
-            .unwrap();  // TODO check OsError
+            .with_title(&self.title)
+            .build(&event_loop)?;
 
         let mut renderer = crate::renderer::Renderer::new(
             &window,
@@ -90,14 +100,14 @@ impl<'a> Application<'a> {
             self.texture_path,
             self.vertices,
             self.indices
-        ).unwrap();
+        )?;
 
         // I know I should use run method instead of de run_return,
         // but all those static variables are a bore to handle.
         // To remember that the resize is not managed perfectly with run_return:
         // https://docs.rs/winit/0.25.0/winit/platform/run_return/trait.EventLoopExtRunReturn.html
         use winit::platform::run_return::EventLoopExtRunReturn;
-        event_loop.run_return(move |event, _, control_flow| match event {
+        Ok(event_loop.run_return(move |event, _, control_flow| match event {
             winit::event::Event::NewEvents(start_cause) => {
                 self.on_new_events(listener, start_cause);
             },
@@ -258,7 +268,7 @@ impl<'a> Application<'a> {
             winit::event::Event::LoopDestroyed => {
                 self.on_destroy(listener);
             },
-        });
+        }))
     }
 
     //- Generic Events Methods ---------------------------------------------------------------------

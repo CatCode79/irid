@@ -25,13 +25,13 @@ impl ConfigBuilder {
     }
 
     ///
-    pub fn clear_color(mut self, clear_color: wgpu::Color) -> Self {
+    pub fn with_clear_color(mut self, clear_color: wgpu::Color) -> Self {
         self.clear_color = Some(clear_color);
         self
     }
 
     ///
-    pub fn window_width(mut self, window_width: u32) -> Self {
+    pub fn with_window_width(mut self, window_width: u32) -> Self {
         self.window_width = match window_width {
             0 => {
                 log::warn!("A value equal to zero has been given to window_width, the default value of {} will be set instead",
@@ -44,7 +44,7 @@ impl ConfigBuilder {
     }
 
     ///
-    pub fn window_height(mut self, window_height: u32) -> Self {
+    pub fn with_window_height(mut self, window_height: u32) -> Self {
         self.window_height = match window_height {
             0 => {
                 log::warn!("A value equal to zero has been given to window_height, the default value of {} will be set instead",
