@@ -1,24 +1,27 @@
 
 //= USES ===========================================================================================
 
-use crate::app::Config;
+use crate::app::{Config, Listener};
+use crate::assets::ModelVertex;
+use crate::renderer::Renderer;
 
 
 //= APPLICATION BUILDER ============================================================================
 
+/// Build a new [Application] with wanted values.
 #[derive(Debug, Default)]
 pub struct ApplicationBuilder<'a> {
-    config: crate::app::Config,
+    config: Config,
     title: Option<String>,
     shaders: Option<std::collections::HashMap<String, String>>,
     texture_path: Option<&'a std::path::Path>,
-    vertices: Option<&'a [crate::assets::ModelVertex]>,
+    vertices: Option<&'a [ModelVertex]>,
     indices: Option<&'a [u32]>
 }
 
 
 impl<'a> ApplicationBuilder<'a> {
-    /// Create an ApplicationBuilder using a filepath to create a Config struct.
+    /// Create an ApplicationBuilder using a filepath to load the config file.
     pub fn new_with_file(filepath: &std::path::Path) -> Self {
         Self {
             config: Config::new(filepath),
@@ -26,40 +29,50 @@ impl<'a> ApplicationBuilder<'a> {
         }
     }
 
-    /// Create an ApplicationBuilder using a Config struct.
-    pub fn new_with_config(config: crate::app::Config) -> Self {
+    /// Create an ApplicationBuilder using a [Config].
+    pub fn new_with_config(config: Config) -> Self {
         Self {
             config,
             ..Default::default()
         }
     }
 
+    ///
+    #[deprecated(note="I have to refactor all the assets and pipeline management")]
     pub fn with_shaders(mut self, shaders: std::collections::HashMap<String, String>) -> Self {
         self.shaders = Some(shaders);
         self
     }
 
+    ///
+    #[deprecated(note="I have to refactor all the assets and pipeline management")]
     pub fn with_texture_path(mut self, texture_path: &'a std::path::Path) -> Self {
         self.texture_path = Some(texture_path);
         self
     }
 
+    /// Set the window title.
     pub fn with_title(mut self, title: String) -> Self {
         self.title = Some(title);
         self
     }
 
-    pub fn with_vertices(mut self, vertices: &'a [crate::assets::ModelVertex]) -> Self {
+    ///
+    #[deprecated(note="I have to refactor all the assets and pipeline management")]
+    pub fn with_vertices(mut self, vertices: &'a [ModelVertex]) -> Self {
         self.vertices = Some(vertices);
         self
     }
 
+    ///
+    #[deprecated(note="I have to refactor all the assets and pipeline management")]
     pub fn with_indices(mut self, indices: &'a [u32]) -> Self {
         self.indices = Some(indices);
         self
     }
 
-    // TODO: gestirò poi i None a seconda dell'uso che farò con le applicazioni
+    /// Build a new [Application] with given values.
+    // TODO I have to manage the Nones values for every unwrap
     pub fn build(self) -> Application<'a> {
         Application {
             config: self.config,
@@ -76,36 +89,46 @@ impl<'a> ApplicationBuilder<'a> {
 
 //= APPLICATION STRUCT =============================================================================
 
+/// This is the structure that serves to manage the whole game application.
 pub struct Application<'a> {
-    config: crate::app::Config,
+    config: Config,
     title: String,
     shaders: std::collections::HashMap<String, String>,
     texture_path: &'a std::path::Path,
-    vertices: &'a [crate::assets::ModelVertex],
+    vertices: &'a [ModelVertex],
     indices: &'a [u32]
 }
 
 
 impl<'a> Application<'a> {
-    /// Starts the event loop (the event loop is winit based).
-    pub fn start<L: crate::app::Listener>(self, listener: &'static L) -> anyhow::Result<()> {
+    /// Starts the
+    /// [event loop](https://docs.rs/winit/0.25.0/winit/event_loop/struct.EventLoop.html).
+    ///
+    /// # Notes:
+    ///
+    /// The event loop uses the winit
+    /// [run_return](https://docs.rs/winit/0.25.0/winit/platform/run_return/trait.EventLoopExtRunReturn.html#tymethod.run_return)
+    /// method.
+    ///
+    /// I know I should use winit
+    /// [run](https://docs.rs/winit/0.25.0/winit/event_loop/struct.EventLoop.html#method.run)
+    /// method instead but all those static variables are a bore to handle.
+    ///
+    /// To remember that the resize is not managed perfectly with run_return.
+    pub fn start<L: Listener>(self, listener: &'static L) -> anyhow::Result<()> {
         let mut event_loop = winit::event_loop::EventLoop::new();
         let window = winit::window::WindowBuilder::new()
             .with_title(&self.title)
             .build(&event_loop)?;
 
-        let mut renderer = crate::renderer::Renderer::new(
+        let mut renderer = Renderer::new(
             &window,
-            self.shaders.get("shader.wgsl").unwrap().clone(),// TODO: controllare poi come togliere il clone (forse con un iteratore)
+            self.shaders.get("shader.wgsl").unwrap().clone(),// TODO Try to remove the clone
             self.texture_path,
             self.vertices,
             self.indices
         )?;
 
-        // I know I should use run method instead of de run_return,
-        // but all those static variables are a bore to handle.
-        // To remember that the resize is not managed perfectly with run_return:
-        // https://docs.rs/winit/0.25.0/winit/platform/run_return/trait.EventLoopExtRunReturn.html
         use winit::platform::run_return::EventLoopExtRunReturn;
         Ok(event_loop.run_return(move |event, _, control_flow| match event {
             winit::event::Event::NewEvents(start_cause) => {
@@ -115,7 +138,7 @@ impl<'a> Application<'a> {
             winit::event::Event::WindowEvent {
                 event: window_event,
                 window_id,
-            } => if window_id == window.id() {  // todo multi-monitor support
+            } => if window_id == window.id() {  // TODO multi-monitor support
                 match window_event {
                     winit::event::WindowEvent::Resized(physical_size) => {
                         self.on_window_resize(listener, &mut renderer, physical_size);
@@ -238,7 +261,7 @@ impl<'a> Application<'a> {
             },
 
             winit::event::Event::DeviceEvent { device_id: _device_id, event: ref _device_event } => {
-                // TODO per ora non vengono utilizzati, li ignoro
+                // TODO Currently I don't have to manage it
             },
 
             winit::event::Event::UserEvent(event) => {
@@ -273,7 +296,7 @@ impl<'a> Application<'a> {
 
     //- Generic Events Methods ---------------------------------------------------------------------
 
-    fn on_new_events<L: crate::app::Listener>(
+    fn on_new_events<L: Listener>(
         &self,
         listener: &L,
         start_cause: winit::event::StartCause
@@ -281,24 +304,24 @@ impl<'a> Application<'a> {
         /*let use_default_behaviour: bool =*/ listener.on_new_events(start_cause);
     }
 
-    fn on_user_event<L: crate::app::Listener>(&self, listener: &L, event: &()) {
+    fn on_user_event<L: Listener>(&self, listener: &L, event: &()) {
         /*let use_default_behaviour: bool =*/ listener.on_user_event(event);
     }
 
-    fn on_suspend<L: crate::app::Listener>(&self, listener: &L) {
+    fn on_suspend<L: Listener>(&self, listener: &L) {
         /*let use_default_behaviour: bool =*/ listener.on_suspend();
     }
 
-    fn on_resume<L: crate::app::Listener>(&self, listener: &L) {
+    fn on_resume<L: Listener>(&self, listener: &L) {
         /*let use_default_behaviour: bool =*/ listener.on_resume();
     }
 
     // This method is probably one of the few that must always be inline.
     #[inline(always)]
-    fn on_redraw<L: crate::app::Listener>(
+    fn on_redraw<L: Listener>(
         &self,
         listener: &L,
-        renderer: &mut crate::renderer::Renderer,
+        renderer: &mut Renderer,
         control_flow: &mut winit::event_loop::ControlFlow
     ) {
         let use_default_behaviour: bool = listener.on_redraw();
@@ -308,7 +331,7 @@ impl<'a> Application<'a> {
                 Err(error) => match error {
                     // These errors should be resolved by the next frame
                     wgpu::SurfaceError::Timeout | wgpu::SurfaceError::Outdated =>
-                        eprintln!("{:?}", error),  // todo
+                        eprintln!("{:?}", error),  // TODO better error messages?
 
                     // Recreate the swap chain if lost
                     wgpu::SurfaceError::Lost => renderer.refresh_current_size(),
@@ -321,7 +344,7 @@ impl<'a> Application<'a> {
         }
     }
 
-    fn on_redraw_request<L: crate::app::Listener>(
+    fn on_redraw_request<L: Listener>(
         &self,
         listener: &L,
         window_id: &winit::window::WindowId
@@ -329,30 +352,31 @@ impl<'a> Application<'a> {
         /*let use_default_behaviour: bool =*/ listener.on_redraw_request(window_id);
     }
 
-    fn on_redraw_clear<L: crate::app::Listener>(&self, listener: &L) {
+    fn on_redraw_clear<L: Listener>(&self, listener: &L) {
         /*let use_default_behaviour: bool =*/ listener.on_redraw_clear();
     }
 
-    fn on_destroy<L: crate::app::Listener>(&self, listener: &L) {
+    fn on_destroy<L: Listener>(&self, listener: &L) {
         /*let use_default_behaviour: bool =*/ listener.on_destroy();
     }
 
     //- Window Events Methods ----------------------------------------------------------------------
 
-    fn on_window_resize<L: crate::app::Listener>(
+    fn on_window_resize<L: Listener>(
         &self,
         listener: &L,
-        renderer: &mut crate::renderer::Renderer,
+        renderer: &mut Renderer,
         physical_size: winit::dpi::PhysicalSize<u32>
     ) {
         let use_default_behaviour = listener.on_window_resize(physical_size);
         if use_default_behaviour {
-            // todo Pensare se il metodo resize lo devo spostare qui, in window o tenerlo così
+            // TODO I have to choose if I have to to keep this method here or move it to renderer
+            //  or window struct.
             renderer.resize(physical_size);
         }
     }
 
-    fn on_window_move<L: crate::app::Listener>(
+    fn on_window_move<L: Listener>(
         &self,
         listener: &L,
         physical_position: winit::dpi::PhysicalPosition<i32>
@@ -360,7 +384,7 @@ impl<'a> Application<'a> {
         /*let use_default_behaviour =*/ listener.on_window_move(physical_position);
     }
 
-    fn on_window_close<L: crate::app::Listener>(
+    fn on_window_close<L: Listener>(
         &self,
         listener: &L,
         control_flow: &mut winit::event_loop::ControlFlow
@@ -371,11 +395,11 @@ impl<'a> Application<'a> {
         }
     }
 
-    fn on_window_destroy<L: crate::app::Listener>(&self, listener: &L) {
+    fn on_window_destroy<L: Listener>(&self, listener: &L) {
         /*let use_default_behaviour =*/ listener.on_window_destroy();
     }
 
-    fn on_window_drop_file<L: crate::app::Listener>(
+    fn on_window_drop_file<L: Listener>(
         &self,
         listener: &L,
         path: std::path::PathBuf
@@ -383,7 +407,7 @@ impl<'a> Application<'a> {
         /*let use_default_behaviour =*/ listener.on_window_drop_file(path);
     }
 
-    fn on_window_hover_file<L: crate::app::Listener>(
+    fn on_window_hover_file<L: Listener>(
         &self,
         listener: &L,
         path: std::path::PathBuf
@@ -391,15 +415,15 @@ impl<'a> Application<'a> {
         /*let use_default_behaviour =*/ listener.on_window_hover_file(path);
     }
 
-    fn on_window_hover_file_cancelled<L: crate::app::Listener>(&self, listener: &L) {
+    fn on_window_hover_file_cancelled<L: Listener>(&self, listener: &L) {
         /*let use_default_behaviour =*/ listener.on_window_hover_file_cancelled();
     }
 
-    fn on_window_receive_character<L: crate::app::Listener>(&self, listener: &L, c: char) {
+    fn on_window_receive_character<L: Listener>(&self, listener: &L, c: char) {
         /*let use_default_behaviour =*/ listener.on_window_receive_character(c);
     }
 
-    fn on_window_focus<L: crate::app::Listener>(&self, listener: &L, gained_focus: bool) {
+    fn on_window_focus<L: Listener>(&self, listener: &L, gained_focus: bool) {
         /*let use_default_behaviour =*/ listener.on_window_focus(gained_focus);
     }
 
@@ -409,12 +433,12 @@ impl<'a> Application<'a> {
     // breakable if used on listener's events.
     // Also then the window is restored (from minimize state) where are
     // input.virtual_keycode KeyboardInput events equals to None.
-    fn on_window_keyboard_input<L: crate::app::Listener>(
+    fn on_window_keyboard_input<L: Listener>(
         &self,
         listener: &L,
         control_flow: &mut winit::event_loop::ControlFlow,
         device_id: winit::event::DeviceId,
-        renderer: &mut crate::renderer::Renderer,
+        renderer: &mut Renderer,
         input: &winit::event::KeyboardInput
     ) {
         // First call a generic method to manage the key events
@@ -427,7 +451,7 @@ impl<'a> Application<'a> {
         // Then check the input's type for default behaviours
         if use_default_behaviour {
             // Check the camera controller
-            renderer.process_camera_events(input);  // TODO: migliorare il sistema, per ora lo sto facendo solo funzionare
+            renderer.process_camera_events(input);  // TODO Enhance this system
 
             match input {
                 // Esc key pressed
@@ -443,7 +467,7 @@ impl<'a> Application<'a> {
         }
     }
 
-    fn on_window_modifiers_change<L: crate::app::Listener>(
+    fn on_window_modifiers_change<L: Listener>(
         &self,
         listener: &L,
         state: winit::event::ModifiersState
@@ -451,7 +475,7 @@ impl<'a> Application<'a> {
         /*let use_default_behaviour =*/ listener.on_window_modifiers_change(state);
     }
 
-    fn on_window_cursor_move<L: crate::app::Listener>(
+    fn on_window_cursor_move<L: Listener>(
         &self,
         listener: &L,
         device_id: winit::event::DeviceId,
@@ -460,7 +484,7 @@ impl<'a> Application<'a> {
         /*let use_default_behaviour =*/ listener.on_window_cursor_move(device_id, position);
     }
 
-    fn on_window_cursor_enter<L: crate::app::Listener>(
+    fn on_window_cursor_enter<L: Listener>(
         &self,
         listener: &L,
         device_id: winit::event::DeviceId
@@ -468,7 +492,7 @@ impl<'a> Application<'a> {
         /*let use_default_behaviour =*/ listener.on_window_cursor_enter(device_id);
     }
 
-    fn on_window_cursor_left<L: crate::app::Listener>(
+    fn on_window_cursor_left<L: Listener>(
         &self,
         listener: &L,
         device_id: winit::event::DeviceId
@@ -476,7 +500,7 @@ impl<'a> Application<'a> {
         /*let use_default_behaviour =*/ listener.on_window_cursor_left(device_id);
     }
 
-    fn on_window_mouse_wheel<L: crate::app::Listener>(
+    fn on_window_mouse_wheel<L: Listener>(
         &self,
         listener: &L,
         device_id: winit::event::DeviceId,
@@ -486,7 +510,7 @@ impl<'a> Application<'a> {
         /*let use_default_behaviour =*/ listener.on_window_mouse_wheel(device_id, delta, phase);
     }
 
-    fn on_window_mouse_input<L: crate::app::Listener>(
+    fn on_window_mouse_input<L: Listener>(
         &self,
         listener: &L,
         device_id: winit::event::DeviceId,
@@ -496,7 +520,7 @@ impl<'a> Application<'a> {
         /*let use_default_behaviour =*/ listener.on_window_mouse_input(device_id, state, button);
     }
 
-    fn on_window_touchpad_pressure<L: crate::app::Listener>(
+    fn on_window_touchpad_pressure<L: Listener>(
         &self,
         listener: &L,
         device_id: winit::event::DeviceId,
@@ -506,7 +530,7 @@ impl<'a> Application<'a> {
         /*let use_default_behaviour =*/ listener.on_window_touchpad_pressure(device_id, pressure, stage);
     }
 
-    fn on_window_axis_motion<L: crate::app::Listener>(
+    fn on_window_axis_motion<L: Listener>(
         &self,
         listener: &L,
         device_id: winit::event::DeviceId,
@@ -516,7 +540,7 @@ impl<'a> Application<'a> {
         /*let use_default_behaviour =*/ listener.on_window_axis_motion(device_id, axis, value);
     }
 
-    fn on_window_touch<L: crate::app::Listener>(
+    fn on_window_touch<L: Listener>(
         &self,
         listener: &L,
         touch: winit::event::Touch
@@ -524,16 +548,16 @@ impl<'a> Application<'a> {
         /*let use_default_behaviour =*/ listener.on_window_touch(touch);
     }
 
-    fn on_window_scale_change<L: crate::app::Listener>(
+    fn on_window_scale_change<L: Listener>(
         &self,
         listener: &L,
-        renderer: &mut crate::renderer::Renderer,
+        renderer: &mut Renderer,
         scale_factor: f64,
-        new_inner_size: &mut winit::dpi::PhysicalSize<u32>
+        new_inner_size: &mut winit::dpi::PhysicalSize<u32>// TODO Probably I have to pass it without & (also below)
     ) {
         let use_default_behaviour = listener.on_window_scale_change(
             scale_factor,
-            new_inner_size  // TODO prob qui e giù devo passarla senza deref
+            new_inner_size
         );
 
         if use_default_behaviour {
@@ -541,7 +565,7 @@ impl<'a> Application<'a> {
         }
     }
 
-    fn on_window_theme_change<L: crate::app::Listener>(
+    fn on_window_theme_change<L: Listener>(
         &self,
         listener: &L,
         // theme is copied because an enumeration

@@ -1,13 +1,10 @@
-/// The Listeners to be implemented for the game logic.
-///
-/// todo: usage's example
-
 
 //= LISTENER TRAITS ================================================================================
 
-/// Listener for a generic event.
+/// The Listeners to be implemented for the game logic.
 ///
-/// For more information see [`enum Event`](winit::event::Event) and [`enum WindowEvent`](winit::event::WindowEvent).
+/// For more information about the events see
+/// [`enum Event`](winit::event::Event) and [`enum WindowEvent`](winit::event::WindowEvent).
 pub trait Listener {
     /// Emitted when new events arrive from the OS to be processed.
     ///
@@ -20,7 +17,8 @@ pub trait Listener {
         true
     }
 
-    /// Emitted when an event is sent from [`EventLoopProxy::send_event`](winit::event_loop::EventLoopProxy::send_event).
+    /// Emitted when an event is sent from
+    /// [`EventLoopProxy::send_event`](winit::event_loop::EventLoopProxy::send_event).
     #[allow(unused_variables)]
     fn on_user_event<T>(&self, event: &T) -> bool {
         true
@@ -32,8 +30,8 @@ pub trait Listener {
     /// Emitted when the application has been resumed.
     fn on_resume(&self) -> bool;
 
-    /// Emitted when all of the event loop's input events have been processed and redraw processing
-    /// is about to begin.
+    /// Emitted when all of the event loop's input events have been processed and redraw
+    /// processing is about to begin.
     ///
     /// This event is useful as a place to put your code that should be run after all
     /// state-changing events have been handled and you want to do stuff (updating state,
@@ -42,8 +40,8 @@ pub trait Listener {
     /// to do it in response to [`Event::RedrawRequested`](winit::event::Event::RedrawRequested),
     /// which gets emitted immediately after this event.
     ///
-    /// Programs that draw graphics continuously, like most games, can render here unconditionally
-    /// for simplicity.
+    /// Programs that draw graphics continuously, like most games, can render here
+    /// unconditionally for simplicity.
     fn on_redraw(&self) -> bool;
 
     /// Emitted after `on_redraw_begin` when a window should be redrawn.
@@ -291,5 +289,5 @@ pub trait Listener {
     }
 
     //- Device Events ------------------------------------------------------------------------------
-    // todo: non ho esattamente l'idea del perchè utilizzarli, ma forse centrano i joypad
+    // TODO: I don't know exactely why I have to use those events, but maybe for the joypad...
 }

@@ -4,10 +4,11 @@
 use std::collections::HashMap;
 use std::fs::read_to_string;
 
-use irid::app::{Application, Config, Listener};
-use irid::meshes::VertexTexture;
 use wgpu::Color;
 use winit::dpi::PhysicalSize;
+
+use irid::app::{Application, Config, Listener};
+use irid::renderer::VertexTexture;
 
 
 //= GAME LOGIC =====================================================================================
