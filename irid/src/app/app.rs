@@ -1,6 +1,9 @@
 
 //= USES ===========================================================================================
 
+use anyhow::anyhow;
+use winit::window::Fullscreen;
+
 use crate::app::{Config, Listener};
 use crate::assets::ModelVertex;
 use crate::renderer::Renderer;
@@ -37,15 +40,13 @@ impl<'a> ApplicationBuilder<'a> {
         }
     }
 
-    ///
-    #[deprecated(note="I have to refactor all the assets and pipeline management")]
+    /// TODO "I have to refactor all the assets and pipeline management"
     pub fn with_shaders(mut self, shaders: std::collections::HashMap<String, String>) -> Self {
         self.shaders = Some(shaders);
         self
     }
 
-    ///
-    #[deprecated(note="I have to refactor all the assets and pipeline management")]
+    /// TODO "I have to refactor all the assets and pipeline management"
     pub fn with_texture_path(mut self, texture_path: &'a std::path::Path) -> Self {
         self.texture_path = Some(texture_path);
         self
@@ -57,15 +58,13 @@ impl<'a> ApplicationBuilder<'a> {
         self
     }
 
-    ///
-    #[deprecated(note="I have to refactor all the assets and pipeline management")]
+    /// TODO "I have to refactor all the assets and pipeline management"
     pub fn with_vertices(mut self, vertices: &'a [ModelVertex]) -> Self {
         self.vertices = Some(vertices);
         self
     }
 
-    ///
-    #[deprecated(note="I have to refactor all the assets and pipeline management")]
+    /// TODO "I have to refactor all the assets and pipeline management"
     pub fn with_indices(mut self, indices: &'a [u32]) -> Self {
         self.indices = Some(indices);
         self
@@ -117,9 +116,33 @@ impl<'a> Application<'a> {
     /// To remember that the resize is not managed perfectly with run_return.
     pub fn start<L: Listener>(self, listener: &'static L) -> anyhow::Result<()> {
         let mut event_loop = winit::event_loop::EventLoop::new();
+        let primary_monitor = match event_loop.primary_monitor() {
+            None => Err(anyhow!("Can’t identify any monitor as a primary one")),
+            Some(primary_monitor) => Ok(primary_monitor),
+        }?;
+
+        // The window starts with visibility set to false because just before maximizing it,
+        // for a moment, a window with the size set in the inner_size values is displayed,
+        // generating an unpleasant flickering visual effect.
         let window = winit::window::WindowBuilder::new()
+            .with_inner_size(self.config.window_inner_size())
+            .with_min_inner_size(self.config.window_min_inner_size())
+            .with_resizable(true)
             .with_title(&self.title)
+            .with_visible(false)
+            //.with_window_icon() // TODO because yes
             .build(&event_loop)?;
+
+        // TODO Vulkan issue https://github.com/gfx-rs/wgpu/issues/1958 give me false positives
+        if self.config.window_starts_maximized() {
+            /*for vm in primary_monitor.video_modes() {
+                println!("{:?}", vm);
+            }*/
+            //let video_mode = primary_monitor.video_modes().nth(0).unwrap();
+
+            //window.set_fullscreen(Some(Fullscreen::Exclusive(video_mode)));  // TODO: doesn't work the ALT+TAB on Windows 10
+            window.set_fullscreen(Some(Fullscreen::Borderless(Some(primary_monitor))));
+        }
 
         let mut renderer = Renderer::new(
             &window,
@@ -128,6 +151,10 @@ impl<'a> Application<'a> {
             self.vertices,
             self.indices
         )?;
+
+        // Now is a good time to make the window visible, lessening the flicker explained above.
+        // TODO check if there's another place inside one event below, maybe resized?
+        window.set_visible(true);
 
         use winit::platform::run_return::EventLoopExtRunReturn;
         Ok(event_loop.run_return(move |event, _, control_flow| match event {
