@@ -6,6 +6,10 @@ use anyhow::anyhow;
 
 //= ADAPTER WRAPPER ================================================================================
 
+/// Handle to a physical graphics and/or compute device.
+///
+/// Adapters can be used to open a connection to the corresponding [`Device`]
+/// on the host system by using [`Adapter::request_device`].
 pub struct Adapter(wgpu::Adapter);
 
 impl Adapter {

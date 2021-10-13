@@ -10,14 +10,9 @@ pub struct PipelineLayoutBuilder<'a> {
 
 impl<'a> PipelineLayoutBuilder<'a> {
     pub fn new() -> Self {
-        #[cfg(feature = "debug_label")]
-        let label = Some("Pipeline Layout Default Label");
-        #[cfg(not(feature = "debug_label"))]
-        let label = wgpu::Label.default();
-
         Self {
             pipeline_layout_desc: wgpu::PipelineLayoutDescriptor {
-                label,
+                label: Some("Pipeline Layout Default Label"),
                 bind_group_layouts: &[],
                 push_constant_ranges: &[],
             },
@@ -134,14 +129,9 @@ pub struct RenderPipelineBuilder<'a> {
 // TODO: qui devo creare direttamente una pipeline irid e non wgpu
 impl<'a> RenderPipelineBuilder<'a> {
     pub fn new(vertex: wgpu::VertexState<'a>) -> Self {
-        #[cfg(feature = "debug_label")]
-        let label = Some("Render Pipeline Default Label");
-        #[cfg(not(feature = "debug_label"))]
-        let label = None;
-
         Self {
             render_pipeline_desc: wgpu::RenderPipelineDescriptor {
-                label,
+                label: Some("Render Pipeline Default Label"),
                 layout: None,
                 vertex,
                 primitive: wgpu::PrimitiveState::default(),

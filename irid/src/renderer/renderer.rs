@@ -69,7 +69,7 @@ impl Renderer {
 
         //- Texture --------------------------------------------------------------------------------
 
-        let diffuse_image = crate::assets::DynamicImage::load(texture_path)?;
+        let diffuse_image = crate::assets::DynamicImage::new(texture_path)?;
 
         let texture_image_metadatas =
             crate::renderer::TextureImageMetadatas::new(&device, diffuse_image.width(), diffuse_image.height());
@@ -94,7 +94,7 @@ impl Renderer {
         // TODO decisamente bisognerà fare qualche cosa con questi passaggi di parametri e clones
         queue.write_texture(
             texture_image_metadatas.create_image_copy(),
-            diffuse_image.as_bytes().unwrap(),  // TODO: piace poco l'unwrap
+            diffuse_image.as_rgba8_bytes().unwrap(),  // TODO: piace poco l'unwrap
             texture_image_metadatas.image_data_layout().clone(),
             texture_image_metadatas.image_size().clone()
         );

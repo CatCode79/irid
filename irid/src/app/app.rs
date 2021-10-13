@@ -88,7 +88,7 @@ impl<'a> ApplicationBuilder<'a> {
 
 //= APPLICATION STRUCT =============================================================================
 
-/// This is the structure that serves to manage the whole game application.
+/// Object that serves to manage the whole game application.
 pub struct Application<'a> {
     config: Config,
     title: String,

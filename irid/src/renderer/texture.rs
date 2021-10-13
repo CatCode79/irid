@@ -8,7 +8,7 @@ pub struct DiffuseTexture {
 
 impl DiffuseTexture {
     pub fn load(device: &crate::renderer::Device, filepath: &std::path::Path) -> anyhow::Result<Self> {
-        let dynamic_image = crate::assets::DynamicImage::load(filepath)?;
+        let dynamic_image = crate::assets::DynamicImage::new(filepath)?;
 
         // TODO: da finire
         let image_metadatas = TextureImageMetadatas::new(
@@ -24,7 +24,7 @@ impl DiffuseTexture {
     }
 
     pub fn as_bytes(&self) -> Option<&[u8]>{
-        self.dynamic_image.as_bytes()
+        self.dynamic_image.as_rgba8_bytes()
     }
 }
 

@@ -113,7 +113,6 @@ pub struct Config {
 }
 
 
-// TODO Serialize with Serde
 impl Config {
     /// Create a Config struct by reading the values from given file path.
     pub fn new(_filepath: &std::path::Path) -> Self {
