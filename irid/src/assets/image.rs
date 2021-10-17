@@ -4,17 +4,18 @@
 /// A Dynamic Image
 ///
 /// It is a wrapper of the [image::DynamicImage](image::DynamicImage) object.
-pub struct DynamicImage(image::DynamicImage, u32, u32);
+#[derive(Debug)]
+pub struct DiffuseImage(image::DynamicImage, u32, u32);
 
 
-impl DynamicImage {
+impl DiffuseImage {
     /// Open and decode a file to read, format will be guessed from path.
     ///
     /// If you want to inspect the content for a better guess on the format,
     /// which does not depend on file extensions, see
     /// [new_with_guessed_format](DynamicImage::new_with_guessed_format).
     pub fn new(filepath: &std::path::Path) -> image::ImageResult<Self> {
-        DynamicImage::new_handler(filepath, false)
+        DiffuseImage::new_handler(filepath, false)
     }
 
     /// Open and decode a file to read, format will be guessed from path first
@@ -34,7 +35,7 @@ impl DynamicImage {
     /// **When an error occurs, the reader may not have been properly reset and it is potentially
     /// hazardous to continue with more IO operations**.
     pub fn new_with_guessed_format(filepath: &std::path::Path) -> image::ImageResult<Self> {
-        DynamicImage::new_handler(filepath, true)
+        DiffuseImage::new_handler(filepath, true)
     }
 
     fn new_handler(filepath: &std::path::Path, guess_the_format:bool) -> image::ImageResult<Self> {
@@ -58,7 +59,7 @@ impl DynamicImage {
         })
     }
 
-    //- Color Data Methods -------------------------------------------------------------------------
+    //- Color Data Conversion Methods --------------------------------------------------------------
 
     /// Get the bytes from the image as 8bit RGBA.
     pub fn as_rgba8_bytes(&self) -> Option<&[u8]> {
@@ -84,20 +85,5 @@ impl DynamicImage {
     /// The height of this image.
     pub fn height(&self) -> u32 {
         self.2
-    }
-
-    //- Exposing Methods ---------------------------------------------------------------------------
-
-    /// Return the wrapped [image::DynamicImage](image::DynamicImage) object.
-    ///
-    /// # Unsafe
-    ///
-    /// The methods isn't unsafe per se, but it could give problems since it is exposed as a
-    /// workaround in case there are missing methods in the wrapper.
-    ///
-    /// We strongly recommend opening an issue to ask which methods you want exposed in the wrapper
-    /// and your use case instead.
-    pub unsafe fn expose_wrapped_dynamic_image(&self) -> &image::DynamicImage {
-        &self.0
     }
 }

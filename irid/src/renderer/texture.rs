@@ -1,30 +1,41 @@
+//= USES ===========================================================================================
+
+use crate::assets::DiffuseImage;
+use crate::renderer::{Device, Surface};
+
 
 //= DIFFUSE TEXTURE ================================================================================
 
+///
+#[derive(Debug)]
 pub struct DiffuseTexture {
-    dynamic_image: crate::assets::DynamicImage,
+    diffuse_image: DiffuseImage,
     image_metadatas: TextureImageMetadatas,
 }
 
 impl DiffuseTexture {
-    pub fn load(device: &crate::renderer::Device, filepath: &std::path::Path) -> anyhow::Result<Self> {
-        let dynamic_image = crate::assets::DynamicImage::new(filepath)?;
+    ///
+    // TODO I have to create the metas in static manner and after the surface/device creation, so I can create a texture without use those parameters
+    pub fn load(surface: &Surface, device: &crate::renderer::Device, filepath: &std::path::Path) -> anyhow::Result<Self> {
+        let diffuse_image = DiffuseImage::new(filepath)?;
 
         // TODO: da finire
         let image_metadatas = TextureImageMetadatas::new(
+            surface,
             device,
-            dynamic_image.width(),
-            dynamic_image.height()
+            diffuse_image.width(),
+            diffuse_image.height()
         );
 
         Ok(Self {
-            dynamic_image,
+            diffuse_image,
             image_metadatas,
         })
     }
 
+    // TODO: to be used instead of  dynamic_image.as_rgba8_bytes on queue.create_texture after created the IridQueue
     pub fn as_bytes(&self) -> Option<&[u8]>{
-        self.dynamic_image.as_rgba8_bytes()
+        self.diffuse_image.as_rgba8_bytes()
     }
 }
 
@@ -32,6 +43,7 @@ impl DiffuseTexture {
 //= TEXTURE IMAGE METADATAS ========================================================================
 
 /// Struct containing values used by queue.write_texture()
+#[derive(Debug)]
 pub struct TextureImageMetadatas {
     texture: wgpu::Texture,
     image_data_layout: wgpu::ImageDataLayout,
@@ -40,7 +52,8 @@ pub struct TextureImageMetadatas {
 
 impl TextureImageMetadatas {
     pub fn new(
-        device: &crate::renderer::Device,
+        surface: &Surface,
+        device: &Device,
         width: u32,
         height: u32,
     ) -> Self {
@@ -59,7 +72,7 @@ impl TextureImageMetadatas {
                 mip_level_count: 1,
                 sample_count: 1,
                 dimension: wgpu::TextureDimension::D2,
-                format: crate::renderer::PREFERRED_TEXTURE_FORMAT,
+                format: surface.get_preferred_format(),
                 // TEXTURE_BINDING tells wgpu that we want to use this texture in shaders
                 // COPY_DST means that we want to copy data to this texture
                 usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
@@ -110,6 +123,8 @@ impl TextureImageMetadatas {
 
 //= TEXTURE BIND GROUP METADATAS ===================================================================
 
+///
+#[derive(Debug)]
 pub struct TextureBindGroupMetadatas {
     bind_group_layout: wgpu::BindGroupLayout,
     bind_group: wgpu::BindGroup,
@@ -201,7 +216,7 @@ impl TextureBindGroupMetadatas {
         wgpu_device.create_sampler(
             &wgpu::SamplerDescriptor {
                 label: Some("Diffuse Texture Sampler"),
-                address_mode_u: wgpu::AddressMode::ClampToEdge,  // TODO: probabilmente meglio utilizzare MirrorRepeated per evitare le Bleeding Textures, idem sotto
+                address_mode_u: wgpu::AddressMode::ClampToEdge,  // TODO: probably is better to use MirrorRepeated to avoid bleeding textures, also below
                 address_mode_v: wgpu::AddressMode::ClampToEdge,
                 address_mode_w: wgpu::AddressMode::ClampToEdge,
                 mag_filter: wgpu::FilterMode::Linear,
@@ -226,11 +241,14 @@ impl TextureBindGroupMetadatas {
 
 //= TEXTURE DEPTH ==================================================================================
 
+///
+#[derive(Debug)]
 pub struct TextureDepthMetadatas {
     _texture: wgpu::Texture,
     view: wgpu::TextureView,
     _sampler: wgpu::Sampler,
 }
+
 
 impl TextureDepthMetadatas {
     pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;

@@ -1,3 +1,7 @@
+//= USES ===========================================================================================
+
+use crate::renderer::Surface;
+
 
 //= SHADER MODULE ==================================================================================
 
@@ -40,101 +44,179 @@ impl<'a> ShaderModuleBuilder<'a> {
 }
 
 
-//= VERTEX STATE ===================================================================================
+//= VERTEX STATE BUILDER ===========================================================================
 
+///
 #[derive(Clone, Debug)]
 pub struct VertexStateBuilder<'a> {
-    vertex_state: wgpu::VertexState<'a>
+    module: &'a wgpu::ShaderModule,
+    entry_point: Option<&'a str>,
+    buffers: Option<&'a [wgpu::VertexBufferLayout<'a>]>,
 }
 
 
 impl<'a> VertexStateBuilder<'a> {
-    pub const DEFAULT_ENTRY_POINT: &'static str = "main";  // TODO: configurarlo in un build script
+    ///
+    pub const DEFAULT_ENTRY_POINT: &'static str = "vertex_main";
 
+    //- Constructor Methods ------------------------------------------------------------------------
+
+    ///
     pub fn new(module: &'a wgpu::ShaderModule) -> Self {
-        Self {
-            vertex_state: wgpu::VertexState {
-                module,
-                entry_point: VertexStateBuilder::DEFAULT_ENTRY_POINT,
-                buffers: &[],
-            },
+        VertexStateBuilder {
+            module,
+            entry_point: None,
+            buffers: None,
         }
     }
 
+    //- With-Setter Methods ------------------------------------------------------------------------
+
+    ///
     pub fn module(&mut self, module: &'a wgpu::ShaderModule) -> &mut Self {
-        self.vertex_state.module = module;
+        self.module = module;
         self
     }
 
+    ///
     pub fn entry_point(&mut self, entry_point: &'a str) -> &mut Self {
-        self.vertex_state.entry_point = if entry_point.is_empty() {
-            VertexStateBuilder::DEFAULT_ENTRY_POINT
+        self.entry_point = if entry_point.is_empty() {
+            log::warn!("An empty entry_point string was passed as argument for VertexStateBuilder, \
+            the default value of {} will be set instead",
+                VertexStateBuilder::DEFAULT_ENTRY_POINT);
+            Some(VertexStateBuilder::DEFAULT_ENTRY_POINT)
         } else {
-            entry_point
+            Some(entry_point)
         };
         self
     }
 
+    ///
     pub fn buffers(mut self, buffers: &'a [wgpu::VertexBufferLayout]) -> Self {
-        self.vertex_state.buffers = buffers;
+        self.buffers = Some(buffers);
         self
     }
 
+    //- Build Methods ------------------------------------------------------------------------------
+
+    ///
     pub fn build(self) -> wgpu::VertexState<'a> {
-        self.vertex_state
+        wgpu::VertexState {
+            module: self.module,
+
+            entry_point: if self.entry_point.is_some() {
+                self.entry_point.unwrap()
+            } else {
+                VertexStateBuilder::DEFAULT_ENTRY_POINT
+            },
+
+            buffers: if self.buffers.is_some() {
+                self.buffers.unwrap()
+            } else {
+                &[]
+            },
+        }
     }
 }
 
 
-//= FRAGMENT STATE ============================================================================
+//= FRAGMENT STATE BUILDER =========================================================================
 
+///
+#[derive(Clone, Debug)]
 pub struct FragmentStateBuilder<'a> {
-    fragment_state: wgpu::FragmentState<'a>,
+    module: &'a wgpu::ShaderModule,
+    entry_point: Option<&'a str>,
+    targets: Option<&'a [wgpu::ColorTargetState]>,
+    color_target_states: Option<[wgpu::ColorTargetState; 1]>,  // workaround to avoid error[E0716]
 }
 
 
 impl<'a> FragmentStateBuilder<'a> {
-    pub const DEFAULT_ENTRY_POINT: &'static str = "main";  // TODO: configurarlo in un build script
+    ///
+    pub const DEFAULT_ENTRY_POINT: &'static str = "fragment_main";
 
-    pub const DEFAULT_COLOR_TARGET_STATE: wgpu::ColorTargetState = wgpu::ColorTargetState {
-        format: crate::renderer::PREFERRED_TEXTURE_FORMAT,
-        blend: Some(wgpu::BlendState {
-            color: wgpu::BlendComponent::REPLACE,
-            alpha: wgpu::BlendComponent::REPLACE,
-        }),
-        write_mask: wgpu::ColorWrites::ALL,
-    };
+    //- Constructor Methods ------------------------------------------------------------------------
 
+    ///
     pub fn new(module: &'a wgpu::ShaderModule) -> Self {
         Self {
-            fragment_state: wgpu::FragmentState {
-                module,
-                entry_point: FragmentStateBuilder::DEFAULT_ENTRY_POINT,
-                targets: &[FragmentStateBuilder::DEFAULT_COLOR_TARGET_STATE],
-            },
+            module,
+            entry_point: None,
+            targets: None,
+            color_target_states: None
         }
     }
 
-    pub fn module(&mut self, module: &'a wgpu::ShaderModule) -> &mut Self {
-        self.fragment_state.module = module;
+    //- With-Setter Methods ------------------------------------------------------------------------
+
+    ///
+    pub fn module(mut self, module: &'a wgpu::ShaderModule) -> Self {
+        self.module = module;
         self
     }
 
-    pub fn entry_point(&mut self, entry_point: &'a str) -> &mut Self {
-        self.fragment_state.entry_point = if entry_point.is_empty() {
-            VertexStateBuilder::DEFAULT_ENTRY_POINT
+    ///
+    pub fn entry_point(mut self, entry_point: &'a str) -> Self {
+        self.entry_point = if entry_point.is_empty() {
+            log::warn!("An empty entry_point string was passed as argument for FragmentStateBuilder, \
+            the default value of {} will be set instead",
+                FragmentStateBuilder::DEFAULT_ENTRY_POINT);
+            Some(FragmentStateBuilder::DEFAULT_ENTRY_POINT)
         } else {
-            entry_point
+            Some(entry_point)
         };
         self
     }
 
-    pub fn targets(&mut self, targets: &'a [wgpu::ColorTargetState]) -> &mut Self {
-        self.fragment_state.targets = targets;
+    ///
+    pub fn targets(mut self, targets: &'a [wgpu::ColorTargetState]) -> Self {
+        self.targets = Some(targets);
         self
     }
 
-    pub fn build(self) -> wgpu::FragmentState<'a> {
-        self.fragment_state
+    //- Build Methods ------------------------------------------------------------------------------
+
+    ///
+    fn create_default_color_target_state(
+        &self,
+        format: wgpu::TextureFormat
+    ) -> wgpu::ColorTargetState {
+        wgpu::ColorTargetState {
+            format,
+            blend: Some(wgpu::BlendState {
+                color: wgpu::BlendComponent::REPLACE,
+                alpha: wgpu::BlendComponent::REPLACE,
+            }),
+            write_mask: wgpu::ColorWrites::ALL,
+        }
+    }
+
+    ///
+    pub fn build(mut self, surface: &'a Surface) -> wgpu::FragmentState<'a> {
+        if self.targets.is_none() {
+            self.color_target_states = Some([self.create_default_color_target_state(
+                surface.get_preferred_format())]
+            );
+        };
+        self.inner_build()
+    }
+
+    fn inner_build(self) -> wgpu::FragmentState<'a> {
+        wgpu::FragmentState {
+            module: self.module,
+
+            entry_point: if self.entry_point.is_some() {
+                self.entry_point.unwrap()
+            } else {
+                FragmentStateBuilder::DEFAULT_ENTRY_POINT
+            },
+
+            targets: if self.targets.is_some() {
+                self.targets.unwrap()
+            } else {
+                &self.color_target_states.unwrap()
+            },
+        }
     }
 }

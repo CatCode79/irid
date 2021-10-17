@@ -1,16 +1,8 @@
 
 //= CONSTS =========================================================================================
 
-const FRAME_TEXTURE_VIEW: wgpu::TextureViewDescriptor = wgpu::TextureViewDescriptor {
-    label: None,
-    format: None,
-    dimension: None,
-    aspect: wgpu::TextureAspect::All,
-    base_mip_level: 0,
-    mip_level_count: None,
-    base_array_layer: 0,
-    array_layer_count: None
-};
+use crate::assets::DiffuseImage;
+use crate::renderer::{TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas};
 
 const NUM_INSTANCES_PER_ROW: u32 = 10;
 const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
@@ -45,6 +37,7 @@ pub struct Renderer {
 
 
 impl Renderer {
+    ///
     pub fn new(
         window: &winit::window::Window,
         shader_source: String,
@@ -69,20 +62,22 @@ impl Renderer {
 
         //- Texture --------------------------------------------------------------------------------
 
-        let diffuse_image = crate::assets::DynamicImage::new(texture_path)?;
+        let diffuse_image = DiffuseImage::new(texture_path)?;
 
-        let texture_image_metadatas =
-            crate::renderer::TextureImageMetadatas::new(&device, diffuse_image.width(), diffuse_image.height());
+        let texture_image_metadatas = TextureImageMetadatas::new(
+            &surface, &device, diffuse_image.width(), diffuse_image.height()
+        );
 
-        let texture_bind_group_metadatas=
-            crate::renderer::TextureBindGroupMetadatas::new(&device, &texture_image_metadatas.texture());
+        let texture_bind_group_metadatas= TextureBindGroupMetadatas::new(
+            &device, &texture_image_metadatas.texture()
+        );
 
-        let texture_depth_metadatas=
-            crate::renderer::TextureDepthMetadatas::new(&device, window_size);
+        let texture_depth_metadatas = TextureDepthMetadatas::new(&device, window_size);
 
         //- Pipeline -------------------------------------------------------------------------------
 
         let pipeline = crate::renderer::RenderPipeline::new(
+            &surface,
             &device,
             texture_bind_group_metadatas.bind_group_layout(),
             camera_metadatas.bind_group_layout(),
@@ -188,14 +183,14 @@ impl Renderer {
         self.refresh_current_size();
     }
 
-    #[inline]
-    pub(crate) fn refresh_current_size(&mut self) {
+    ///
+    pub fn refresh_current_size(&mut self) {
         self.surface.update(&self.device, self.window_size);
     }
 
     //- Camera Methods -----------------------------------------------------------------------------
 
-    #[inline(always)]
+    ///
     pub fn process_camera_events(&mut self, input: &winit::event::KeyboardInput) -> bool {
         self.camera_controller.process_events(input)
     }
@@ -203,7 +198,6 @@ impl Renderer {
     //- Command Encoder Methods --------------------------------------------------------------------
 
     ///
-    #[inline(always)]
     pub fn create_command_encoder(&self, label_text: &str) -> wgpu::CommandEncoder {
         self.device.expose_wgpu_device().create_command_encoder(  // TODO: probabilmente è meglio spostarlo in device
             &wgpu::CommandEncoderDescriptor {
@@ -214,6 +208,7 @@ impl Renderer {
 
     //- Rendering Methods --------------------------------------------------------------------------
 
+    ///
     pub(crate) fn redraw(&mut self, config: &crate::app::Config) -> Result<(), wgpu::SurfaceError> {
         self.camera_controller.update_camera(&mut self.camera);
         let mut camera_uniform = *self.camera_metadatas.uniform();
@@ -235,10 +230,19 @@ thread 'main' panicked at 'Texture[1] does not exist', C:\Users\DarkWolf\.cargo\
         // Also if I move those two lines inside the render_pass scope I still have the error.
         // I suspect a bug inside the wgpu. I found this on wgpu v0.10.
         // (I should probably mention it as an issue on the official github repo but I'm a lazy cat)
-        // TODO: test results with wgpu 0.11: NO TEST PERFORMED
+        // TODO: test results with wgpu 0.11: NO TEST PERFORMED, probably the logic is changed because some modification about frame and output
 
         let output = self.surface.get_current_frame()?.output;
-        let frame_view = output.texture.create_view(&FRAME_TEXTURE_VIEW);  // TODO: forse in realtà è più veloce accedervi se si trova nella stessa porzione di codice e non come costante non locale
+        let frame_view = output.texture.create_view(&wgpu::TextureViewDescriptor {
+            label: None,
+            format: None,
+            dimension: None,
+            aspect: wgpu::TextureAspect::All,
+            base_mip_level: 0,
+            mip_level_count: None,
+            base_array_layer: 0,
+            array_layer_count: None
+        });
         //- ¡WARNING ENDS! -------------------------------------------------------------------------
 
         let mut encoder = self.create_command_encoder("Render Encoder");
@@ -283,6 +287,7 @@ thread 'main' panicked at 'Texture[1] does not exist', C:\Users\DarkWolf\.cargo\
 
     //- Getters ------------------------------------------------------------------------------------
 
+    ///
     pub fn texture_bind_group_metadatas(&self) -> &crate::renderer::TextureBindGroupMetadatas {
         &self.texture_bind_group_metadatas
     }

@@ -1,4 +1,11 @@
 
+//= USES ===========================================================================================
+
+use crate::renderer::{Device, DiffuseTexture, Surface};
+
+
+//= VERTEX OBJECT ==================================================================================
+
 pub trait Vertex {
     fn desc<'a>() -> wgpu::VertexBufferLayout<'a>;
 }
@@ -40,7 +47,8 @@ impl Vertex for ModelVertex {
     }
 }
 
-//= 3D MODEL =======================================================================================
+
+//= 3D MODEL OBJECT ================================================================================
 
 pub struct Model {
     pub meshes: Vec<Mesh>,
@@ -61,8 +69,11 @@ pub struct Mesh {
 }
 
 impl Model {
+    ///
+    // TODO also here I have to remove at least surface param
     pub fn load<P: AsRef<std::path::Path>>(
-        device: &crate::renderer::Device,
+        surface: &Surface,
+        device: &Device,
         path: P,
     ) -> anyhow::Result<Self> {
         let (obj_models, obj_materials) = tobj::load_obj(
@@ -85,7 +96,7 @@ impl Model {
         for mat in obj_materials {
             use std::ops::Deref;
             let filepath = containing_folder.join(mat.diffuse_texture);
-            let texture = crate::renderer::DiffuseTexture::load(device, filepath.deref())?;
+            let texture = DiffuseTexture::load(surface, device, filepath.deref())?;
 
             materials.push(Material {
                 name: mat.name,

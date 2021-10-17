@@ -3,6 +3,8 @@
 
 //= PIPELINE LAYOUT ================================================================================
 
+use crate::renderer::{Device, Surface};
+
 pub struct PipelineLayoutBuilder<'a> {
     pipeline_layout_desc: wgpu::PipelineLayoutDescriptor<'a>
 }
@@ -211,8 +213,11 @@ pub struct RenderPipeline(wgpu::RenderPipeline);
 
 
 impl RenderPipeline {
+    ///
+    // TODO Also here: I have to remove the Surface parameter
     pub fn new(
-        device: &crate::renderer::Device,
+        surface: &Surface,
+        device: &Device,
         texture_bind_group_layout: &wgpu::BindGroupLayout,
         camera_bind_group_layout: &wgpu::BindGroupLayout,
         shader_source: String
@@ -235,7 +240,8 @@ impl RenderPipeline {
         let vertex_state = crate::renderer::VertexStateBuilder::new(&shader_module)
             .buffers(buffers)
             .build();
-        let fragment_state = crate::renderer::FragmentStateBuilder::new(&shader_module).build();
+        let fragment_state = crate::renderer::FragmentStateBuilder::new(&shader_module)
+            .build(&surface);
 
         let primitive_state = PrimitiveStateBuilder::new().build();
 
@@ -257,7 +263,10 @@ impl RenderPipeline {
         }
     }
 
-    pub fn expose_wrapped_render_pipeline(&self) -> &wgpu::RenderPipeline {
+    //- Crate-Public Methods -----------------------------------------------------------------------
+
+    // This method MUST remain public at the crate level.
+    pub(crate) fn expose_wrapped_render_pipeline(&self) -> &wgpu::RenderPipeline {
         &self.0
     }
 }

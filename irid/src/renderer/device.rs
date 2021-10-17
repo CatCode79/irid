@@ -2,6 +2,13 @@
 //= DEVICE WRAPPER =================================================================================
 
 /// Open connection to a graphics and/or compute device.
+///
+/// Responsible for the creation of most rendering and compute resources.
+/// These are then used in commands, which are submitted to a [`Queue`](wgpu::Queue).
+///
+/// A device may be requested from an adapter with
+/// [`Adapter::request_device`](Adapter::request_device).
+#[derive(Debug)]
 pub struct Device(wgpu::Device);
 
 
@@ -15,7 +22,7 @@ impl Device {
                 &wgpu::DeviceDescriptor {
                     label: Some("New Device & Queue"),
                     features: wgpu::Features::empty(),
-                    limits: wgpu::Limits::downlevel_defaults(),  // TODO: farlo configurabile lato utente
+                    limits: wgpu::Limits::downlevel_defaults(),  // TODO to be choosable by user
                 },
                 None, // Trace path
             ).await
@@ -56,9 +63,10 @@ impl Device {
         )
     }
 
-    ///
-    #[inline]
-    pub fn expose_wgpu_device(&self) -> &wgpu::Device {
+    //- Crate-Public Methods -----------------------------------------------------------------------
+
+    // This method MUST remain public at the crate level.
+    pub(crate) fn expose_wgpu_device(&self) -> &wgpu::Device {
         &self.0
     }
 }
