@@ -1,7 +1,8 @@
 //= USES ===========================================================================================
 
 use anyhow::anyhow;
-use crate::renderer::Adapter;
+
+use crate::renderer::{Adapter, Device};
 
 
 //= SURFACE WRAPPER ================================================================================
@@ -17,6 +18,8 @@ pub struct Surface {
 
 
 impl Surface {
+    //- Constructor Methods ------------------------------------------------------------------------
+
     /// Create a new Surface using the window handle and retrieves an Adapter which matches
     /// the created surface.
     pub fn new(
@@ -33,7 +36,7 @@ impl Surface {
         // For debug purpose prints on console all the available adapters
         enumerate_all_adapters(backends, &wgpu_instance);
 
-        let adapter = crate::renderer::Adapter::new(&wgpu_instance, &wgpu_surface)?;
+        let adapter = Adapter::new(&wgpu_instance, &wgpu_surface)?;
 
         #[cfg(debug_assertions)]
         println!("Picked Adapter: {:?}", adapter.get_info());
@@ -97,16 +100,16 @@ impl Surface {
     // Swapchain Methods ---------------------------------------------------------------------------
 
     /// Initializes Surface for presentation.
-    pub fn configure(&self, device: &crate::renderer::Device) {
-        self.wgpu_surface.configure(device.expose_wgpu_device(), &self.configuration);
+    pub fn configure(&self, device: &Device) {
+        self.wgpu_surface.configure(device.expose_wrapped_device(), &self.configuration);
     }
 
     /// Updates the Surface for presentation.
-    pub fn update(&mut self, device: &crate::renderer::Device, size: winit::dpi::PhysicalSize<u32>) {
+    pub fn update(&mut self, device: &Device, size: winit::dpi::PhysicalSize<u32>) {
         if size.width > 0 && size.height > 0 {
             self.configuration.width = size.width;
             self.configuration.height = size.height;
-            self.wgpu_surface.configure(&device.expose_wgpu_device(), &self.configuration);
+            self.wgpu_surface.configure(&device.expose_wrapped_device(), &self.configuration);
         }
     }
 

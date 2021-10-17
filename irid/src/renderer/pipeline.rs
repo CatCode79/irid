@@ -1,16 +1,21 @@
 //= USES ===========================================================================================
 
+use crate::renderer::{Device, Surface};
+
 
 //= PIPELINE LAYOUT ================================================================================
 
-use crate::renderer::{Device, Surface};
-
+///
 pub struct PipelineLayoutBuilder<'a> {
     pipeline_layout_desc: wgpu::PipelineLayoutDescriptor<'a>
 }
 
 
 impl<'a> PipelineLayoutBuilder<'a> {
+
+    //- Constructor Methods ------------------------------------------------------------------------
+
+    ///
     pub fn new() -> Self {
         Self {
             pipeline_layout_desc: wgpu::PipelineLayoutDescriptor {
@@ -21,6 +26,9 @@ impl<'a> PipelineLayoutBuilder<'a> {
         }
     }
 
+    //- Builder-Setter Methods ---------------------------------------------------------------------
+
+    ///
     pub fn label(mut self, label_text: &'a str) -> Self {
         self.pipeline_layout_desc.label = if label_text.is_empty() {
             wgpu::Label::default()
@@ -30,6 +38,7 @@ impl<'a> PipelineLayoutBuilder<'a> {
         self
     }
 
+    ///
     pub fn bind_group_layouts(
         mut self,
         bind_group_layouts: &'a [&wgpu::BindGroupLayout]
@@ -38,6 +47,7 @@ impl<'a> PipelineLayoutBuilder<'a> {
         self
     }
 
+    ///
     pub fn push_constant_ranges(
         mut self,
         push_constant_ranges: &'a [wgpu::PushConstantRange]
@@ -46,11 +56,10 @@ impl<'a> PipelineLayoutBuilder<'a> {
         self
     }
 
-    /*pub fn expose_wrapped_desc(&self) -> &wgpu::PipelineLayoutDescriptor {
-        &self.pipeline_layout_desc
-    }*/
+    //- Build Methods ------------------------------------------------------------------------------
 
-    pub fn build(self, device: &wgpu::Device) -> wgpu::PipelineLayout {
+    ///
+    pub fn build(self, device: &Device) -> wgpu::PipelineLayout {
         device.create_pipeline_layout(&self.pipeline_layout_desc)
     }
 }
@@ -58,11 +67,17 @@ impl<'a> PipelineLayoutBuilder<'a> {
 
 //= PRIMITIVE STATE ================================================================================
 
+///
 pub struct PrimitiveStateBuilder {
     primitive_state: wgpu::PrimitiveState,
 }
 
+
 impl PrimitiveStateBuilder {
+
+    //- Constructor Methods ------------------------------------------------------------------------
+
+    ///
     pub fn new() -> Self {  // TODO: bug! a me puzza sto static
         Self {
             primitive_state: wgpu::PrimitiveState {
@@ -80,41 +95,53 @@ impl PrimitiveStateBuilder {
         }
     }
 
+    //- Builder-Setter Methods ---------------------------------------------------------------------
+
+    ///
     pub fn topology(&mut self, topology: wgpu::PrimitiveTopology) -> &mut Self {
         self.primitive_state.topology = topology;
         self
     }
 
+    ///
     pub fn strip_index_format(&mut self, strip_index_format: wgpu::IndexFormat) -> &mut Self {
         self.primitive_state.strip_index_format = Some(strip_index_format);
         self
     }
 
+    ///
     pub fn front_face(&mut self, front_face: wgpu::FrontFace) -> &mut Self {
         self.primitive_state.front_face = front_face;
         self
     }
 
+    ///
     pub fn cull_mode(&mut self, cull_mode: wgpu::Face) -> &mut Self {
         self.primitive_state.cull_mode = Some(cull_mode);
         self
     }
 
+    ///
     pub fn polygon_mode(&mut self, polygon_mode: wgpu::PolygonMode) -> &mut Self {
         self.primitive_state.polygon_mode = polygon_mode;
         self
     }
 
+    ///
     pub fn clamp_depth(&mut self, clamp_depth: bool) -> &mut Self {
         self.primitive_state.clamp_depth = clamp_depth;
         self
     }
 
+    ///
     pub fn conservative(&mut self, conservative: bool) -> &mut Self {
         self.primitive_state.conservative = conservative;
         self
     }
 
+    //- Build Methods ------------------------------------------------------------------------------
+
+    ///
     pub fn build(self) -> wgpu::PrimitiveState {
         self.primitive_state
     }
@@ -123,6 +150,7 @@ impl PrimitiveStateBuilder {
 
 //= PIPELINE DESCRIPTOR ============================================================================
 
+///
 pub struct RenderPipelineBuilder<'a> {
     render_pipeline_desc: wgpu::RenderPipelineDescriptor<'a>
 }
@@ -130,6 +158,10 @@ pub struct RenderPipelineBuilder<'a> {
 
 // TODO: qui devo creare direttamente una pipeline irid e non wgpu
 impl<'a> RenderPipelineBuilder<'a> {
+
+    //- Constructor Methods ------------------------------------------------------------------------
+
+    ///
     pub fn new(vertex: wgpu::VertexState<'a>) -> Self {
         Self {
             render_pipeline_desc: wgpu::RenderPipelineDescriptor {
@@ -137,7 +169,7 @@ impl<'a> RenderPipelineBuilder<'a> {
                 layout: None,
                 vertex,
                 primitive: wgpu::PrimitiveState::default(),
-                depth_stencil: Some(RenderPipelineBuilder::create_depth_stencil()),
+                depth_stencil: Some(RenderPipelineBuilder::create_default_depth_stencil()),
                 multisample: wgpu::MultisampleState::default(),
                 fragment: None
             },
@@ -145,7 +177,7 @@ impl<'a> RenderPipelineBuilder<'a> {
     }
 
     #[inline]
-    fn create_depth_stencil() -> wgpu::DepthStencilState {
+    fn create_default_depth_stencil() -> wgpu::DepthStencilState {
         wgpu::DepthStencilState {
             format: crate::renderer::TextureDepthMetadatas::DEPTH_FORMAT,
             depth_write_enabled: true,
@@ -155,8 +187,9 @@ impl<'a> RenderPipelineBuilder<'a> {
         }
     }
 
-    //- Setters ------------------------------------------------------------------------------------
+    //- Builder-Setter Methods ---------------------------------------------------------------------
 
+    ///
     pub fn label(&mut self, label_text: &'a str) -> &mut Self {
         self.render_pipeline_desc.label = if label_text.is_empty() {
             wgpu::Label::default()
@@ -166,31 +199,37 @@ impl<'a> RenderPipelineBuilder<'a> {
         self
     }
 
+    ///
     pub fn layout(&mut self, layout: &'a wgpu::PipelineLayout) -> &mut Self {
         self.render_pipeline_desc.layout = Some(layout);
         self
     }
 
+    ///
     pub fn vertex(&mut self, vertex: wgpu::VertexState<'a>) -> &mut Self {
         self.render_pipeline_desc.vertex = vertex;
         self
     }
 
+    ///
     pub fn primitive(&mut self, primitive: wgpu::PrimitiveState) -> &mut Self {
         self.render_pipeline_desc.primitive = primitive;
         self
     }
 
+    ///
     pub fn depth_stencil(&mut self, depth_stencil: wgpu::DepthStencilState) -> &mut Self {
         self.render_pipeline_desc.depth_stencil = Some(depth_stencil);
         self
     }
 
+    ///
     pub fn multisample(&mut self, multisample: wgpu::MultisampleState) -> &mut Self {
         self.render_pipeline_desc.multisample = multisample;
         self
     }
 
+    ///
     pub fn fragment(&mut self, fragment: wgpu::FragmentState<'a>) -> &mut Self {
         self.render_pipeline_desc.fragment = Some(fragment);
         self
@@ -198,7 +237,8 @@ impl<'a> RenderPipelineBuilder<'a> {
 
     //- Build Methods ------------------------------------------------------------------------------
 
-    pub fn build(&mut self, device: &wgpu::Device) -> wgpu::RenderPipeline {
+    ///
+    pub fn build(&mut self, device: &Device) -> wgpu::RenderPipeline {
         device.create_render_pipeline(&self.render_pipeline_desc)
     }
 }
@@ -222,11 +262,9 @@ impl RenderPipeline {
         camera_bind_group_layout: &wgpu::BindGroupLayout,
         shader_source: String
     ) -> Self {
-        let wgpu_device = device.expose_wgpu_device();
-
         let pipeline_layout = PipelineLayoutBuilder::new()
             .bind_group_layouts(&[texture_bind_group_layout, camera_bind_group_layout])
-            .build(wgpu_device);
+            .build(device);
 
         use crate::assets::Vertex;
         let buffers = &[
@@ -236,7 +274,7 @@ impl RenderPipeline {
         ];
         let shader_module = crate::renderer::ShaderModuleBuilder::new(
             wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(shader_source))
-        ).build(wgpu_device);
+        ).build(device);
         let vertex_state = crate::renderer::VertexStateBuilder::new(&shader_module)
             .with_buffers(buffers)
             .build();
@@ -256,16 +294,15 @@ impl RenderPipeline {
             .fragment(fragment_state)
             .primitive(primitive_state)
             .multisample(multisample)
-            .build(wgpu_device);
+            .build(device);
 
         Self {
             0: wgpu_render_pipeline,
         }
     }
 
-    //- Crate-Public Methods -----------------------------------------------------------------------
+    //- Wrapper Methods ----------------------------------------------------------------------------
 
-    // This method MUST remain public at the crate level.
     pub(crate) fn expose_wrapped_render_pipeline(&self) -> &wgpu::RenderPipeline {
         &self.0
     }

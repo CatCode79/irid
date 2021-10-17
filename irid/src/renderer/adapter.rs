@@ -10,10 +10,14 @@ use anyhow::anyhow;
 ///
 /// Adapters can be used to open a connection to the corresponding [`Device`]
 /// on the host system by using [`Adapter::request_device`].
-pub struct Adapter(wgpu::Adapter);
+pub struct Adapter {
+    wgpu_adapter: wgpu::Adapter,
+}
 
 
 impl Adapter {
+    //- Constructor Methods ------------------------------------------------------------------------
+
     /// Retrieves an Adapter which matches the given surface.
     /// Some options are "soft", so treated as non-mandatory. Others are "hard".
     /// If no adapters are found that suffice all the "hard" options, Err is returned.
@@ -31,11 +35,12 @@ impl Adapter {
             ).await
         });
 
-        match wgpu_adapter {
-            None => Err(anyhow!("An adapter compatible with the given surface could not be obtained")),
-            Some(wgpu_adapter) => Ok(Self {
-                0: wgpu_adapter,
+        if wgpu_adapter.is_some() {
+            Ok(Self {
+                wgpu_adapter: wgpu_adapter.unwrap(),
             })
+        } else {
+            Err(anyhow!("An adapter compatible with the given surface could not be obtained"))
         }
     }
 
@@ -63,18 +68,18 @@ impl Adapter {
         trace_path: Option<&std::path::Path>
     ) -> impl std::future::Future<Output =
     anyhow::Result<(wgpu::Device, wgpu::Queue), wgpu::RequestDeviceError>> + Send {
-        self.0.request_device(desc, trace_path)
+        self.wgpu_adapter.request_device(desc, trace_path)
     }
 
     /// Get info about the adapter itself.
     pub fn get_info(&self) -> wgpu::AdapterInfo {
-        self.0.get_info()
+        self.wgpu_adapter.get_info()
     }
 
     ///- Crate-Public Methods ----------------------------------------------------------------------
 
     // This method MUST remain public at the crate level.
     pub(crate) fn expose_wrapped_adapter(&self) -> &wgpu::Adapter {
-        &self.0
+        &self.wgpu_adapter
     }
 }

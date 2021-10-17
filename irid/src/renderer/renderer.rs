@@ -129,8 +129,7 @@ impl Renderer {
 
         let instance_data = instances.iter().map(crate::renderer::Instance::to_raw)
             .collect::<Vec<_>>();
-        use wgpu::util::DeviceExt;
-        let instance_buffer = device.expose_wgpu_device().create_buffer_init(  // TODO: quando creerò le generics per i vertici utilizzare quella in device
+        let instance_buffer = device.create_buffer_init(  // TODO: quando creerò le generics per i vertici utilizzare quella in device
             &wgpu::util::BufferInitDescriptor {
                 label: Some("Instance Buffer"),
                 contents: bytemuck::cast_slice(&instance_data),
@@ -199,7 +198,7 @@ impl Renderer {
 
     ///
     pub fn create_command_encoder(&self, label_text: &str) -> wgpu::CommandEncoder {
-        self.device.expose_wgpu_device().create_command_encoder(  // TODO: probabilmente è meglio spostarlo in device
+        self.device.create_command_encoder(
             &wgpu::CommandEncoderDescriptor {
                 label: Some(label_text),
             }

@@ -14,9 +14,10 @@ pub struct DiffuseTexture {
 }
 
 impl DiffuseTexture {
+
     ///
     // TODO I have to create the metas in static manner and after the surface/device creation, so I can create a texture without use those parameters
-    pub fn load(surface: &Surface, device: &crate::renderer::Device, filepath: &std::path::Path) -> anyhow::Result<Self> {
+    pub fn load(surface: &Surface, device: &Device, filepath: &std::path::Path) -> anyhow::Result<Self> {
         let diffuse_image = DiffuseImage::new(filepath)?;
 
         // TODO: da finire
@@ -57,8 +58,6 @@ impl TextureImageMetadatas {
         width: u32,
         height: u32,
     ) -> Self {
-        let wgpu_device = device.expose_wgpu_device();
-
         let image_size = wgpu::Extent3d {
             width,
             height,
@@ -66,7 +65,7 @@ impl TextureImageMetadatas {
             depth_or_array_layers: 1,
         };
 
-        let texture = wgpu_device.create_texture(
+        let texture = device.create_texture(
             &wgpu::TextureDescriptor {
                 size: image_size,
                 mip_level_count: 1,
@@ -130,18 +129,17 @@ pub struct TextureBindGroupMetadatas {
     bind_group: wgpu::BindGroup,
 }
 
+
 impl TextureBindGroupMetadatas {
     pub fn new(
-        device: &crate::renderer::Device,
+        device: &Device,
         texture: &wgpu::Texture
     ) -> Self {
-        let wgpu_device = device.expose_wgpu_device();
-
         let bind_group_layout = TextureBindGroupMetadatas::create_bind_group_layout(
-            wgpu_device
+            device
         );
 
-        let bind_group = wgpu_device.create_bind_group(
+        let bind_group = device.create_bind_group(
             &wgpu::BindGroupDescriptor {
                 layout: &bind_group_layout,
                 entries: &[
@@ -154,7 +152,7 @@ impl TextureBindGroupMetadatas {
                     wgpu::BindGroupEntry {
                         binding: 1,
                         resource: wgpu::BindingResource::Sampler(
-                            &TextureBindGroupMetadatas::create_sampler(wgpu_device)
+                            &TextureBindGroupMetadatas::create_sampler(device)
                         ),
                     }
                 ],
@@ -169,9 +167,9 @@ impl TextureBindGroupMetadatas {
     }
 
     fn create_bind_group_layout(
-        wgpu_device: &wgpu::Device
+        device: &Device
     ) -> wgpu::BindGroupLayout {
-        wgpu_device.create_bind_group_layout(
+        device.create_bind_group_layout(
             &wgpu::BindGroupLayoutDescriptor {
                 entries: &[
                     wgpu::BindGroupLayoutEntry {
@@ -212,8 +210,8 @@ impl TextureBindGroupMetadatas {
         )
     }
 
-    fn create_sampler(wgpu_device: &wgpu::Device) -> wgpu::Sampler {
-        wgpu_device.create_sampler(
+    fn create_sampler(device: &Device) -> wgpu::Sampler {
+        device.create_sampler(
             &wgpu::SamplerDescriptor {
                 label: Some("Diffuse Texture Sampler"),
                 address_mode_u: wgpu::AddressMode::ClampToEdge,  // TODO: probably is better to use MirrorRepeated to avoid bleeding textures, also below
@@ -253,14 +251,14 @@ pub struct TextureDepthMetadatas {
 impl TextureDepthMetadatas {
     pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
 
+    //- Constructor Methods ------------------------------------------------------------------------
+
     /// Our depth texture needs to be the same size as our screen if we want things
     /// to render correctly so we give to constructor windows_size value.
     pub fn new(
-        device: &crate::renderer::Device,
+        device: &Device,
         window_size: winit::dpi::PhysicalSize<u32>,
     ) -> Self {
-        let wgpu_device = device.expose_wgpu_device();
-
         let size = wgpu::Extent3d {
             width: window_size.width,
             height: window_size.height,
@@ -277,7 +275,7 @@ impl TextureDepthMetadatas {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
         };
 
-        let texture = wgpu_device.create_texture(&desc);
+        let texture = device.create_texture(&desc);
 
         let view = texture.create_view(
             &wgpu::TextureViewDescriptor{
@@ -291,7 +289,7 @@ impl TextureDepthMetadatas {
         // If we do decide to render our depth texture, we need to use CompareFunction::LessEqual.
         // This is due to how the samplerShadow and sampler2DShadow()
         // interacts with the texture() function in GLSL.
-        let sampler = wgpu_device.create_sampler(
+        let sampler = device.create_sampler(
             &wgpu::SamplerDescriptor {
                 address_mode_u: wgpu::AddressMode::ClampToEdge,
                 address_mode_v: wgpu::AddressMode::ClampToEdge,

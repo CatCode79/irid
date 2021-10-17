@@ -62,13 +62,10 @@ impl Camera {
 
     /// Create a new CameraMetadatas from this camera.
     pub fn create_metadatas(&self, device: &crate::renderer::Device) -> CameraMetadatas {
-        let wgpu_device = device.expose_wgpu_device();
-
         let mut uniform = CameraUniform::new();
         uniform.update_view_proj(self);
 
-        use wgpu::util::DeviceExt;
-        let buffer = wgpu_device.create_buffer_init(
+        let buffer = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: Some("Camera Buffer"),
                 contents: bytemuck::cast_slice(&[uniform.clone()]),
@@ -76,7 +73,7 @@ impl Camera {
             }
         );
 
-        let bind_group_layout = wgpu_device.create_bind_group_layout(
+        let bind_group_layout = device.create_bind_group_layout(
             &wgpu::BindGroupLayoutDescriptor {
                 entries: &[
                     wgpu::BindGroupLayoutEntry {
@@ -94,7 +91,7 @@ impl Camera {
             }
         );
 
-        let bind_group = wgpu_device.create_bind_group(
+        let bind_group = device.create_bind_group(
             &wgpu::BindGroupDescriptor {
                 layout: &bind_group_layout,
                 entries: &[
