@@ -8,7 +8,12 @@ use crate::renderer::Adapter;
 
 /// A Surface represents a platform-specific surface (e.g. a window) onto which rendered images
 /// may be presented.
-pub struct Surface(wgpu::Surface, wgpu::TextureFormat, wgpu::SurfaceConfiguration);
+pub struct Surface {
+    wgpu_surface: wgpu::Surface,
+    preferred_format: wgpu::TextureFormat,
+    configuration: wgpu::SurfaceConfiguration,
+    color_target_states: [wgpu::ColorTargetState; 1],
+}
 
 
 impl Surface {
@@ -34,7 +39,7 @@ impl Surface {
         println!("Picked Adapter: {:?}", adapter.get_info());
 
         // Most images are stored using sRGB so we need to reflect that here.
-        //let texture_format = wgpu::TextureFormat::Rgba8UnormSrgb;  // TODO must be choosable by user
+        //let preferred_format = wgpu::TextureFormat::Rgba8UnormSrgb;  // TODO must be choosable by user
         let preferred_format = wgpu_surface.get_preferred_format(
             adapter.expose_wrapped_adapter()
         );
@@ -55,41 +60,60 @@ impl Surface {
             present_mode: wgpu::PresentMode::Fifo,  // TODO: to be choosable by the user
         };
 
+        let color_target_states = [wgpu::ColorTargetState {
+            format: preferred_format,
+            blend: Some(wgpu::BlendState {
+                color: wgpu::BlendComponent::REPLACE,
+                alpha: wgpu::BlendComponent::REPLACE,
+            }),
+            write_mask: wgpu::ColorWrites::ALL,
+        }];
+
         let surface = Self {
-            0: wgpu_surface,
-            1: preferred_format,
-            2: configuration,
+            wgpu_surface,
+            preferred_format,
+            configuration,
+            color_target_states,
         };
 
         Ok((surface, adapter))
     }
 
+    //- Getter Methods -----------------------------------------------------------------------------
+
+    /// Returns an optimal texture format to use for with the previously created Surface
+    /// and Adapter.
+    pub fn get_preferred_format(&self) -> wgpu::TextureFormat {
+        self.preferred_format
+    }
+
+    /// Return an array with a [ColorTargetState](wgpu::ColorTargetState) single value,
+    /// it's a default value mainly used on
+    /// [FragmentStateBuilder](crate::shader::FragmentStateBuilder).
+    pub fn color_target_states(&self) -> &[wgpu::ColorTargetState] {
+        &self.color_target_states
+    }
+
+    // Swapchain Methods ---------------------------------------------------------------------------
+
     /// Initializes Surface for presentation.
     pub fn configure(&self, device: &crate::renderer::Device) {
-        self.0.configure(device.expose_wgpu_device(), &self.2);
+        self.wgpu_surface.configure(device.expose_wgpu_device(), &self.configuration);
     }
 
     /// Updates the Surface for presentation.
     pub fn update(&mut self, device: &crate::renderer::Device, size: winit::dpi::PhysicalSize<u32>) {
         if size.width > 0 && size.height > 0 {
-            self.2.width = size.width;
-            self.2.height = size.height;
-            self.0.configure(&device.expose_wgpu_device(), &self.2);
+            self.configuration.width = size.width;
+            self.configuration.height = size.height;
+            self.wgpu_surface.configure(&device.expose_wgpu_device(), &self.configuration);
         }
     }
 
     /// Returns the next texture to be presented by the Surface for drawing.
     #[inline(always)]
     pub fn get_current_frame(&self) -> Result<wgpu::SurfaceFrame, wgpu::SurfaceError> {
-        self.0.get_current_frame()
-    }
-
-    //- Wrapped Methods ----------------------------------------------------------------------------
-
-    /// Returns an optimal texture format to use for with the previously created Surface
-    /// and Adapter.
-    pub fn get_preferred_format(&self) -> wgpu::TextureFormat {
-        self.1
+        self.wgpu_surface.get_current_frame()
     }
 }
 

@@ -69,7 +69,7 @@ impl PrimitiveStateBuilder {
                 topology: wgpu::PrimitiveTopology::TriangleList,
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
-                cull_mode: Some(wgpu::Face::Back),  // TODO: Qui in nannou il cull_mode è None, da controllare in learnwgpu cosa servisse esattamente
+                cull_mode: Some(wgpu::Face::Back),  // TODO: Qui in nannou il cull_mode è None, da controllare in lw_examples cosa servisse esattamente
                 // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
                 polygon_mode: wgpu::PolygonMode::Fill,
                 // Requires Features::DEPTH_CLAMPING
@@ -238,7 +238,7 @@ impl RenderPipeline {
             wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(shader_source))
         ).build(wgpu_device);
         let vertex_state = crate::renderer::VertexStateBuilder::new(&shader_module)
-            .buffers(buffers)
+            .with_buffers(buffers)
             .build();
         let fragment_state = crate::renderer::FragmentStateBuilder::new(&shader_module)
             .build(&surface);

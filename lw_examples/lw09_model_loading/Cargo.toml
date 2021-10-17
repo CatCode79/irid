@@ -1,5 +1,5 @@
 [package]
-name = "learnwgpu_09_model_loading"
+name = "lw09_model_loading"
 version = "0.0.1"
 authors = ["CatCode <andrea.postal@gmail.com>"]
 edition = "2018"
