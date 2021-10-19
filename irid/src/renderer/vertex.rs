@@ -12,6 +12,7 @@
 
 //= COLORED VERTEX =================================================================================
 
+///
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct VertexColor {
@@ -34,6 +35,7 @@ impl VertexColor {
         },
     ];
 
+    ///
     pub fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
         wgpu::VertexBufferLayout {
             array_stride: std::mem::size_of::<VertexColor>() as wgpu::BufferAddress,
@@ -46,6 +48,7 @@ impl VertexColor {
 
 //= TEXTURED VERTEX ================================================================================
 
+///
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct VertexTexture {
@@ -68,6 +71,7 @@ impl VertexTexture {
         },
     ];
 
+    ///
     pub fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
         wgpu::VertexBufferLayout {
             array_stride: std::mem::size_of::<VertexTexture>() as wgpu::BufferAddress,

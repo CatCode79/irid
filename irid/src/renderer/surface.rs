@@ -18,6 +18,7 @@ pub struct Surface {
 
 
 impl Surface {
+
     //- Constructor Methods ------------------------------------------------------------------------
 
     /// Create a new Surface using the window handle and retrieves an Adapter which matches
@@ -34,6 +35,7 @@ impl Surface {
         let wgpu_surface = unsafe { wgpu_instance.create_surface(window) };
 
         // For debug purpose prints on console all the available adapters
+        #[cfg(debug_assertions)]
         enumerate_all_adapters(backends, &wgpu_instance);
 
         let adapter = Adapter::new(&wgpu_instance, &wgpu_surface)?;
@@ -42,7 +44,7 @@ impl Surface {
         println!("Picked Adapter: {:?}", adapter.get_info());
 
         // Most images are stored using sRGB so we need to reflect that here.
-        //let preferred_format = wgpu::TextureFormat::Rgba8UnormSrgb;  // TODO must be choosable by user
+        //let preferred_format = wgpu::TextureFormat::Rgba8UnormSrgb;  // TODO user choosable
         let preferred_format = wgpu_surface.get_preferred_format(
             adapter.expose_wrapped_adapter()
         );
@@ -60,7 +62,7 @@ impl Surface {
             // Fifo is "vsync on". Immediate is "vsync off".
             // Mailbox is a hybrid between the two (gpu doesn't block if running faster
             // than the display, but screen tearing doesn't happen)
-            present_mode: wgpu::PresentMode::Fifo,  // TODO: to be choosable by the user
+            present_mode: wgpu::PresentMode::Fifo,  // TODO user choosable
         };
 
         let color_target_states = [wgpu::ColorTargetState {

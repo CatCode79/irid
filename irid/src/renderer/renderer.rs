@@ -1,8 +1,11 @@
 
-//= CONSTS =========================================================================================
+//= USES ===========================================================================================
 
 use crate::assets::DiffuseImage;
 use crate::renderer::{TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas};
+
+
+//= CONSTS =========================================================================================
 
 const NUM_INSTANCES_PER_ROW: u32 = 10;
 const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
@@ -28,7 +31,7 @@ pub struct Renderer {
     texture_bind_group_metadatas: crate::renderer::TextureBindGroupMetadatas,
     texture_depth_metadatas: crate::renderer::TextureDepthMetadatas,
     pipeline: crate::renderer::RenderPipeline,
-    vertex_buffer: wgpu::Buffer,  // TODO: forse questo devo spostarlo in render_pass o pipeline, anche quello sotto
+    vertex_buffer: wgpu::Buffer,  // TODO: maybe this is better to move this buffer, and the index buffer, inside the render_pass or pipeline object
     index_buffer: wgpu::Buffer,
     num_indices: u32,
     instances: Vec<crate::renderer::Instance>,
@@ -45,7 +48,7 @@ impl Renderer {
         vertices: &[crate::assets::ModelVertex],
         indices: &[u32]
     ) -> anyhow::Result<Self> {
-        let window_size = window.inner_size();  // TODO: window.fullscreen at startup
+        let window_size = window.inner_size();
 
         let backends = wgpu::Backends::VULKAN | wgpu::Backends::DX12;
         let (surface, adapter) = crate::renderer::Surface::new(backends, window, window_size)?;
@@ -86,7 +89,7 @@ impl Renderer {
 
         //- Queue Schedule -------------------------------------------------------------------------
 
-        // TODO decisamente bisognerà fare qualche cosa con questi passaggi di parametri e clones
+        // TODO we have to create a IridQueue object to remove those args (also we have to think about clones)
         queue.write_texture(
             texture_image_metadatas.create_image_copy(),
             diffuse_image.as_rgba8_bytes().unwrap(),  // TODO: piace poco l'unwrap
@@ -129,7 +132,7 @@ impl Renderer {
 
         let instance_data = instances.iter().map(crate::renderer::Instance::to_raw)
             .collect::<Vec<_>>();
-        let instance_buffer = device.create_buffer_init(  // TODO: quando creerò le generics per i vertici utilizzare quella in device
+        let instance_buffer = device.create_buffer_init(  // TODO when we will create the generics avout Vertices we will use the Device.create_vertex_buffer_init instead
             &wgpu::util::BufferInitDescriptor {
                 label: Some("Instance Buffer"),
                 contents: bytemuck::cast_slice(&instance_data),
@@ -269,7 +272,7 @@ thread 'main' panicked at 'Texture[1] does not exist', C:\Users\DarkWolf\.cargo\
                 }
             );
 
-            render_pass.set_pipeline(self.pipeline.expose_wrapped_render_pipeline());
+            render_pass.set_pipeline(self.pipeline.expose_wrapped_render_pipeline());  // TODO we can remove this expose call creating an RenderPass wrapper
             render_pass.set_bind_group(0, self.texture_bind_group_metadatas.bind_group(), &[]);
             render_pass.set_bind_group(1, self.camera_metadatas.bind_group(), &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));

@@ -16,6 +16,7 @@ pub struct Adapter {
 
 
 impl Adapter {
+
     //- Constructor Methods ------------------------------------------------------------------------
 
     /// Retrieves an Adapter which matches the given surface.
@@ -29,7 +30,7 @@ impl Adapter {
             // About force_fallback_adapter: https://github.com/gfx-rs/wgpu/issues/2063
             wgpu_instance.request_adapter(
                 &wgpu::RequestAdapterOptions {
-                    power_preference: wgpu::PowerPreference::HighPerformance,  // TODO maybe better to give power of choice
+                    power_preference: wgpu::PowerPreference::HighPerformance,  // TODO maybe better to give power of choice, probably creating a Builder for Adapter
                     compatible_surface: Some(&wgpu_surface),
                 }
             ).await
@@ -78,7 +79,7 @@ impl Adapter {
 
     ///- Crate-Public Methods ----------------------------------------------------------------------
 
-    // This method MUST remain public at the crate level.
+    // This method MUST remains public at the crate level.
     pub(crate) fn expose_wrapped_adapter(&self) -> &wgpu::Adapter {
         &self.wgpu_adapter
     }

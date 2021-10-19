@@ -1,6 +1,5 @@
 //= USES ===========================================================================================
 
-use wgpu::{ShaderModuleDescriptor};
 use crate::renderer::{Device, Surface};
 
 
@@ -48,7 +47,7 @@ impl<'a> ShaderModuleBuilder<'a> {
 
     /// Build the shader module.
     pub fn build(self, device: &Device) -> wgpu::ShaderModule {
-        device.create_shader_module(&ShaderModuleDescriptor {
+        device.create_shader_module(&wgpu::ShaderModuleDescriptor {
             label: Some(self.label.unwrap()),  // TODO mancano dei check
             source: self.source,
         })

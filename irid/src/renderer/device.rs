@@ -139,6 +139,7 @@ impl Device {
 
     //- Wrapper Methods ----------------------------------------------------------------------------
 
+    // This method MUST remains public at the crate level.
     pub(crate) fn expose_wrapped_device(&self) -> &wgpu::Device {
         &self.wgpu_device
     }

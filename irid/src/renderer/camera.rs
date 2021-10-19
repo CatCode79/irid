@@ -19,6 +19,7 @@ const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
 
 //= CAMERA =========================================================================================
 
+///
 pub struct Camera {
     eye: cgmath::Point3<f32>,
     target: cgmath::Point3<f32>,
@@ -28,6 +29,7 @@ pub struct Camera {
     znear: f32,
     zfar: f32,
 }
+
 
 impl Camera {
     /// Create a new camera given the window's width and height
@@ -116,6 +118,7 @@ impl Camera {
 
 //= CAMERA UNIFORM BUFFER ==========================================================================
 
+///
 // We need those to store our data correctly for the shaders and the buffer
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -124,6 +127,7 @@ pub struct CameraUniform {
     // to convert the Matrix4 into a 4x4 f32 array
     view_proj: [[f32; 4]; 4],
 }
+
 
 impl CameraUniform {
     fn new() -> Self {
@@ -142,12 +146,14 @@ impl CameraUniform {
 
 //= CAMERA METADATAS ===============================================================================
 
+///
 pub struct CameraMetadatas {
     uniform: CameraUniform,
     buffer: wgpu::Buffer,
     bind_group_layout: wgpu::BindGroupLayout,
     bind_group: wgpu::BindGroup,
 }
+
 
 impl CameraMetadatas {
     #[inline(always)]

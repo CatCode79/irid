@@ -13,14 +13,14 @@ pub struct DiffuseTexture {
     image_metadatas: TextureImageMetadatas,
 }
 
-impl DiffuseTexture {
 
+impl DiffuseTexture {
     ///
     // TODO I have to create the metas in static manner and after the surface/device creation, so I can create a texture without use those parameters
     pub fn load(surface: &Surface, device: &Device, filepath: &std::path::Path) -> anyhow::Result<Self> {
         let diffuse_image = DiffuseImage::new(filepath)?;
 
-        // TODO: da finire
+        // TODO: I need to create this and get it as reference
         let image_metadatas = TextureImageMetadatas::new(
             surface,
             device,
@@ -51,7 +51,12 @@ pub struct TextureImageMetadatas {
     image_size: wgpu::Extent3d,
 }
 
+
 impl TextureImageMetadatas {
+
+    //- Constructor Methods ------------------------------------------------------------------------
+
+    ///
     pub fn new(
         surface: &Surface,
         device: &Device,
@@ -93,7 +98,7 @@ impl TextureImageMetadatas {
     }
 
 
-    //- ImageCopyTexture related metghods ----------------------------------------------------------
+    //- ImageCopyTexture-related methods -----------------------------------------------------------
 
     pub fn create_image_copy(&self) -> wgpu::ImageCopyTexture {
         wgpu::ImageCopyTexture {
@@ -104,7 +109,7 @@ impl TextureImageMetadatas {
         }
     }
 
-    //- Getters ------------------------------------------------------------------------------------
+    //- Getter Methods -----------------------------------------------------------------------------
 
     pub fn texture(&self) -> &wgpu::Texture {
         &self.texture
@@ -131,6 +136,9 @@ pub struct TextureBindGroupMetadatas {
 
 
 impl TextureBindGroupMetadatas {
+
+    //- Constructor Methods ------------------------------------------------------------------------
+
     pub fn new(
         device: &Device,
         texture: &wgpu::Texture
@@ -225,7 +233,7 @@ impl TextureBindGroupMetadatas {
         )
     }
 
-    //- Getters ------------------------------------------------------------------------------------
+    //- Getter Methods -----------------------------------------------------------------------------
 
     pub fn bind_group_layout(&self) -> &wgpu::BindGroupLayout {
         &self.bind_group_layout
@@ -311,7 +319,7 @@ impl TextureDepthMetadatas {
         }
     }
 
-    //- Getters ------------------------------------------------------------------------------------
+    //- Getter Methods -----------------------------------------------------------------------------
 
     pub fn view(&self) -> &wgpu::TextureView {
         &self.view

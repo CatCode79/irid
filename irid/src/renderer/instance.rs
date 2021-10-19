@@ -9,6 +9,7 @@ pub struct Instance {
 
 }
 
+
 impl Instance {
     /// Convert an Instance to a structure GPU readable.
     pub fn to_raw(&self) -> InstanceRaw {
@@ -20,7 +21,7 @@ impl Instance {
 }
 
 
-//= INSTANCE FOR GLSL SHADER =======================================================================
+//= INSTANCE FOR SHADERS ===========================================================================
 
 /// This is the data that will go into the wgpu::Buffer.
 /// We keep these separate so that we can update the Instance as much as we want without needing
@@ -30,6 +31,7 @@ impl Instance {
 pub struct InstanceRaw {
     model: [[f32; 4]; 4],
 }
+
 
 impl InstanceRaw {
     ///
