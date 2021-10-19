@@ -38,7 +38,7 @@ impl Surface {
         #[cfg(debug_assertions)]
         enumerate_all_adapters(backends, &wgpu_instance);
 
-        let adapter = Adapter::new(&wgpu_instance, &wgpu_surface)?;
+        let adapter = pollster::block_on(Adapter::new(&wgpu_instance, &wgpu_surface))?;
 
         #[cfg(debug_assertions)]
         println!("Picked Adapter: {:?}", adapter.get_info());
@@ -92,7 +92,7 @@ impl Surface {
         self.preferred_format
     }
 
-    /// Return an array with a [ColorTargetState](wgpu::ColorTargetState) single value,
+    /// Returns an array with a [ColorTargetState](wgpu::ColorTargetState) single value,
     /// it's a default value mainly used on
     /// [FragmentStateBuilder](crate::shader::FragmentStateBuilder).
     pub fn color_target_states(&self) -> &[wgpu::ColorTargetState] {
@@ -125,7 +125,7 @@ impl Surface {
 
 //= FUNCTIONS ======================================================================================
 
-/// Show all the adapters information for debug.
+/// Shows all the adapters information for debug.
 #[cfg(debug_assertions)]
 fn enumerate_all_adapters(backends: wgpu::Backends, instance: &wgpu::Instance) {
     instance.poll_all(true);

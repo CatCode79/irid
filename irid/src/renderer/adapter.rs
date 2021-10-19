@@ -22,11 +22,11 @@ impl Adapter {
     /// Retrieves an Adapter which matches the given surface.
     /// Some options are "soft", so treated as non-mandatory. Others are "hard".
     /// If no adapters are found that suffice all the "hard" options, Err is returned.
-    pub fn new(
+    pub async fn new(
         wgpu_instance: &wgpu::Instance,
         wgpu_surface: &wgpu::Surface
     ) -> anyhow::Result<Self> {
-        let wgpu_adapter = pollster::block_on(async {
+        let wgpu_adapter = {
             // About force_fallback_adapter: https://github.com/gfx-rs/wgpu/issues/2063
             wgpu_instance.request_adapter(
                 &wgpu::RequestAdapterOptions {
@@ -34,7 +34,7 @@ impl Adapter {
                     compatible_surface: Some(&wgpu_surface),
                 }
             ).await
-        });
+        };
 
         if wgpu_adapter.is_some() {
             Ok(Self {

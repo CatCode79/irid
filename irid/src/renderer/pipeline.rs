@@ -1,6 +1,10 @@
 //= USES ===========================================================================================
 
-use crate::renderer::{Device, Surface};
+use crate::assets::{ModelVertex, Vertex};
+use crate::renderer::{
+    Device, FragmentStateBuilder, InstanceRaw, ShaderModuleBuilder, Surface,
+    TextureDepthMetadatas, VertexStateBuilder
+};
 
 
 //= PIPELINE LAYOUT ================================================================================
@@ -176,10 +180,9 @@ impl<'a> RenderPipelineBuilder<'a> {
         }
     }
 
-    #[inline]
     fn create_default_depth_stencil() -> wgpu::DepthStencilState {
         wgpu::DepthStencilState {
-            format: crate::renderer::TextureDepthMetadatas::DEPTH_FORMAT,
+            format: TextureDepthMetadatas::DEPTH_FORMAT,
             depth_write_enabled: true,
             depth_compare: wgpu::CompareFunction::Less,
             stencil: wgpu::StencilState::default(),
@@ -270,19 +273,18 @@ impl RenderPipeline {
             .with_bind_group_layouts(&[texture_bind_group_layout, camera_bind_group_layout])
             .build(device);
 
-        use crate::assets::Vertex;
         let buffers = &[
-            crate::assets::ModelVertex::desc(),
-            //crate::renderer::VertexTexture::desc(),
-            crate::renderer::InstanceRaw::desc()
+            ModelVertex::desc(),
+            //VertexTexture::desc(),
+            InstanceRaw::desc()
         ];
-        let shader_module = crate::renderer::ShaderModuleBuilder::new(
+        let shader_module = ShaderModuleBuilder::new(
             wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(shader_source))
         ).build(device);
-        let vertex_state = crate::renderer::VertexStateBuilder::new(&shader_module)
+        let vertex_state = VertexStateBuilder::new(&shader_module)
             .with_buffers(buffers)
             .build();
-        let fragment_state = crate::renderer::FragmentStateBuilder::new(&shader_module)
+        let fragment_state = FragmentStateBuilder::new(&shader_module)
             .build(&surface);
 
         let primitive_state = PrimitiveStateBuilder::new().build();

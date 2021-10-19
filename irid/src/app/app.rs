@@ -133,17 +133,6 @@ impl<'a> Application<'a> {
             //.with_window_icon() // TODO because yes
             .build(&event_loop)?;
 
-        // TODO Vulkan issue https://github.com/gfx-rs/wgpu/issues/1958 give me false positives
-        if self.config.window_starts_maximized() {
-            /*for vm in primary_monitor.video_modes() {
-                println!("{:?}", vm);
-            }*/
-            //let video_mode = primary_monitor.video_modes().nth(0).unwrap();
-
-            //window.set_fullscreen(Some(Fullscreen::Exclusive(video_mode)));  // TODO: doesn't work the ALT+TAB on Windows 10
-            window.set_fullscreen(Some(Fullscreen::Borderless(Some(primary_monitor))));
-        }
-
         let mut renderer = Renderer::new(
             &window,
             self.shaders.get("shader.wgsl").unwrap().clone(),// TODO Try to remove the clone
@@ -152,7 +141,21 @@ impl<'a> Application<'a> {
             self.indices
         )?;
 
-        // Now is a good time to make the window visible, lessening the flicker explained above.
+        // It is preferable to maximize the windows after the surface and renderer setup,
+        // but is not mandatory.
+        // TODO Vulkan issue https://github.com/gfx-rs/wgpu/issues/1958 gives false positives
+        if self.config.window_starts_maximized() {
+            /*for vm in primary_monitor.video_modes() {
+                println!("{:?}", vm);
+            }*/
+            //let video_mode = primary_monitor.video_modes().nth(0).unwrap();
+
+            //window.set_fullscreen(Some(Fullscreen::Exclusive(video_mode)));  // TODO doesn't work the ALT+TAB on Windows 10
+            window.set_fullscreen(Some(Fullscreen::Borderless(Some(primary_monitor))));
+        }
+
+        // Now is a good time to make the window visible, lessening the flicker explained above,
+        // on WindowsBuilder lines.
         // TODO check if there's another place inside one event below, maybe resized?
         window.set_visible(true);
 

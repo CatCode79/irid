@@ -57,7 +57,7 @@ pub struct Model {
 
 pub struct Material {
     pub name: String,
-    pub texture: crate::renderer::DiffuseTexture,
+    pub texture: DiffuseTexture,
 }
 
 pub struct Mesh {

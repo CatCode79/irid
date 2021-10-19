@@ -1,3 +1,7 @@
+//= USES ===========================================================================================
+
+use crate::renderer::Device;
+
 
 //= CONSTS =========================================================================================
 
@@ -63,7 +67,7 @@ impl Camera {
     }
 
     /// Create a new CameraMetadatas from this camera.
-    pub fn create_metadatas(&self, device: &crate::renderer::Device) -> CameraMetadatas {
+    pub fn create_metadatas(&self, device: &Device) -> CameraMetadatas {
         let mut uniform = CameraUniform::new();
         uniform.update_view_proj(self);
 
@@ -137,7 +141,6 @@ impl CameraUniform {
         }
     }
 
-    #[inline]
     pub(crate) fn update_view_proj(&mut self, camera: &Camera) {
         self.view_proj = camera.build_view_projection_matrix().into();
     }
@@ -156,22 +159,18 @@ pub struct CameraMetadatas {
 
 
 impl CameraMetadatas {
-    #[inline(always)]
     pub fn uniform(&self) -> &CameraUniform {
         &self.uniform
     }
 
-    #[inline(always)]
     pub fn buffer(&self) -> &wgpu::Buffer {
         &self.buffer
     }
 
-    #[inline(always)]
     pub fn bind_group_layout(&self) -> &wgpu::BindGroupLayout {
         &self.bind_group_layout
     }
 
-    #[inline(always)]
     pub fn bind_group(&self) -> &wgpu::BindGroup {
         &self.bind_group
     }
@@ -247,7 +246,7 @@ impl CameraController {
         }
     }
 
-    pub fn update_camera(&self, camera: &mut crate::renderer::Camera) {
+    pub fn update_camera(&self, camera: &mut Camera) {
         use cgmath::InnerSpace;
 
         let forward = camera.target - camera.eye;

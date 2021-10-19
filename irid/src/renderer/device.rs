@@ -1,4 +1,10 @@
 
+//= USES ===========================================================================================
+
+use crate::assets::ModelVertex;
+use crate::renderer::Adapter;
+
+
 //= DEVICE WRAPPER =================================================================================
 
 /// Open connection to a graphics and/or compute device.
@@ -10,6 +16,7 @@
 /// [`Adapter::request_device`](Adapter::request_device).
 #[derive(Debug)]
 pub struct Device {
+    label_text: String,
     wgpu_device: wgpu::Device,
 }
 
@@ -19,21 +26,26 @@ impl Device {
     //- Constructor Methods ------------------------------------------------------------------------
 
     /// Create a new Device and Queue given ad adapter.
-    pub fn new(
-        adapter: &crate::renderer::Adapter
+    pub async fn new(
+        adapter: &Adapter
     ) -> anyhow::Result<(Self, wgpu::Queue), wgpu::RequestDeviceError> {
-        let (wgpu_device, queue) = pollster::block_on(async {
+        let label_text = format!(
+            "Device Default Label [creation {:?}]", std::time::SystemTime::now()
+        );
+
+        let (wgpu_device, queue) = {
             adapter.request_device(
                 &wgpu::DeviceDescriptor {
-                    label: Some("New Device & Queue"),
+                    label: Some(label_text.as_str()),
                     features: wgpu::Features::empty(),
                     limits: wgpu::Limits::downlevel_defaults(),  // TODO to be choosable by user
                 },
                 None, // Trace path
             ).await
-        })?;
+        }?;
 
         let device = Self {
+            label_text,
             wgpu_device,
         };
 
@@ -52,7 +64,7 @@ impl Device {
     pub fn create_vertex_buffer_init(
         &self,
         label_text: &str,
-        vertices: &[crate::assets::ModelVertex]
+        vertices: &[ModelVertex]
     ) -> wgpu::Buffer {
         use wgpu::util::DeviceExt;
         self.wgpu_device.create_buffer_init(

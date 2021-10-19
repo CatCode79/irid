@@ -1,8 +1,12 @@
 
 //= USES ===========================================================================================
 
-use crate::assets::DiffuseImage;
-use crate::renderer::{TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas};
+use crate::app::Config;
+use crate::assets::{DiffuseImage, ModelVertex};
+use crate::renderer::{
+    Adapter, Camera, CameraController, CameraMetadatas, Device, Instance, RenderPipeline, Surface,
+    TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas
+};
 
 
 //= CONSTS =========================================================================================
@@ -20,48 +24,51 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 ///
 pub struct Renderer {
     window_size: winit::dpi::PhysicalSize<u32>,
-    surface: crate::renderer::Surface,
-    _adapter: crate::renderer::Adapter,
-    device: crate::renderer::Device,
+    surface: Surface,
+    _adapter: Adapter,
+    device: Device,
     queue: wgpu::Queue,
-    camera: crate::renderer::Camera,
-    camera_metadatas: crate::renderer::CameraMetadatas,
-    camera_controller: crate::renderer::CameraController,
-    _texture_image_metadatas: crate::renderer::TextureImageMetadatas,
-    texture_bind_group_metadatas: crate::renderer::TextureBindGroupMetadatas,
-    texture_depth_metadatas: crate::renderer::TextureDepthMetadatas,
-    pipeline: crate::renderer::RenderPipeline,
+    camera: Camera,
+    camera_metadatas: CameraMetadatas,
+    camera_controller: CameraController,
+    _texture_image_metadatas: TextureImageMetadatas,
+    texture_bind_group_metadatas: TextureBindGroupMetadatas,
+    texture_depth_metadatas: TextureDepthMetadatas,
+    pipeline: RenderPipeline,
     vertex_buffer: wgpu::Buffer,  // TODO: maybe this is better to move this buffer, and the index buffer, inside the render_pass or pipeline object
     index_buffer: wgpu::Buffer,
     num_indices: u32,
-    instances: Vec<crate::renderer::Instance>,
+    instances: Vec<Instance>,
     instance_buffer: wgpu::Buffer,
 }
 
 
 impl Renderer {
+
+    //- Constructor Methods ------------------------------------------------------------------------
+
     ///
     pub fn new(
         window: &winit::window::Window,
         shader_source: String,
         texture_path: &std::path::Path,
-        vertices: &[crate::assets::ModelVertex],
+        vertices: &[ModelVertex],
         indices: &[u32]
     ) -> anyhow::Result<Self> {
         let window_size = window.inner_size();
 
         let backends = wgpu::Backends::VULKAN | wgpu::Backends::DX12;
-        let (surface, adapter) = crate::renderer::Surface::new(backends, window, window_size)?;
+        let (surface, adapter) = Surface::new(backends, window, window_size)?;
 
-        let (device, queue) = crate::renderer::Device::new(&adapter)?;
+        let (device, queue) = pollster::block_on(Device::new(&adapter))?;
 
         surface.configure(&device);
 
         //- Camera ---------------------------------------------------------------------------------
 
-        let camera = crate::renderer::Camera::new(window_size.width as f32, window_size.height as f32);
+        let camera = Camera::new(window_size.width as f32, window_size.height as f32);
         let camera_metadatas = camera.create_metadatas(&device);
-        let camera_controller = crate::renderer::CameraController::new(0.2);
+        let camera_controller = CameraController::new(0.2);
 
         //- Texture --------------------------------------------------------------------------------
 
@@ -79,7 +86,7 @@ impl Renderer {
 
         //- Pipeline -------------------------------------------------------------------------------
 
-        let pipeline = crate::renderer::RenderPipeline::new(
+        let pipeline = RenderPipeline::new(
             &surface,
             &device,
             texture_bind_group_metadatas.bind_group_layout(),
@@ -123,14 +130,14 @@ impl Renderer {
                                                         cgmath::Rad(std::f32::consts::PI / 4.0f32))
                 };
 
-                crate::renderer::Instance {
+                Instance {
                     position,
                     rotation,
                 }
             })
         }).collect::<Vec<_>>();
 
-        let instance_data = instances.iter().map(crate::renderer::Instance::to_raw)
+        let instance_data = instances.iter().map(Instance::to_raw)
             .collect::<Vec<_>>();
         let instance_buffer = device.create_buffer_init(  // TODO when we will create the generics avout Vertices we will use the Device.create_vertex_buffer_init instead
             &wgpu::util::BufferInitDescriptor {
@@ -166,13 +173,11 @@ impl Renderer {
     //- Size Methods -------------------------------------------------------------------------------
 
     /// Getter for the windows's physical size attribute.
-    #[inline]
     pub fn get_size(&self) -> winit::dpi::PhysicalSize<u32> {
         self.window_size
     }
 
     /// Calculate the aspect ratio of the window's inner size.
-    #[inline]
     pub fn calc_aspect_ratio(&self) -> f32 {
         self.window_size.width as f32 / self.window_size.height as f32
     }
@@ -181,7 +186,7 @@ impl Renderer {
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
         self.window_size = new_size;
         self.texture_depth_metadatas =
-            crate::renderer::TextureDepthMetadatas::new(&self.device, self.window_size);
+            TextureDepthMetadatas::new(&self.device, self.window_size);
         self.refresh_current_size();
     }
 
@@ -211,7 +216,7 @@ impl Renderer {
     //- Rendering Methods --------------------------------------------------------------------------
 
     ///
-    pub(crate) fn redraw(&mut self, config: &crate::app::Config) -> Result<(), wgpu::SurfaceError> {
+    pub(crate) fn redraw(&mut self, config: &Config) -> Result<(), wgpu::SurfaceError> {
         self.camera_controller.update_camera(&mut self.camera);
         let mut camera_uniform = *self.camera_metadatas.uniform();
         camera_uniform.update_view_proj(&self.camera);
@@ -290,7 +295,7 @@ thread 'main' panicked at 'Texture[1] does not exist', C:\Users\DarkWolf\.cargo\
     //- Getters ------------------------------------------------------------------------------------
 
     ///
-    pub fn texture_bind_group_metadatas(&self) -> &crate::renderer::TextureBindGroupMetadatas {
+    pub fn texture_bind_group_metadatas(&self) -> &TextureBindGroupMetadatas {
         &self.texture_bind_group_metadatas
     }
 }

@@ -119,13 +119,13 @@ impl Config {
         Config::default()
     }
 
-    /// Return the clear color used in a
+    /// Returns the clear color used in a
     /// [render pass color attachment](wgpu::RenderPassColorAttachment).
     pub fn clear_color(&self) -> wgpu::Color {
         self.clear_color
     }
 
-    /// Return the window inner width (used when the window is not maximized).
+    /// Returns the window inner width (used when the window is not maximized).
     ///
     /// The returned value is a NonZeroU32 to avoid division by zero on computing the
     /// [display aspect ratio](https://en.wikipedia.org/wiki/Display_aspect_ratio).
@@ -133,7 +133,7 @@ impl Config {
         self.window_inner_width
     }
 
-    /// Return the window inner height (used when the window is not maximized).
+    /// Returns the window inner height (used when the window is not maximized).
     ///
     /// The returned value is a NonZeroU32 to avoid division by zero on computing the
     /// [display aspect ratio](https://en.wikipedia.org/wiki/Display_aspect_ratio).
@@ -141,12 +141,12 @@ impl Config {
         self.window_inner_height
     }
 
-    /// Check if the game's window starts maximized.
+    /// Checks if the game's window starts maximized.
     pub fn window_starts_maximized(&self) -> bool {
         self.window_starts_maximized
     }
 
-    /// Return the window inner size.
+    /// Returns the window inner size.
     pub fn window_inner_size(&self) -> winit::dpi::PhysicalSize<u32> {
         winit::dpi::PhysicalSize {
             width: self.window_inner_width.get(),
@@ -154,7 +154,7 @@ impl Config {
         }
     }
 
-    /// Return the minimum window inner size. You cannot resize the window below these values.
+    /// Returns the minimum window inner size. You cannot resize the window below these values.
     pub fn window_min_inner_size(&self) -> winit::dpi::PhysicalSize<u32> {
         winit::dpi::PhysicalSize {
             width: self.window_inner_width.get() / 2,
