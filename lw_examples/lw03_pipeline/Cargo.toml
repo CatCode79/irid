@@ -2,7 +2,7 @@
 name = "learnwgpu_03_pipeline"
 version = "0.0.1"
 authors = ["CatCode <andrea.postal@gmail.com>"]
-edition = "2018"
+edition = "2021"
 description = "based on https://sotrh.github.io/learn-wgpu/beginner/tutorial3-pipeline/"
 
 [dependencies]

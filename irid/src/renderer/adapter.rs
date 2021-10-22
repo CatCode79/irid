@@ -22,7 +22,7 @@ impl Adapter {
     /// Retrieves an Adapter which matches the given surface.
     /// Some options are "soft", so treated as non-mandatory. Others are "hard".
     /// If no adapters are found that suffice all the "hard" options, Err is returned.
-    pub async fn new(
+    pub(crate) async fn new(
         wgpu_instance: &wgpu::Instance,
         wgpu_surface: &wgpu::Surface
     ) -> anyhow::Result<Self> {

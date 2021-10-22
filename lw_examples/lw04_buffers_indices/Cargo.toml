@@ -2,7 +2,7 @@
 name = "learnwgpu_04_buffers_indices"
 version = "0.0.1"
 authors = ["CatCode <andrea.postal@gmail.com>"]
-edition = "2018"
+edition = "2021"
 description = "based on https://sotrh.github.io/learn-wgpu/beginner/tutorial4-buffer/"
 
 [dependencies]

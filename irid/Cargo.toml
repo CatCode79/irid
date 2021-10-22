@@ -1,8 +1,8 @@
 [package]
 name = "irid"
-version = "0.0.50"
+version = "0.0.51"
 authors = ["CatCode <andrea.postal@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 anyhow = "1.0"  # has the no_std feature

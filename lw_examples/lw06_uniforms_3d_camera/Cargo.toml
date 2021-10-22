@@ -2,7 +2,7 @@
 name = "learnwgpu_06_uniforms_3d_camera"
 version = "0.0.1"
 authors = ["CatCode <andrea.postal@gmail.com>"]
-edition = "2018"
+edition = "2021"
 description = "based on https://sotrh.github.io/learn-wgpu/beginner/tutorial6-uniforms/"
 
 [dependencies]
