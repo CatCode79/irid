@@ -117,8 +117,8 @@ impl Surface {
 
     /// Returns the next texture to be presented by the Surface for drawing.
     #[inline(always)]
-    pub fn get_current_frame(&self) -> Result<wgpu::SurfaceFrame, wgpu::SurfaceError> {
-        self.wgpu_surface.get_current_frame()
+    pub fn get_current_texture(&self) -> Result<wgpu::SurfaceTexture, wgpu::SurfaceError> {
+        self.wgpu_surface.get_current_texture()
     }
 }
 

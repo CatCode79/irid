@@ -239,7 +239,7 @@ thread 'main' panicked at 'Texture[1] does not exist', C:\Users\DarkWolf\.cargo\
         // (I should probably mention it as an issue on the official github repo but I'm a lazy cat)
         // TODO: test results with wgpu 0.11: NO TEST PERFORMED, probably the logic is changed because some modification about frame and output
 
-        let output = self.surface.get_current_frame()?.output;
+        let output = self.surface.get_current_texture()?.output;
         let frame_view = output.texture.create_view(&wgpu::TextureViewDescriptor {
             label: None,
             format: None,

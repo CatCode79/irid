@@ -12,5 +12,4 @@ members = [
     "lw_examples/lw07_instancing",
     "lw_examples/lw08_depth_buffer",
     "lw_examples/lw09_model_loading",
-    "shaded_sun",
 ]

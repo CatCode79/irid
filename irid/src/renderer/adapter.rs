@@ -31,6 +31,7 @@ impl Adapter {
             wgpu_instance.request_adapter(
                 &wgpu::RequestAdapterOptions {
                     power_preference: wgpu::PowerPreference::HighPerformance,  // TODO maybe better to give power of choice, probably creating a Builder for Adapter
+                    force_fallback_adapter: false,
                     compatible_surface: Some(&wgpu_surface),
                 }
             ).await
