@@ -130,7 +130,7 @@ impl Model {
 
             let index_buffer = device.create_indices_buffer_init(
                 &format!("{:?} Index Buffer", path.as_ref()),
-                &m.mesh.indices.as_slice(),
+                m.mesh.indices.as_slice(),
             );
 
             meshes.push(Mesh {

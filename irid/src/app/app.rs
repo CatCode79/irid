@@ -160,7 +160,7 @@ impl<'a> Application<'a> {
         window.set_visible(true);
 
         use winit::platform::run_return::EventLoopExtRunReturn;
-        Ok(event_loop.run_return(move |event, _, control_flow| match event {
+        event_loop.run_return(move |event, _, control_flow| match event {
             winit::event::Event::NewEvents(start_cause) => {
                 self.on_new_events(listener, start_cause);
             },
@@ -321,7 +321,9 @@ impl<'a> Application<'a> {
             winit::event::Event::LoopDestroyed => {
                 self.on_destroy(listener);
             },
-        }))
+        });
+
+        Ok(())
     }
 
     //- Generic Events Methods ---------------------------------------------------------------------
@@ -483,17 +485,11 @@ impl<'a> Application<'a> {
             // Check the camera controller
             renderer.process_camera_events(input);  // TODO Enhance this system
 
-            match input {
-                // Esc key pressed
-                winit::event::KeyboardInput {
+            if let winit::event::KeyboardInput {
                     state: winit::event::ElementState::Pressed,
                     virtual_keycode: Some(winit::event::VirtualKeyCode::Escape),
                     ..
-                } => *control_flow = winit::event_loop::ControlFlow::Exit,
-
-                // The other keys are ignored
-                _ => {}
-            }
+                } = input { *control_flow = winit::event_loop::ControlFlow::Exit }
         }
     }
 

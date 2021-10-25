@@ -1,7 +1,7 @@
 
 //= USES ===========================================================================================
 
-use irid::app::{Application, Config, Listener};
+use irid::app::{ApplicationBuilder, Config, ConfigBuilder, Listener};
 use wgpu::Color;
 use winit::dpi::PhysicalSize;
 
@@ -36,18 +36,20 @@ impl Listener for GameListener {
 //= MAIN ===========================================================================================
 
 fn main() {
+    log::set_max_level(log::LevelFilter::Error);
     env_logger::init();
 
-    let listener: &'static GameListener = &GameListener { };
+    let config = ConfigBuilder::new()
+        .with_clear_color(Color {
+            r: 0.1,
+            g: 0.2,
+            b: 0.3,
+            a: 1.0,
+        })
+        .build();
 
-    let mut config = Config::default();
-    config.clear_color = Color {
-        r: 0.1,
-        g: 0.2,
-        b: 0.3,
-        a: 1.0,
-    };
+    let listener: &GameListener = &GameListener { };
 
-    let app = Application::new(config);
+    let app = ApplicationBuilder::new_with_config(config).build();
     app.start(listener);
 }

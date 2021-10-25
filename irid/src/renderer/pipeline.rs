@@ -10,13 +10,13 @@ use crate::renderer::{
 //= PIPELINE LAYOUT ================================================================================
 
 ///
+#[derive(Clone, Debug, Default)]
 pub struct PipelineLayoutBuilder<'a> {
     pipeline_layout_desc: wgpu::PipelineLayoutDescriptor<'a>
 }
 
 
 impl<'a> PipelineLayoutBuilder<'a> {
-
     //- Constructor Methods ------------------------------------------------------------------------
 
     ///
@@ -72,13 +72,13 @@ impl<'a> PipelineLayoutBuilder<'a> {
 //= PRIMITIVE STATE ================================================================================
 
 ///
+#[derive(Clone, Debug, Default)]
 pub struct PrimitiveStateBuilder {
     primitive_state: wgpu::PrimitiveState,
 }
 
 
 impl PrimitiveStateBuilder {
-
     //- Constructor Methods ------------------------------------------------------------------------
 
     ///
@@ -285,7 +285,7 @@ impl RenderPipeline {
             .with_buffers(buffers)
             .build();
         let fragment_state = FragmentStateBuilder::new(&shader_module)
-            .build(&surface);
+            .build(surface);
 
         let primitive_state = PrimitiveStateBuilder::new().build();
 

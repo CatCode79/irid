@@ -7,6 +7,7 @@ description = "based on https://sotrh.github.io/learn-wgpu/beginner/tutorial1-wi
 
 [dependencies]
 env_logger = "0.8"
+log = "0.4"
 winit = "0.25"
 
 [dependencies.irid]

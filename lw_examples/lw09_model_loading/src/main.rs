@@ -40,7 +40,7 @@ impl Listener for GameListener {
 //= MAIN ===========================================================================================
 
 fn main() {
-    log::set_max_level(log::LevelFilter::Trace);
+    log::set_max_level(log::LevelFilter::Error);
     env_logger::init();
 
     let config = ConfigBuilder::new()
@@ -60,7 +60,7 @@ fn main() {
     // TODO: Passare solo la path o il nome file
     let mut shaders: HashMap<String, String> = HashMap::new();
     let frag_wgsl = match read_to_string(SHADER_WGSL_FILEPATH) {
-        Ok(file) => file.clone(),  // TODO: Cercare di rimuovere il clone
+        Ok(file) => file,
         Err(why) => panic!("couldn't open {} file: {}", SHADER_WGSL_FILENAME, why),
     };
     shaders.insert(SHADER_WGSL_FILENAME.to_string(), frag_wgsl);

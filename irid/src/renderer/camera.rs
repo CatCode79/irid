@@ -63,7 +63,7 @@ impl Camera {
         // Without this, objects up close would be the same size as objects far away.
         let proj = cgmath::perspective(cgmath::Deg(self.fovy), self.aspect, self.znear, self.zfar);
 
-        return OPENGL_TO_WGPU_MATRIX * proj * view;
+        OPENGL_TO_WGPU_MATRIX * proj * view
     }
 
     /// Create a new CameraMetadatas from this camera.
@@ -74,7 +74,7 @@ impl Camera {
         let buffer = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: Some("Camera Buffer"),
-                contents: bytemuck::cast_slice(&[uniform.clone()]),
+                contents: bytemuck::cast_slice(&[uniform]),  // Copy!
                 usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             }
         );
@@ -123,9 +123,8 @@ impl Camera {
 //= CAMERA UNIFORM BUFFER ==========================================================================
 
 ///
-// We need those to store our data correctly for the shaders and the buffer
 #[repr(C)]
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]  // TODO trying to avoid Copy trait (is used by bytemuck)
 pub struct CameraUniform {
     // We can't use cgmath with bytemuck directly so we'll have
     // to convert the Matrix4 into a 4x4 f32 array
@@ -207,8 +206,8 @@ impl CameraController {
 
     ///
     pub fn process_events(&mut self, input: &winit::event::KeyboardInput) -> bool {
-        match input {
-            &winit::event::KeyboardInput {
+        match *input {
+            winit::event::KeyboardInput {
                 state,
                 virtual_keycode: Some(keycode),
                 ..

@@ -79,7 +79,7 @@ impl Renderer {
         );
 
         let texture_bind_group_metadatas= TextureBindGroupMetadatas::new(
-            &device, &texture_image_metadatas.texture()
+            &device, texture_image_metadatas.texture()
         );
 
         let texture_depth_metadatas = TextureDepthMetadatas::new(&device, window_size);
@@ -100,8 +100,8 @@ impl Renderer {
         queue.write_texture(
             texture_image_metadatas.create_image_copy(),
             diffuse_image.as_rgba8_bytes().unwrap(),  // TODO: piace poco l'unwrap
-            texture_image_metadatas.image_data_layout().clone(),
-            texture_image_metadatas.image_size().clone()
+            *texture_image_metadatas.image_data_layout(),
+            *texture_image_metadatas.image_size()
         );
 
         //- Vertex and Index Buffers ---------------------------------------------------------------
@@ -221,7 +221,7 @@ impl Renderer {
         let mut camera_uniform = *self.camera_metadatas.uniform();
         camera_uniform.update_view_proj(&self.camera);
         self.queue.write_buffer(
-            &self.camera_metadatas.buffer(),
+            self.camera_metadatas.buffer(),
             0,
             bytemuck::cast_slice(&[camera_uniform])
         );
@@ -239,8 +239,8 @@ thread 'main' panicked at 'Texture[1] does not exist', C:\Users\DarkWolf\.cargo\
         // (I should probably mention it as an issue on the official github repo but I'm a lazy cat)
         // TODO: test results with wgpu 0.11: NO TEST PERFORMED, probably the logic is changed because some modification about frame and output
 
-        let output = self.surface.get_current_texture()?.output;
-        let frame_view = output.texture.create_view(&wgpu::TextureViewDescriptor {
+        let texture = &self.surface.get_current_texture()?.texture;
+        let frame_view = texture.create_view(&wgpu::TextureViewDescriptor {
             label: None,
             format: None,
             dimension: None,
@@ -267,7 +267,7 @@ thread 'main' panicked at 'Texture[1] does not exist', C:\Users\DarkWolf\.cargo\
                         },
                     }],
                     depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                        view: &self.texture_depth_metadatas.view(),
+                        view: self.texture_depth_metadatas.view(),
                         depth_ops: Some(wgpu::Operations {
                             load: wgpu::LoadOp::Clear(1.0),
                             store: true,

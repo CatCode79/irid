@@ -111,7 +111,7 @@ impl Surface {
         if size.width > 0 && size.height > 0 {
             self.configuration.width = size.width;
             self.configuration.height = size.height;
-            self.wgpu_surface.configure(&device.expose_wrapped_device(), &self.configuration);
+            self.wgpu_surface.configure(device.expose_wrapped_device(), &self.configuration);
         }
     }
 

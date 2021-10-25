@@ -7,7 +7,7 @@ use std::fs::read_to_string;
 use wgpu::Color;
 use winit::dpi::PhysicalSize;
 
-use irid::app::{Application, Config, Listener};
+use irid::app::{Application, ApplicationBuilder, ConfigBuilder, Listener};
 use irid::renderer::VertexTexture;
 
 
@@ -41,16 +41,17 @@ impl Listener for GameListener {
 //= MAIN ===========================================================================================
 
 fn main() {
+    log::set_max_level(log::LevelFilter::Error);
     env_logger::init();
-    log::set_max_level(log::LevelFilter::Debug);
 
-    let mut config = Config::default();
-    config.clear_color = Color {
-        r: 0.1,
-        g: 0.2,
-        b: 0.3,
-        a: 1.0,
-    };
+    let config = ConfigBuilder::new()
+        .with_clear_color(Color {
+            r: 0.1,
+            g: 0.2,
+            b: 0.3,
+            a: 1.0,
+        })
+        .build();
 
     let listener: &GameListener = &GameListener { };
 
@@ -86,6 +87,6 @@ fn main() {
         /* padding */ 0,
     ];
 
-    let app: Application = Application::new(config);
-    app.start(listener, shaders, TREE_FILEPATH, VERTICES, INDICES);
+    let app = ApplicationBuilder::new_with_config(config).build();
+    app.start(listener);
 }

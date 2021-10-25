@@ -1,7 +1,7 @@
 
 //= USES ===========================================================================================
 
-use irid::app::{Application, Listener};
+use irid::app::{Application, ApplicationBuilder, Listener};
 use winit::dpi::PhysicalSize;
 
 
@@ -39,6 +39,6 @@ fn main() {
 
     let listener: &'static GameListener = &GameListener { };
 
-    let app = Application::default();
+    let app = ApplicationBuilder::default().build();
     app.start(listener);
 }

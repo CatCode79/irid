@@ -1,6 +1,6 @@
 [package]
 name = "irid"
-version = "0.0.52"
+version = "0.0.53"
 authors = ["CatCode <andrea.postal@gmail.com>"]
 edition = "2021"
 
