@@ -24,7 +24,7 @@ impl<'a> ShaderModuleBuilder<'a> {
         }
     }
 
-    //- Builder-Setter Methods ---------------------------------------------------------------------
+    //- Setter Methods -----------------------------------------------------------------------------
 
     /// Debug label of the shader module. This will show up in graphics debuggers
     /// for easy identification.

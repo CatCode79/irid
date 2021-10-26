@@ -226,20 +226,8 @@ impl Renderer {
             bytemuck::cast_slice(&[camera_uniform])
         );
 
-        //- ¡WARNING STARTS! -----------------------------------------------------------------------
-        // output variable must be let binded and not used inline or it give me a validation error:
-        /*
-[2021-09-12T18:39:07Z ERROR wgpu_hal::vulkan::instance] VALIDATION [VUID-VkPresentInfoKHR-pImageIndices-01296 (0xc7aabc16)]
-    	Validation Error: [ VUID-VkPresentInfoKHR-pImageIndices-01296 ] Object 0: handle = 0x21511202e68, type = VK_OBJECT_TYPE_QUEUE; | MessageID = 0xc7aabc16 | vkQueuePresentKHR(): pSwapchains[0] images passed to present must be in layout VK_IMAGE_LAYOUT_PRESENT_SRC_KHR or VK_IMAGE_LAYOUT_SHARED_PRESENT_KHR but is in VK_IMAGE_LAYOUT_UNDEFINED. The Vulkan spec states: Each element of pImageIndices must be the index of a presentable image acquired from the swapchain specified by the corresponding element of the pSwapchains array, and the presented image subresource must be in the VK_IMAGE_LAYOUT_PRESENT_SRC_KHR layout at the time the operation is executed on a VkDevice (https://github.com/KhronosGroup/Vulkan-Docs/search?q=)VUID-VkPresentInfoKHR-pImageIndices-01296)
-[2021-09-12T18:39:07Z ERROR wgpu_hal::vulkan::instance] 	objects: (type: QUEUE, hndl: 0x21511202e68, name: ?)
-thread 'main' panicked at 'Texture[1] does not exist', C:\Users\DarkWolf\.cargo\registry\src\github.com-1ecc6299db9ec823\wgpu-core-0.10.1\src\hub.rs:129:32
-        */
-        // Also if I move those two lines inside the render_pass scope I still have the error.
-        // I suspect a bug inside the wgpu. I found this on wgpu v0.10.
-        // (I should probably mention it as an issue on the official github repo but I'm a lazy cat)
-        // TODO: test results with wgpu 0.11: NO TEST PERFORMED, probably the logic is changed because some modification about frame and output
-
-        let texture = &self.surface.get_current_texture()?.texture;
+        let frame = self.surface.get_current_texture()?;
+        let texture = &frame.texture;
         let frame_view = texture.create_view(&wgpu::TextureViewDescriptor {
             label: None,
             format: None,
@@ -250,7 +238,6 @@ thread 'main' panicked at 'Texture[1] does not exist', C:\Users\DarkWolf\.cargo\
             base_array_layer: 0,
             array_layer_count: None
         });
-        //- ¡WARNING ENDS! -------------------------------------------------------------------------
 
         let mut encoder = self.create_command_encoder("Render Encoder");
 
@@ -288,6 +275,7 @@ thread 'main' panicked at 'Texture[1] does not exist', C:\Users\DarkWolf\.cargo\
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));
+        frame.present();
 
         Ok(())
     }

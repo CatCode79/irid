@@ -17,6 +17,7 @@ pub struct PipelineLayoutBuilder<'a> {
 
 
 impl<'a> PipelineLayoutBuilder<'a> {
+
     //- Constructor Methods ------------------------------------------------------------------------
 
     ///
@@ -30,7 +31,7 @@ impl<'a> PipelineLayoutBuilder<'a> {
         }
     }
 
-    //- Builder-Setter Methods ---------------------------------------------------------------------
+    //- Setter Methods -----------------------------------------------------------------------------
 
     ///
     pub fn with_label(mut self, label_text: &'a str) -> Self {
@@ -79,6 +80,7 @@ pub struct PrimitiveStateBuilder {
 
 
 impl PrimitiveStateBuilder {
+
     //- Constructor Methods ------------------------------------------------------------------------
 
     ///
@@ -99,7 +101,7 @@ impl PrimitiveStateBuilder {
         }
     }
 
-    //- Builder-Setter Methods ---------------------------------------------------------------------
+    //- Setter Methods -----------------------------------------------------------------------------
 
     ///
     pub fn with_topology(&mut self, topology: wgpu::PrimitiveTopology) -> &mut Self {
@@ -190,7 +192,7 @@ impl<'a> RenderPipelineBuilder<'a> {
         }
     }
 
-    //- Builder-Setter Methods ---------------------------------------------------------------------
+    //- Setter Methods -----------------------------------------------------------------------------
 
     ///
     pub fn with_label(&mut self, label_text: &'a str) -> &mut Self {
