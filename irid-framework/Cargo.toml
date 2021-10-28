@@ -1,12 +1,13 @@
 [package]
-name = "irid"
-version = "0.0.54"
+name = "irid-framework"
+version = "0.0.55"
 authors = ["CatCode <andrea.postal@gmail.com>"]
 edition = "2021"
+publish = false
 
 [dependencies]
-anyhow = "1.0"  # has the no_std feature
-bytemuck = { version = "1.7", features = ["derive"] }  # it's core only by default
+anyhow = "1.0"
+bytemuck = { version = "1.7", features = ["derive"] }
 cgmath = "0.18"
 env_logger = "0.9"
 image = "0.23"
