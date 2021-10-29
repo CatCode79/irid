@@ -1,5 +1,8 @@
 [workspace]
 resolver = "2"
 members = [
-    "irid-framework",
+    "irid-core",
+
+    "irid-assets",
+    "irid-renderer",
 ]

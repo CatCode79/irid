@@ -2,7 +2,10 @@
 
 use anyhow::anyhow;
 
-use crate::renderer::{Adapter, Device};
+use crate::{
+    adapter::Adapter,
+    device::Device,
+};
 
 
 //= SURFACE WRAPPER ================================================================================

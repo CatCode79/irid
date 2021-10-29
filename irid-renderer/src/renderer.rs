@@ -1,10 +1,9 @@
 
 //= USES ===========================================================================================
 
-use crate::app::Config;
-use crate::assets::{DiffuseImage, ModelVertex};
-use crate::renderer::{
-    Adapter, Camera, CameraController, CameraMetadatas, Device, Instance, RenderPipeline, Surface,
+use crate::{
+    Adapter, Camera, CameraController, CameraMetadatas, Device, Instance,
+    RendererConfig, RenderPipeline, Surface,
     TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas
 };
 
@@ -216,7 +215,7 @@ impl Renderer {
     //- Rendering Methods --------------------------------------------------------------------------
 
     ///
-    pub(crate) fn redraw(&mut self, config: &Config) -> Result<(), wgpu::SurfaceError> {
+    pub(crate) fn redraw(&mut self, config: &RendererConfig) -> Result<(), wgpu::SurfaceError> {
         self.camera_controller.update_camera(&mut self.camera);
         let mut camera_uniform = *self.camera_metadatas.uniform();
         camera_uniform.update_view_proj(&self.camera);

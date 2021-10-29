@@ -1,7 +1,7 @@
 
 //= USES ===========================================================================================
 
-use crate::renderer::{Device, DiffuseTexture, Surface};
+use irid_renderer::{Device, DiffuseTexture, Surface};
 
 
 //= VERTEX OBJECT ==================================================================================

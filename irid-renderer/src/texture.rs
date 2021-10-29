@@ -1,7 +1,9 @@
 //= USES ===========================================================================================
 
-use crate::assets::DiffuseImage;
-use crate::renderer::{Device, Surface};
+use crate::{
+    device::Device,
+    surface::Surface,
+};
 
 
 //= DIFFUSE TEXTURE ================================================================================

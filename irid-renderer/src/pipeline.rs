@@ -1,7 +1,6 @@
 //= USES ===========================================================================================
 
-use crate::assets::{ModelVertex, Vertex};
-use crate::renderer::{
+use crate::{
     Device, FragmentStateBuilder, InstanceRaw, ShaderModuleBuilder, Surface,
     TextureDepthMetadatas, VertexStateBuilder
 };

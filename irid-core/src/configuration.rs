@@ -1,20 +1,17 @@
 
 //= APPLICATION CONFIG BUILDER =====================================================================
 
-/// Build a new [Config] with wanted values.
-#[derive(Debug)]
-pub struct ConfigBuilder {
-    clear_color: Option<wgpu::Color>,
+/// Build a new [AppConfig] with wanted values.
+#[derive(Clone, Debug)]
+pub struct AppConfigBuilder {
     window_inner_width: Option<std::num::NonZeroU32>,
     window_inner_height: Option<std::num::NonZeroU32>,
     window_starts_maximized: bool,
 }
 
 
-/// Application's configuration.
-impl ConfigBuilder {
-    pub const DEFAULT_CLEAR_COLOR: Option<wgpu::Color> =
-        Some(wgpu::Color::WHITE);
+/// Application configuration.
+impl AppConfigBuilder {
     pub const DEFAULT_WINDOW_INNER_WIDTH: Option<std::num::NonZeroU32> =
         std::num::NonZeroU32::new(1920 / 2);
     pub const DEFAULT_WINDOW_INNER_HEIGHT: Option<std::num::NonZeroU32> =
@@ -22,21 +19,13 @@ impl ConfigBuilder {
     pub const DEFAULT_WINDOW_STARTS_MAXIMIZED: bool =
         true;  // false value as default can gives less starting problems
 
-    /// Create it to build new [Config]s.
+    /// Create it to build new [AppConfig].
     pub fn new() -> Self {
         Self {
-            clear_color: None,
             window_inner_width: None,
             window_inner_height: None,
             ..Default::default()
         }
-    }
-
-    /// Color used by a [render pass color attachment](wgpu::RenderPassColorAttachment)
-    /// to perform a [clear operation](wgpu::LoadOp).
-    pub fn with_clear_color(mut self, clear_color: wgpu::Color) -> Self {
-        self.clear_color = Some(clear_color);
-        self
     }
 
     /// Set the width window inner size.
@@ -44,8 +33,8 @@ impl ConfigBuilder {
         self.window_inner_width = match window_inner_width {
             0 => {
                 log::warn!("A value equal to zero has been given to window_width, the default value of {} will be set instead",
-                    ConfigBuilder::DEFAULT_WINDOW_INNER_WIDTH.unwrap());
-                ConfigBuilder::DEFAULT_WINDOW_INNER_WIDTH
+                    AppConfigBuilder::DEFAULT_WINDOW_INNER_WIDTH.unwrap());
+                AppConfigBuilder::DEFAULT_WINDOW_INNER_WIDTH
             },
             _ => std::num::NonZeroU32::new(window_inner_width),
         };
@@ -57,8 +46,8 @@ impl ConfigBuilder {
         self.window_inner_height = match window_inner_height {
             0 => {
                 log::warn!("A value equal to zero has been given to window_height, the default value of {} will be set instead",
-                    ConfigBuilder::DEFAULT_WINDOW_INNER_HEIGHT.unwrap());
-                ConfigBuilder::DEFAULT_WINDOW_INNER_HEIGHT
+                    AppConfigBuilder::DEFAULT_WINDOW_INNER_HEIGHT.unwrap());
+                AppConfigBuilder::DEFAULT_WINDOW_INNER_HEIGHT
             },
             _ => std::num::NonZeroU32::new(window_inner_height),
         };
@@ -70,31 +59,27 @@ impl ConfigBuilder {
         self
     }
 
-    /// Build a new [Config] with the set values.
-    pub fn build(self) -> Config {
-        Config {
-            clear_color: if self.clear_color
-                .is_some() { self.clear_color.unwrap() }
-                else { ConfigBuilder::DEFAULT_CLEAR_COLOR.unwrap() },
+    /// Build a new [AppConfig] with the set values.
+    pub fn build(self) -> AppConfig {
+        AppConfig {
             window_inner_width: if self.window_inner_width
                 .is_some() { self.window_inner_width.unwrap() }
-                else { ConfigBuilder::DEFAULT_WINDOW_INNER_WIDTH.unwrap() },
+                else { AppConfigBuilder::DEFAULT_WINDOW_INNER_WIDTH.unwrap() },
             window_inner_height: if self.window_inner_height
                 .is_some() { self.window_inner_height.unwrap() }
-                else { ConfigBuilder::DEFAULT_WINDOW_INNER_HEIGHT.unwrap() },
+                else { AppConfigBuilder::DEFAULT_WINDOW_INNER_HEIGHT.unwrap() },
             window_starts_maximized: self.window_starts_maximized,
         }
     }
 }
 
 
-impl Default for ConfigBuilder {
-    fn default() -> ConfigBuilder {
-        ConfigBuilder {
-            clear_color: ConfigBuilder::DEFAULT_CLEAR_COLOR,
-            window_inner_width: ConfigBuilder::DEFAULT_WINDOW_INNER_WIDTH,
-            window_inner_height: ConfigBuilder::DEFAULT_WINDOW_INNER_HEIGHT,
-            window_starts_maximized: ConfigBuilder::DEFAULT_WINDOW_STARTS_MAXIMIZED,
+impl Default for Self {
+    fn default() -> Self {
+        Self {
+            window_inner_width: AppConfigBuilder::DEFAULT_WINDOW_INNER_WIDTH,
+            window_inner_height: AppConfigBuilder::DEFAULT_WINDOW_INNER_HEIGHT,
+            window_starts_maximized: AppConfigBuilder::DEFAULT_WINDOW_STARTS_MAXIMIZED,
         }
     }
 }
@@ -102,28 +87,25 @@ impl Default for ConfigBuilder {
 
 //= APPLICATION CONFIG OBJECT ======================================================================
 
-/// The [Application](crate::app::Application)'s configuration, TODO: readable by file with
+/// The [Application](crate::app::Application) configuration, TODO: readable by file with
 /// [serde](https://crates.io/crates/serde).
-#[derive(Debug)]
-pub struct Config {
-    clear_color: wgpu::Color,
+#[derive(Clone, Debug)]
+pub struct AppConfig {
     window_inner_width: std::num::NonZeroU32,
     window_inner_height: std::num::NonZeroU32,
     window_starts_maximized: bool,
 }
 
 
-impl Config {
+impl AppConfig {
+    //- Constructors -------------------------------------------------------------------------------
+
     /// Create a Config struct by reading the values from given file path.
     pub fn new(_filepath: &std::path::Path) -> Self {
-        Config::default()
+        AppConfig::default()
     }
 
-    /// Returns the clear color used in a
-    /// [render pass color attachment](wgpu::RenderPassColorAttachment).
-    pub fn clear_color(&self) -> wgpu::Color {
-        self.clear_color
-    }
+    //- Getter Methods -----------------------------------------------------------------------------
 
     /// Returns the window inner width (used when the window is not maximized).
     ///
@@ -146,6 +128,8 @@ impl Config {
         self.window_starts_maximized
     }
 
+    //- Windows Inner Size Methods -----------------------------------------------------------------
+
     /// Returns the window inner size.
     pub fn window_inner_size(&self) -> winit::dpi::PhysicalSize<u32> {
         winit::dpi::PhysicalSize {
@@ -164,13 +148,12 @@ impl Config {
 }
 
 
-impl Default for Config {
+impl Default for AppConfig {
     fn default() -> Self {
         Self {
-            clear_color: ConfigBuilder::DEFAULT_CLEAR_COLOR.unwrap(),
-            window_inner_width: ConfigBuilder::DEFAULT_WINDOW_INNER_WIDTH.unwrap(),
-            window_inner_height: ConfigBuilder::DEFAULT_WINDOW_INNER_HEIGHT.unwrap(),
-            window_starts_maximized: ConfigBuilder::DEFAULT_WINDOW_STARTS_MAXIMIZED,
+            window_inner_width: AppConfigBuilder::DEFAULT_WINDOW_INNER_WIDTH.unwrap(),
+            window_inner_height: AppConfigBuilder::DEFAULT_WINDOW_INNER_HEIGHT.unwrap(),
+            window_starts_maximized: AppConfigBuilder::DEFAULT_WINDOW_STARTS_MAXIMIZED,
         }
     }
 }

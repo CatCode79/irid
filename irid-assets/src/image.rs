@@ -3,12 +3,15 @@
 
 /// A Dynamic Image
 ///
-/// It is a wrapper of the [image::DynamicImage](image::DynamicImage) object.
+/// It is a wrapper of [image::DynamicImage](image::DynamicImage) object.
 #[derive(Debug)]
 pub struct DiffuseImage(image::DynamicImage, u32, u32);
 
 
 impl DiffuseImage {
+
+    //- Constructors -------------------------------------------------------------------------------
+
     /// Open and decode a file to read, format will be guessed from path.
     ///
     /// If you want to inspect the content for a better guess on the format,
@@ -59,17 +62,6 @@ impl DiffuseImage {
         })
     }
 
-    //- Color Data Conversion Methods --------------------------------------------------------------
-
-    /// Get the bytes from the image as 8bit RGBA.
-    pub fn as_rgba8_bytes(&self) -> Option<&[u8]> {
-        use image::EncodableLayout;
-        match self.0.as_rgba8() {
-            None => { None }
-            Some(rgba8) => { Some(rgba8.as_bytes()) }
-        }
-    }
-
     //- Getter Methods -----------------------------------------------------------------------------
 
     /// The width and height of this image.
@@ -85,5 +77,16 @@ impl DiffuseImage {
     /// The height of this image.
     pub fn height(&self) -> u32 {
         self.2
+    }
+
+    //- Color Data Conversion Methods --------------------------------------------------------------
+
+    /// Get the bytes from the image as 8bit RGBA.
+    pub fn as_rgba8_bytes(&self) -> Option<&[u8]> {
+        use image::EncodableLayout;
+        match self.0.as_rgba8() {
+            None => { None }
+            Some(rgba8) => { Some(rgba8.as_bytes()) }
+        }
     }
 }

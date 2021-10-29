@@ -4,9 +4,10 @@
 use anyhow::anyhow;
 use winit::window::Fullscreen;
 
-use crate::app::{Config, Listener};
-use crate::assets::ModelVertex;
-use crate::renderer::Renderer;
+use irid_assets::ModelVertex;
+use irid_renderer::Renderer;
+
+use crate::{AppConfig, Listener};
 
 
 //= APPLICATION BUILDER ============================================================================
@@ -14,7 +15,7 @@ use crate::renderer::Renderer;
 /// Build a new [Application] with wanted values.
 #[derive(Debug, Default)]
 pub struct ApplicationBuilder<'a> {
-    config: Config,
+    config: AppConfig,
     title: Option<String>,
     shaders: Option<std::collections::HashMap<String, String>>,
     texture_path: Option<&'a std::path::Path>,
@@ -27,13 +28,13 @@ impl<'a> ApplicationBuilder<'a> {
     /// Create an ApplicationBuilder using a filepath to load the config file.
     pub fn new_with_file(filepath: &std::path::Path) -> Self {
         Self {
-            config: Config::new(filepath),
+            config: AppConfig::new(filepath),
             ..Default::default()
         }
     }
 
     /// Create an ApplicationBuilder using a [Config].
-    pub fn new_with_config(config: Config) -> Self {
+    pub fn new_with_config(config: AppConfig) -> Self {
         Self {
             config,
             ..Default::default()
@@ -90,7 +91,7 @@ impl<'a> ApplicationBuilder<'a> {
 
 /// Object that serves to manage the whole game application.
 pub struct Application<'a> {
-    config: Config,
+    config: AppConfig,
     title: String,
     shaders: std::collections::HashMap<String, String>,
     texture_path: &'a std::path::Path,
@@ -130,7 +131,7 @@ impl<'a> Application<'a> {
             .with_resizable(true)
             .with_title(&self.title)
             .with_visible(false)
-            //.with_window_icon() // TODO because yes
+            //.with_window_icon() // TODO because yes!
             .build(&event_loop)?;
 
         let mut renderer = Renderer::new(
