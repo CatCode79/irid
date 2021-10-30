@@ -1,11 +1,19 @@
 
+//= USES ===========================================================================================
+
+use std::num::NonZeroU32;
+
+
 //= DYNAMIC IMAGE ==================================================================================
 
-/// A Dynamic Image
+/// A Diffuse Image
 ///
 /// It is a wrapper of [image::DynamicImage](image::DynamicImage) object.
-#[derive(Debug)]
-pub struct DiffuseImage(image::DynamicImage, u32, u32);
+#[derive(Clone, Debug)]
+pub struct DiffuseImage {
+    dynamic_image: image::DynamicImage,
+    size: ImageSize,
+}
 
 
 impl DiffuseImage {
@@ -18,7 +26,7 @@ impl DiffuseImage {
     /// which does not depend on file extensions, see
     /// [new_with_guessed_format](DynamicImage::new_with_guessed_format).
     pub fn new(filepath: &std::path::Path) -> image::ImageResult<Self> {
-        DiffuseImage::new_handler(filepath, false)
+        DiffuseImage::handle_new(filepath, false)
     }
 
     /// Open and decode a file to read, format will be guessed from path first
@@ -38,10 +46,10 @@ impl DiffuseImage {
     /// **When an error occurs, the reader may not have been properly reset and it is potentially
     /// hazardous to continue with more IO operations**.
     pub fn new_with_guessed_format(filepath: &std::path::Path) -> image::ImageResult<Self> {
-        DiffuseImage::new_handler(filepath, true)
+        DiffuseImage::handle_new(filepath, true)
     }
 
-    fn new_handler(filepath: &std::path::Path, guess_the_format:bool) -> image::ImageResult<Self> {
+    fn handle_new(filepath: &std::path::Path, guess_the_format:bool) -> image::ImageResult<Self> {
         let file_reader = if guess_the_format {
             image::io::Reader::open(filepath)?.with_guessed_format()?  // TODO: use anyhow context instead, also below
         } else {
@@ -50,33 +58,32 @@ impl DiffuseImage {
 
         let dynamic_image = file_reader.decode()?;
 
-        let image_dimensions = {
+        let size = {
             use image::GenericImageView;
-            dynamic_image.dimensions()
+            ImageSize::from(dynamic_image.dimensions())
         };
 
         Ok(Self {
-            0: dynamic_image,
-            1: image_dimensions.0,
-            2: image_dimensions.1,
+            dynamic_image,
+            size,
         })
     }
 
     //- Getter Methods -----------------------------------------------------------------------------
 
     /// The width and height of this image.
-    pub fn dimensions(&self) -> (u32, u32) {
-        (self.1, self.2)
+    pub fn size(&self) -> impl ImageSize {
+        self.size
     }
 
     /// The width of this image.
     pub fn width(&self) -> u32 {
-        self.1
+        self.size.width()
     }
 
     /// The height of this image.
     pub fn height(&self) -> u32 {
-        self.2
+        self.size.height()
     }
 
     //- Color Data Conversion Methods --------------------------------------------------------------
@@ -84,9 +91,51 @@ impl DiffuseImage {
     /// Get the bytes from the image as 8bit RGBA.
     pub fn as_rgba8_bytes(&self) -> Option<&[u8]> {
         use image::EncodableLayout;
-        match self.0.as_rgba8() {
+        match self.dynamic_image.as_rgba8() {
             None => { None }
             Some(rgba8) => { Some(rgba8.as_bytes()) }
         }
+    }
+}
+
+//= DIFFUSE IMAGE SIZE =============================================================================
+
+#[derive(Clone, Copy, Debug)]
+struct DiffuseImageSize {
+    width: NonZeroU32,
+    height: NonZeroU32,
+}
+
+impl ImageSize for DiffuseImageSize {
+
+    //- Constructors -------------------------------------------------------------------------------
+
+
+
+    //- Getters ------------------------------------------------------------------------------------
+
+    pub fn width(&self) -> u32 {
+        self.width.unwrap()
+    }
+
+    pub fn height(&self) -> u32 {
+        self.height.unwrap()
+    }
+
+    pub fn as_tuple(&self) -> (u32, u32) {
+        (self.width.unwrap(), self.height.unwrap())
+    }
+}
+
+
+impl From<((u32, u32))> for ImageSize {
+    fn from(tuple: (u32, u32)) -> Self {
+        ImageSize::new(tuple.0, tuple.1)
+    }
+}
+
+impl From<[(u32, u32); 2]> for ImageSize {
+    fn from(tuple: (u32, u32)) -> Self {
+        ImageSize::new(tuple.0, tuple.1)
     }
 }

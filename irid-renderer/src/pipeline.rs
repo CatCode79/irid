@@ -1,7 +1,9 @@
 //= USES ===========================================================================================
 
+use irid_traits::Vertex;
+
 use crate::{
-    Device, FragmentStateBuilder, InstanceRaw, ShaderModuleBuilder, Surface,
+    Device, FragmentStateBuilder, InstanceRaw, ModelVertex, ShaderModuleBuilder, Surface,
     TextureDepthMetadatas, VertexStateBuilder
 };
 

@@ -16,14 +16,14 @@ pub use self::vertex::*;
 
 //= MODS ===========================================================================================
 
-mod adapter;
-mod camera;
-mod configuration;
-mod device;
-mod instance;
-mod pipeline;
-mod renderer;
-mod shader;
-mod surface;
-mod vertex;
-mod texture;
+pub(crate) mod adapter;
+pub(crate) mod camera;
+pub(crate) mod configuration;
+pub(crate) mod device;
+pub(crate) mod instance;
+pub(crate) mod pipeline;
+pub(crate) mod renderer;
+pub(crate) mod shader;
+pub(crate) mod surface;
+pub(crate) mod vertex;
+pub(crate) mod texture;

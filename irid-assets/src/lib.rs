@@ -6,6 +6,6 @@ pub use self::model::*;
 
 //= MODS ===========================================================================================
 
-mod configuration;
-mod image;
-mod model;
+pub(crate) mod configuration;
+pub(crate) mod image;
+pub(crate) mod model;

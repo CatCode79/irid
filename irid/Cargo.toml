@@ -1,12 +1,12 @@
 [package]
-name = "irid-core"
+name = "irid"
 version = "0.1.0"
 authors = ["CatCode79 <andrea.postal@gmail.com>"]
 edition = "2021"
 rust-version = "1.56"
-description = "Irid Framework Core"
+description = "Irid Game Framework Core"
 repository = "https://github.com/CatCode79/irid-framework"
-license = "MIT OR Apache-2.0"
+license = "MIT OR Apache-2.0 OR Zlib"
 publish = false
 
 [dependencies]
@@ -17,6 +17,7 @@ env_logger = "0.9"
 image = "0.23"
 irid-assets = { path = "../irid-assets" }
 irid-renderer = { path = "../irid-renderer" }
+#irid-traits = { path = "../irid-traits" }
 log = "0.4"
 pollster = "0.2"
 tobj = "3.2"

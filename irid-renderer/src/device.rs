@@ -1,6 +1,8 @@
 
 //= USES ===========================================================================================
 
+use irid_traits::Vertex;
+
 use crate::Adapter;
 
 
@@ -63,7 +65,7 @@ impl Device {
     pub fn create_vertex_buffer_init(
         &self,
         label_text: &str,
-        vertices: &[ModelVertex]
+        vertices: &[Vertex]
     ) -> wgpu::Buffer {
         use wgpu::util::DeviceExt;
         self.wgpu_device.create_buffer_init(

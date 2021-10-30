@@ -1,12 +1,12 @@
-
 //= USES ===========================================================================================
 
+use irid_traits::Vertex;
+
 use crate::{
-    Adapter, Camera, CameraController, CameraMetadatas, Device, Instance,
+    Adapter, Camera, CameraController, CameraMetadatas, Device, Instance, ModelVertex,
     RendererConfig, RenderPipeline, Surface,
     TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas
 };
-
 
 //= CONSTS =========================================================================================
 
@@ -17,8 +17,23 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
     NUM_INSTANCES_PER_ROW as f32 * 0.5
 );
 
+//= RENDERER BUILDER ===============================================================================
 
-//= RENDERER STRUCT ================================================================================
+///
+#[derive(Clone, Debug)]
+pub struct RendererBuilder<'a> {
+    window: &'a winit::window::Window,
+    shader_source: Option<String>,
+    texture_path: Option<&'a std::path::Path>,  // TODO We have to think to retain the lifetime or move
+    vertices: Option<&'a [ModelVertex]>,  // TODO Probably better to encapsulate the [ModelVertex] logic
+    indices: Option<&'a [u32]>,
+}
+
+impl<'a> RenderBuilder<'a> {
+
+}
+
+//= RENDERER OBJECT ================================================================================
 
 ///
 pub struct Renderer {
@@ -41,17 +56,16 @@ pub struct Renderer {
     instance_buffer: wgpu::Buffer,
 }
 
-
 impl Renderer {
 
-    //- Constructor Methods ------------------------------------------------------------------------
+    //- Constructors -------------------------------------------------------------------------------
 
     ///
     pub fn new(
         window: &winit::window::Window,
         shader_source: String,
         texture_path: &std::path::Path,
-        vertices: &[ModelVertex],
+        vertices: &[ModelVertex],  // TODO Better to encapsulate the [Self::Vrtx] logic.
         indices: &[u32]
     ) -> anyhow::Result<Self> {
         let window_size = window.inner_size();

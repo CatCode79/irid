@@ -1,9 +1,0 @@
-[package]
-name = "irid-common-traits"
-version = "0.1.0"
-edition = "2021"
-rust-version = "1.56"
-
-[lib]
-
-[dependencies]
