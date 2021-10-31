@@ -1,6 +1,6 @@
 //= USES ===========================================================================================
 
-use irid_traits::Vertex;
+use irid_traits::{Image, Vertex};
 
 use crate::{
     Adapter, Camera, CameraController, CameraMetadatas, Device, Instance, ModelVertex,
@@ -19,59 +19,74 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 
 //= RENDERER BUILDER ===============================================================================
 
+trait RendererAssociatedTypes {
+
+}
+
 ///
 #[derive(Clone, Debug)]
-pub struct RendererBuilder<'a> {
+pub struct RendererBuilder<'a, Image> {
     window: &'a winit::window::Window,
     shader_source: Option<String>,
-    texture_path: Option<&'a std::path::Path>,  // TODO We have to think to retain the lifetime or move
+    texture_path: Option<&'a Image>,
     vertices: Option<&'a [ModelVertex]>,  // TODO Probably better to encapsulate the [ModelVertex] logic
     indices: Option<&'a [u32]>,
 }
 
 impl<'a> RenderBuilder<'a> {
-
-}
-
-//= RENDERER OBJECT ================================================================================
-
-///
-pub struct Renderer {
-    window_size: winit::dpi::PhysicalSize<u32>,
-    surface: Surface,
-    _adapter: Adapter,
-    device: Device,
-    queue: wgpu::Queue,
-    camera: Camera,
-    camera_metadatas: CameraMetadatas,
-    camera_controller: CameraController,
-    _texture_image_metadatas: TextureImageMetadatas,
-    texture_bind_group_metadatas: TextureBindGroupMetadatas,
-    texture_depth_metadatas: TextureDepthMetadatas,
-    pipeline: RenderPipeline,
-    vertex_buffer: wgpu::Buffer,  // TODO: maybe this is better to move this buffer, and the index buffer, inside the render_pass or pipeline object
-    index_buffer: wgpu::Buffer,
-    num_indices: u32,
-    instances: Vec<Instance>,
-    instance_buffer: wgpu::Buffer,
-}
-
-impl Renderer {
-
     //- Constructors -------------------------------------------------------------------------------
 
     ///
-    pub fn new(
-        window: &winit::window::Window,
-        shader_source: String,
-        texture_path: &std::path::Path,
-        vertices: &[ModelVertex],  // TODO Better to encapsulate the [Self::Vrtx] logic.
-        indices: &[u32]
-    ) -> anyhow::Result<Self> {
-        let window_size = window.inner_size();
+    pub fn new(window: &'a winit::window::Window) -> Self {
+        Self {
+            window,
+            shader_source: None,
+            texture_path: None,
+            vertices: None,
+            indices: None,
+        }
+    }
+
+    //- Setters ------------------------------------------------------------------------------------
+
+    ///
+    pub fn with_window(self, window: &'a winit::window::Window) {
+        self.window = window;
+        self
+    }
+
+    ///
+    pub fn with_shader_source(self, shader_source: String) -> Self {
+        self.shader_source = Some(shader_source);
+        self
+    }
+
+    ///
+    pub fn with_texture_path(self, texture_path: &'a std::path::Path) -> Self {
+        self.texture_path = Some(texture_path);
+        self
+    }
+
+    ///
+    pub fn with_vertices(self, vertices: &'a [ModelVertex]) -> Self {
+        self.vertices = Some(vertices);
+        self
+    }
+
+    ///
+    pub fn with_indices(self, indices: &'a [u32]) -> Self {
+        self.indices = Some(indices);
+        self
+    }
+
+    //- Build --------------------------------------------------------------------------------------
+
+    ///
+    pub fn build(self) -> anyhow::Result<Renderer> {
+        let window_size = self.window.inner_size();
 
         let backends = wgpu::Backends::VULKAN | wgpu::Backends::DX12;
-        let (surface, adapter) = Surface::new(backends, window, window_size)?;
+        let (surface, adapter) = Surface::new(backends, self.window, window_size)?;
 
         let (device, queue) = pollster::block_on(Device::new(&adapter))?;
 
@@ -85,7 +100,7 @@ impl Renderer {
 
         //- Texture --------------------------------------------------------------------------------
 
-        let diffuse_image = DiffuseImage::new(texture_path)?;
+        let diffuse_image = DiffuseImage::new(self.texture_path)?;
 
         let texture_image_metadatas = TextureImageMetadatas::new(
             &surface, &device, diffuse_image.width(), diffuse_image.height()
@@ -104,7 +119,7 @@ impl Renderer {
             &device,
             texture_bind_group_metadatas.bind_group_layout(),
             camera_metadatas.bind_group_layout(),
-            shader_source
+            self.shader_source
         );
 
         //- Queue Schedule -------------------------------------------------------------------------
@@ -119,10 +134,10 @@ impl Renderer {
 
         //- Vertex and Index Buffers ---------------------------------------------------------------
 
-        let vertex_buffer = device.create_vertex_buffer_init("Vertex Buffer", vertices);
-        let index_buffer = device.create_indices_buffer_init("Index Buffer", indices);
+        let vertex_buffer = device.create_vertex_buffer_init("Vertex Buffer", self.vertices);
+        let index_buffer = device.create_indices_buffer_init("Index Buffer", self.indices);
 
-        let num_indices = indices.len() as u32;
+        let num_indices = self.indices.len() as u32;
 
         //- Instances ------------------------------------------------------------------------------
 
@@ -153,11 +168,11 @@ impl Renderer {
         let instance_data = instances.iter().map(Instance::to_raw)
             .collect::<Vec<_>>();
         let instance_buffer = device.create_buffer_init(  // TODO when we will create the generics avout Vertices we will use the Device.create_vertex_buffer_init instead
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Instance Buffer"),
-                contents: bytemuck::cast_slice(&instance_data),
-                usage: wgpu::BufferUsages::VERTEX,
-            }
+                                                          &wgpu::util::BufferInitDescriptor {
+                                                              label: Some("Instance Buffer"),
+                                                              contents: bytemuck::cast_slice(&instance_data),
+                                                              usage: wgpu::BufferUsages::VERTEX,
+                                                          }
         );
 
         //- Renderer Creation ----------------------------------------------------------------------
@@ -165,10 +180,10 @@ impl Renderer {
         Ok(Self {
             window_size,
             surface,
-            _adapter: adapter,
+            adapter,
             device,
             queue,
-            _texture_image_metadatas: texture_image_metadatas,
+            texture_image_metadatas,
             texture_bind_group_metadatas,
             texture_depth_metadatas,
             camera,
@@ -182,8 +197,33 @@ impl Renderer {
             instance_buffer,
         })
     }
+}
 
-    //- Size Methods -------------------------------------------------------------------------------
+//= RENDERER OBJECT ================================================================================
+
+///
+pub struct Renderer {
+    window_size: winit::dpi::PhysicalSize<u32>,
+    surface: Surface,
+    adapter: Adapter,
+    device: Device,
+    queue: wgpu::Queue,
+    camera: Camera,
+    camera_metadatas: CameraMetadatas,
+    camera_controller: CameraController,
+    texture_image_metadatas: TextureImageMetadatas,
+    texture_bind_group_metadatas: TextureBindGroupMetadatas,
+    texture_depth_metadatas: TextureDepthMetadatas,
+    pipeline: RenderPipeline,
+    vertex_buffer: wgpu::Buffer,  // TODO: maybe this is better to move this buffer, and the index buffer, inside the render_pass or pipeline object
+    index_buffer: wgpu::Buffer,
+    num_indices: u32,
+    instances: Vec<Instance>,
+    instance_buffer: wgpu::Buffer,
+}
+
+impl Renderer {
+    //- SwapChain/Surface Size ---------------------------------------------------------------------
 
     /// Getter for the windows's physical size attribute.
     pub fn get_size(&self) -> winit::dpi::PhysicalSize<u32> {
@@ -208,14 +248,14 @@ impl Renderer {
         self.surface.update(&self.device, self.window_size);
     }
 
-    //- Camera Methods -----------------------------------------------------------------------------
+    //- Camera -------------------------------------------------------------------------------------
 
     ///
     pub fn process_camera_events(&mut self, input: &winit::event::KeyboardInput) -> bool {
         self.camera_controller.process_events(input)
     }
 
-    //- Command Encoder Methods --------------------------------------------------------------------
+    //- Command Encoder ----------------------------------------------------------------------------
 
     ///
     pub fn create_command_encoder(&self, label_text: &str) -> wgpu::CommandEncoder {
@@ -226,7 +266,7 @@ impl Renderer {
         )
     }
 
-    //- Rendering Methods --------------------------------------------------------------------------
+    //- Rendering ----------------------------------------------------------------------------------
 
     ///
     pub(crate) fn redraw(&mut self, config: &RendererConfig) -> Result<(), wgpu::SurfaceError> {
