@@ -1,3 +1,6 @@
+/// Refer to the documentation of the individual signatures in a generic way
+/// because the individual implementations may vary in detail.
+
 //= IMAGE ==========================================================================================
 
 /// Trait that describes the generic behavior of an image object.

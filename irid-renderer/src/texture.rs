@@ -1,5 +1,9 @@
 //= USES ===========================================================================================
 
+use irid_assets_traits::{
+    Image,
+};
+
 use crate::{
     device::Device,
     surface::Surface,
@@ -10,15 +14,15 @@ use crate::{
 
 ///
 #[derive(Debug)]
-pub struct DiffuseTexture {
-    diffuse_image: DiffuseImage,
+pub struct DiffuseTexture<I: Image> {
+    diffuse_image: I,
     image_metadatas: TextureImageMetadatas,
 }
 
 
-impl DiffuseTexture {
+impl DiffuseTexture<I> {
     ///
-    // TODO I have to create the metas in static manner and after the surface/device creation, so I can create a texture without use those parameters
+    // TODO I have to create the metas in static manner and after the surface/device creation, so I can create a texture without use those parameters (maybe after that we can move this object inside irid-assets crate)
     pub fn load(surface: &Surface, device: &Device, filepath: &std::path::Path) -> anyhow::Result<Self> {
         let diffuse_image = DiffuseImage::new(filepath)?;
 
@@ -37,7 +41,7 @@ impl DiffuseTexture {
     }
 
     // TODO: to be used instead of  dynamic_image.as_rgba8_bytes on queue.create_texture after created the IridQueue
-    pub fn as_bytes(&self) -> Option<&[u8]>{
+    pub fn as_bytes(&self) -> Option<&[u8]> {
         self.diffuse_image.as_rgba8_bytes()
     }
 }

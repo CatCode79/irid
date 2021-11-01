@@ -1,6 +1,6 @@
 //= USES ===========================================================================================
 
-use irid_traits::Vertex;
+use irid_renderer_traits::Vertex;
 
 use crate::{
     Device, FragmentStateBuilder, InstanceRaw, ModelVertex, ShaderModuleBuilder, Surface,

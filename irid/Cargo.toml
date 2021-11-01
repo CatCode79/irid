@@ -17,7 +17,7 @@ env_logger = "0.9"
 image = "0.23"
 irid-assets = { path = "../irid-assets" }
 irid-renderer = { path = "../irid-renderer" }
-#irid-traits = { path = "../irid-traits" }
+#irid-assets-traits = { path = "../irid-assets-traits" }
 log = "0.4"
 pollster = "0.2"
 tobj = "3.2"

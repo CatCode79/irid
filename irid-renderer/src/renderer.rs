@@ -1,6 +1,7 @@
 //= USES ===========================================================================================
 
-use irid_traits::{Image, Vertex};
+use irid_assets_traits::Image;
+use irid_renderer_traits::Vertex;
 
 use crate::{
     Adapter, Camera, CameraController, CameraMetadatas, Device, Instance, ModelVertex,
@@ -28,12 +29,12 @@ trait RendererAssociatedTypes {
 pub struct RendererBuilder<'a, Image> {
     window: &'a winit::window::Window,
     shader_source: Option<String>,
-    texture_path: Option<&'a Image>,
+    diffuse_image: Option<&'a Image>,
     vertices: Option<&'a [ModelVertex]>,  // TODO Probably better to encapsulate the [ModelVertex] logic
     indices: Option<&'a [u32]>,
 }
 
-impl<'a> RenderBuilder<'a> {
+impl<'a> RendererBuilder<'a> {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
@@ -62,8 +63,8 @@ impl<'a> RenderBuilder<'a> {
     }
 
     ///
-    pub fn with_texture_path(self, texture_path: &'a std::path::Path) -> Self {
-        self.texture_path = Some(texture_path);
+    pub fn with_diffuse_image(self, diffuse_image: &'a impl Image) -> Self {
+        self.diffuse_image = Some(diffuse_image);
         self
     }
 
@@ -100,10 +101,8 @@ impl<'a> RenderBuilder<'a> {
 
         //- Texture --------------------------------------------------------------------------------
 
-        let diffuse_image = DiffuseImage::new(self.texture_path)?;
-
         let texture_image_metadatas = TextureImageMetadatas::new(
-            &surface, &device, diffuse_image.width(), diffuse_image.height()
+            &surface, &device, self.diffuse_image.width(), self.diffuse_image.height()
         );
 
         let texture_bind_group_metadatas= TextureBindGroupMetadatas::new(
@@ -127,7 +126,7 @@ impl<'a> RenderBuilder<'a> {
         // TODO we have to create a IridQueue object to remove those args (also we have to think about clones)
         queue.write_texture(
             texture_image_metadatas.create_image_copy(),
-            diffuse_image.as_rgba8_bytes().unwrap(),  // TODO: piace poco l'unwrap
+            self.diffuse_image.as_rgba8_bytes().unwrap(),  // TODO: piace poco l'unwrap
             *texture_image_metadatas.image_data_layout(),
             *texture_image_metadatas.image_size()
         );
