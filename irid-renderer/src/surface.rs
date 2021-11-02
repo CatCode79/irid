@@ -22,7 +22,7 @@ pub struct Surface {
 
 impl Surface {
 
-    //- Constructor Methods ------------------------------------------------------------------------
+    //- Constructors -------------------------------------------------------------------------------
 
     /// Create a new Surface using the window handle and retrieves an Adapter which matches
     /// the created surface.
@@ -87,7 +87,7 @@ impl Surface {
         Ok((surface, adapter))
     }
 
-    //- Getter Methods -----------------------------------------------------------------------------
+    //- Getters ------------------------------------------------------------------------------------
 
     /// Returns an optimal texture format to use for with the previously created Surface
     /// and Adapter.
@@ -102,7 +102,7 @@ impl Surface {
         &self.color_target_states
     }
 
-    // Swapchain Methods ---------------------------------------------------------------------------
+    // Swapchain -----------------------------------------------------------------------------------
 
     /// Initializes Surface for presentation.
     pub fn configure(&self, device: &Device) {

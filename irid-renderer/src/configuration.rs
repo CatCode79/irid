@@ -66,7 +66,7 @@ impl RendererConfig {
         RendererConfig::default()
     }
 
-    //- Getter Methods -----------------------------------------------------------------------------
+    //- Getters ------------------------------------------------------------------------------------
 
     /// Returns the clear color used in a
     /// [render pass color attachment](wgpu::RenderPassColorAttachment).

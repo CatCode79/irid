@@ -17,7 +17,7 @@ pub struct Adapter {
 
 impl Adapter {
 
-    //- Constructor Methods ------------------------------------------------------------------------
+    //- Constructors -------------------------------------------------------------------------------
 
     /// Retrieves an Adapter which matches the given surface.
     /// Some options are "soft", so treated as non-mandatory. Others are "hard".
@@ -78,7 +78,7 @@ impl Adapter {
         self.wgpu_adapter.get_info()
     }
 
-    ///- Crate-Public Methods ----------------------------------------------------------------------
+    //- Crate-Public Methods -----------------------------------------------------------------------
 
     // This method MUST remains public at the crate level.
     pub(crate) fn expose_wrapped_adapter(&self) -> &wgpu::Adapter {

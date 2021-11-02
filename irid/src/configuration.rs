@@ -105,7 +105,7 @@ impl AppConfig {
         AppConfig::default()
     }
 
-    //- Getter Methods -----------------------------------------------------------------------------
+    //- Getters ------------------------------------------------------------------------------------
 
     /// Returns the window inner width (used when the window is not maximized).
     ///
@@ -128,7 +128,7 @@ impl AppConfig {
         self.window_starts_maximized
     }
 
-    //- Windows Inner Size Methods -----------------------------------------------------------------
+    //- Windows Inner Size -------------------------------------------------------------------------
 
     /// Returns the window inner size.
     pub fn window_inner_size(&self) -> winit::dpi::PhysicalSize<u32> {

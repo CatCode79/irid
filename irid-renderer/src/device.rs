@@ -24,7 +24,7 @@ pub struct Device {
 
 impl Device {
 
-    //- Constructor Methods ------------------------------------------------------------------------
+    //- Constructors -------------------------------------------------------------------------------
 
     /// Create a new Device and Queue given ad adapter.
     pub async fn new(
@@ -53,7 +53,7 @@ impl Device {
         Ok((device, queue))
     }
 
-    //- Creation Methods ---------------------------------------------------------------------------
+    //- Creations ----------------------------------------------------------------------------------
 
     /// Creates a [Buffer](wgpu::Buffer) with data to initialize it.
     pub fn create_buffer_init(&self, buffer_init_desc: &wgpu::util::BufferInitDescriptor) -> wgpu::Buffer {
@@ -150,7 +150,7 @@ impl Device {
         self.wgpu_device.create_sampler(sampler_desc)
     }
 
-    //- Wrapper Methods ----------------------------------------------------------------------------
+    //- Crate-Level Methods ------------------------------------------------------------------------
 
     // This method MUST remains public at the crate level.
     pub(crate) fn expose_wrapped_device(&self) -> &wgpu::Device {

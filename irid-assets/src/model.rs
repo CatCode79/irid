@@ -25,11 +25,7 @@ pub struct Mesh {
 impl Model {
     ///
     // TODO also here I have to remove at least surface param
-    pub fn load<P: AsRef<std::path::Path>>(
-        surface: &Surface,
-        device: &Device,
-        path: P,
-    ) -> anyhow::Result<Self> {
+    pub fn load<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<Self> {
         let (obj_models, obj_materials) = tobj::load_obj(
             path.as_ref(),
             &tobj::LoadOptions {
@@ -50,7 +46,7 @@ impl Model {
         for mat in obj_materials {
             use std::ops::Deref;
             let filepath = containing_folder.join(mat.diffuse_texture);
-            let texture = DiffuseTexture::load(surface, device, filepath.deref())?;
+            let texture = DiffuseImage::load(*filepath)?;
 
             materials.push(Material {
                 name: mat.name,

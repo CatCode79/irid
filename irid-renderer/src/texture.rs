@@ -14,20 +14,18 @@ use crate::{
 
 ///
 #[derive(Debug)]
-pub struct DiffuseTexture<I: Image> {
-    diffuse_image: I,
-    image_metadatas: TextureImageMetadatas,
+pub struct DiffuseTexture<I> {
+    image: I,
+    metadatas: TextureImageMetadatas,
 }
 
 
 impl DiffuseTexture<I> {
     ///
     // TODO I have to create the metas in static manner and after the surface/device creation, so I can create a texture without use those parameters (maybe after that we can move this object inside irid-assets crate)
-    pub fn load(surface: &Surface, device: &Device, filepath: &std::path::Path) -> anyhow::Result<Self> {
-        let diffuse_image = DiffuseImage::new(filepath)?;
-
+    pub fn load(surface: &Surface, device: &Device, image: &I) -> anyhow::Result<Self> {
         // TODO: I need to create this and get it as reference
-        let image_metadatas = TextureImageMetadatas::new(
+        let metadatas = TextureImageMetadatas::new(
             surface,
             device,
             diffuse_image.width(),
@@ -35,14 +33,14 @@ impl DiffuseTexture<I> {
         );
 
         Ok(Self {
-            diffuse_image,
-            image_metadatas,
+            image,
+            metadatas,
         })
     }
 
     // TODO: to be used instead of  dynamic_image.as_rgba8_bytes on queue.create_texture after created the IridQueue
     pub fn as_bytes(&self) -> Option<&[u8]> {
-        self.diffuse_image.as_rgba8_bytes()
+        self.image.as_rgba8_bytes()
     }
 }
 
@@ -60,7 +58,7 @@ pub struct TextureImageMetadatas {
 
 impl TextureImageMetadatas {
 
-    //- Constructor Methods ------------------------------------------------------------------------
+    //- Constructors -------------------------------------------------------------------------------
 
     ///
     pub fn new(
@@ -104,7 +102,7 @@ impl TextureImageMetadatas {
     }
 
 
-    //- ImageCopyTexture-related methods -----------------------------------------------------------
+    //- ImageCopyTexture ---------------------------------------------------------------------------
 
     pub fn create_image_copy(&self) -> wgpu::ImageCopyTexture {
         wgpu::ImageCopyTexture {
@@ -115,7 +113,7 @@ impl TextureImageMetadatas {
         }
     }
 
-    //- Getter Methods -----------------------------------------------------------------------------
+    //- Getters ------------------------------------------------------------------------------------
 
     pub fn texture(&self) -> &wgpu::Texture {
         &self.texture
@@ -143,7 +141,7 @@ pub struct TextureBindGroupMetadatas {
 
 impl TextureBindGroupMetadatas {
 
-    //- Constructor Methods ------------------------------------------------------------------------
+    //- Constructors -------------------------------------------------------------------------------
 
     pub fn new(
         device: &Device,
@@ -239,7 +237,7 @@ impl TextureBindGroupMetadatas {
         )
     }
 
-    //- Getter Methods -----------------------------------------------------------------------------
+    //- Getters ------------------------------------------------------------------------------------
 
     pub fn bind_group_layout(&self) -> &wgpu::BindGroupLayout {
         &self.bind_group_layout
@@ -265,7 +263,7 @@ pub struct TextureDepthMetadatas {
 impl TextureDepthMetadatas {
     pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
 
-    //- Constructor Methods ------------------------------------------------------------------------
+    //- Constructors -------------------------------------------------------------------------------
 
     /// Our depth texture needs to be the same size as our screen if we want things
     /// to render correctly so we give to constructor windows_size value.
@@ -325,7 +323,7 @@ impl TextureDepthMetadatas {
         }
     }
 
-    //- Getter Methods -----------------------------------------------------------------------------
+    //- Getters ------------------------------------------------------------------------------------
 
     pub fn view(&self) -> &wgpu::TextureView {
         &self.view

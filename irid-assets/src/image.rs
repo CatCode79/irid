@@ -30,7 +30,7 @@ impl DiffuseImage {
 
         let size = {
             use image::GenericImageView;
-            ImageSize::from(dynamic_image.dimensions())
+            ImageSize::from(image.dimensions())
         };
 
         Ok(Self {
@@ -78,7 +78,7 @@ impl Image for DiffuseImage {
         DiffuseImage::handle_new(filepath, true)
     }
 
-    //- Getter Methods -----------------------------------------------------------------------------
+    //- Getters ------------------------------------------------------------------------------------
 
     /// The width and height of this image.
     fn size(&self) -> &Self::ImgSz {
@@ -95,7 +95,7 @@ impl Image for DiffuseImage {
         self.size.height()
     }
 
-    //- Color Data Conversion Methods --------------------------------------------------------------
+    //- Color Data Conversions ---------------------------------------------------------------------
 
     /// Get the bytes from the image as 8bit RGBA.
     fn as_rgba8_bytes(&self) -> Option<&[u8]> {

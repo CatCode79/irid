@@ -327,7 +327,7 @@ impl<'a> Application<'a> {
         Ok(())
     }
 
-    //- Generic Events Methods ---------------------------------------------------------------------
+    //- Generic Events -----------------------------------------------------------------------------
 
     fn on_new_events<L: Listener>(
         &self,
@@ -393,7 +393,7 @@ impl<'a> Application<'a> {
         /*let use_default_behaviour: bool =*/ listener.on_destroy();
     }
 
-    //- Window Events Methods ----------------------------------------------------------------------
+    //- Window Events ------------------------------------------------------------------------------
 
     fn on_window_resize<L: Listener>(
         &self,

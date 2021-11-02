@@ -19,7 +19,7 @@ pub struct PipelineLayoutBuilder<'a> {
 
 impl<'a> PipelineLayoutBuilder<'a> {
 
-    //- Constructor Methods ------------------------------------------------------------------------
+    //- Constructors -------------------------------------------------------------------------------
 
     ///
     pub fn new() -> Self {
@@ -32,7 +32,7 @@ impl<'a> PipelineLayoutBuilder<'a> {
         }
     }
 
-    //- Setter Methods -----------------------------------------------------------------------------
+    //- Setters ------------------------------------------------------------------------------------
 
     ///
     pub fn with_label(mut self, label_text: &'a str) -> Self {
@@ -62,7 +62,7 @@ impl<'a> PipelineLayoutBuilder<'a> {
         self
     }
 
-    //- Build Methods ------------------------------------------------------------------------------
+    //- Build --------------------------------------------------------------------------------------
 
     /// Build a new [PipelineLayout](wgpu::PipelineLayout).
     pub fn build(self, device: &Device) -> wgpu::PipelineLayout {
@@ -82,7 +82,7 @@ pub struct PrimitiveStateBuilder {
 
 impl PrimitiveStateBuilder {
 
-    //- Constructor Methods ------------------------------------------------------------------------
+    //- Constructors -------------------------------------------------------------------------------
 
     ///
     pub fn new() -> Self {  // TODO: bug! a me puzza sto static
@@ -102,7 +102,7 @@ impl PrimitiveStateBuilder {
         }
     }
 
-    //- Setter Methods -----------------------------------------------------------------------------
+    //- Setters ------------------------------------------------------------------------------------
 
     ///
     pub fn with_topology(&mut self, topology: wgpu::PrimitiveTopology) -> &mut Self {
@@ -146,7 +146,7 @@ impl PrimitiveStateBuilder {
         self
     }
 
-    //- Build Methods ------------------------------------------------------------------------------
+    //- Build --------------------------------------------------------------------------------------
 
     ///
     pub fn build(self) -> wgpu::PrimitiveState {
@@ -166,7 +166,7 @@ pub struct RenderPipelineBuilder<'a> {
 // TODO: here we have to create directly an irid pipeline and not a wgpu pipeline
 impl<'a> RenderPipelineBuilder<'a> {
 
-    //- Constructor Methods ------------------------------------------------------------------------
+    //- Constructors -------------------------------------------------------------------------------
 
     ///
     pub fn new(vertex: wgpu::VertexState<'a>) -> Self {
@@ -193,7 +193,7 @@ impl<'a> RenderPipelineBuilder<'a> {
         }
     }
 
-    //- Setter Methods -----------------------------------------------------------------------------
+    //- Setters ------------------------------------------------------------------------------------
 
     ///
     pub fn with_label(&mut self, label_text: &'a str) -> &mut Self {
@@ -241,7 +241,7 @@ impl<'a> RenderPipelineBuilder<'a> {
         self
     }
 
-    //- Build Methods ------------------------------------------------------------------------------
+    //- Build --------------------------------------------------------------------------------------
 
     ///
     pub fn build(&mut self, device: &Device) -> wgpu::RenderPipeline {
@@ -262,7 +262,7 @@ pub struct RenderPipeline {
 
 impl RenderPipeline {
 
-    //- Constructor Methods ------------------------------------------------------------------------
+    //- Constructors -------------------------------------------------------------------------------
 
     ///
     pub fn new(
@@ -310,7 +310,7 @@ impl RenderPipeline {
         }
     }
 
-    //- Wrapper Methods ----------------------------------------------------------------------------
+    //- Crate-Level Methods ------------------------------------------------------------------------
 
     // This method MUST remains public at the crate level.
     pub(crate) fn expose_wrapped_render_pipeline(&self) -> &wgpu::RenderPipeline {

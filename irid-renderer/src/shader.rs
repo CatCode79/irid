@@ -17,7 +17,7 @@ pub struct ShaderModuleBuilder<'a> {
 
 impl<'a> ShaderModuleBuilder<'a> {
 
-    //- Constructor Methods ------------------------------------------------------------------------
+    //- Constructors -------------------------------------------------------------------------------
 
     /// Create a new ShaderModuleBuilder.
     pub fn new(source: wgpu::ShaderSource<'static>) -> Self {
@@ -27,7 +27,7 @@ impl<'a> ShaderModuleBuilder<'a> {
         }
     }
 
-    //- Setter Methods -----------------------------------------------------------------------------
+    //- Setters ------------------------------------------------------------------------------------
 
     /// Debug label of the shader module. This will show up in graphics debuggers
     /// for easy identification.
@@ -46,7 +46,7 @@ impl<'a> ShaderModuleBuilder<'a> {
         self
     }
 
-    //- Build Methods ------------------------------------------------------------------------------
+    //- Build --------------------------------------------------------------------------------------
 
     /// Build the shader module.
     pub fn build(self, device: &Device) -> wgpu::ShaderModule {
@@ -74,7 +74,7 @@ impl<'a> VertexStateBuilder<'a> {
     /// one will not be passed.
     pub const DEFAULT_ENTRY_POINT: &'static str = "vs_main";
 
-    //- Constructor Methods ------------------------------------------------------------------------
+    //- Constructors -------------------------------------------------------------------------------
 
     /// Create a new VertexStateBuilder with a [ShaderModule](wgpu::ShaderModule).
     pub fn new(module: &'a wgpu::ShaderModule) -> Self {
@@ -85,7 +85,7 @@ impl<'a> VertexStateBuilder<'a> {
         }
     }
 
-    //- With-Setter Methods ------------------------------------------------------------------------
+    //- Setters ------------------------------------------------------------------------------------
 
     /// The compiled shader module for this vertex stage.
     pub fn with_module(&mut self, module: &'a wgpu::ShaderModule) -> &mut Self {
@@ -113,7 +113,7 @@ impl<'a> VertexStateBuilder<'a> {
         self
     }
 
-    //- Build Methods ------------------------------------------------------------------------------
+    //- Build --------------------------------------------------------------------------------------
 
     /// Build a new Vertex State.
     pub fn build(self) -> wgpu::VertexState<'a> {
@@ -152,7 +152,7 @@ impl<'a> FragmentStateBuilder<'a> {
     /// one will not be passed.
     pub const DEFAULT_ENTRY_POINT: &'static str = "fs_main";
 
-    //- Constructor Methods ------------------------------------------------------------------------
+    //- Constructors -------------------------------------------------------------------------------
 
     /// Create a new FragmentStateBuilder with a [ShaderModule](wgpu::ShaderModule).
     pub fn new(module: &'a wgpu::ShaderModule) -> Self {
@@ -163,7 +163,7 @@ impl<'a> FragmentStateBuilder<'a> {
         }
     }
 
-    //- With-Setter Methods ------------------------------------------------------------------------
+    //- Setters ------------------------------------------------------------------------------------
 
     /// The compiled shader module for this fragment stage.
     pub fn with_module(mut self, module: &'a wgpu::ShaderModule) -> Self {
@@ -191,7 +191,7 @@ impl<'a> FragmentStateBuilder<'a> {
         self
     }
 
-    //- Build Methods ------------------------------------------------------------------------------
+    //- Build --------------------------------------------------------------------------------------
 
     /// Build a new Fragment State.
     pub fn build(self, surface: &'a Surface) -> wgpu::FragmentState<'a> {
