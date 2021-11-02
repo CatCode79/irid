@@ -4,11 +4,6 @@ use irid_assets_traits::{
     Image,
 };
 
-use crate::{
-    device::Device,
-    surface::Surface,
-};
-
 
 //= DIFFUSE TEXTURE ================================================================================
 

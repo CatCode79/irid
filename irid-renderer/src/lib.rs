@@ -10,8 +10,6 @@ pub use self::pipeline::*;
 pub use self::renderer::*;
 pub use self::shader::*;
 pub use self::surface::*;
-pub use self::texture::*;
-pub use self::vertex::*;
 
 
 //= MODS ===========================================================================================
@@ -25,5 +23,3 @@ pub(crate) mod pipeline;
 pub(crate) mod renderer;
 pub(crate) mod shader;
 pub(crate) mod surface;
-pub(crate) mod vertex;
-pub(crate) mod texture;
