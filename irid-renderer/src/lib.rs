@@ -23,3 +23,5 @@ pub(crate) mod pipeline;
 pub(crate) mod renderer;
 pub(crate) mod shader;
 pub(crate) mod surface;
+
+pub(crate) mod texture_metas;

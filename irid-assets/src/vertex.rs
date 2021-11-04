@@ -1,7 +1,6 @@
 //= USES ===========================================================================================
 
-use irid_renderer_traits::Vertex;
-
+use irid_assets_traits::Vertex;
 
 //= MODEL VERTEX ===================================================================================
 
@@ -42,7 +41,6 @@ impl Vertex for ModelVertex {
     }
 }
 
-
 //= COLORED VERTEX =================================================================================
 
 ///
@@ -52,7 +50,6 @@ pub struct ColorVertex {
     pub position: [f32; 3],
     pub color: [f32; 3],
 }
-
 
 impl Vertex for ColorVertex {
     fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
@@ -74,7 +71,6 @@ impl Vertex for ColorVertex {
         }
     }
 }
-
 
 //= TEXTURED VERTEX ================================================================================
 
@@ -108,8 +104,7 @@ impl Vertex for TextCoordsVertex {
     }
 }
 
-
-//= FNS ============================================================================================
+//= MESH CREATION ==================================================================================
 
 /*
 pub fn create_polygon(_num_vertices: u16) -> (Vec<Vertex>, Vec<u16>) {

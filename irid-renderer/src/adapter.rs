@@ -16,7 +16,6 @@ pub struct Adapter {
 
 
 impl Adapter {
-
     //- Constructors -------------------------------------------------------------------------------
 
     /// Retrieves an Adapter which matches the given surface.

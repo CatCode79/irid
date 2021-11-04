@@ -1,11 +1,11 @@
 //= USES ===========================================================================================
 
-use irid_renderer_traits::Vertex;
+use irid_assets_traits::Vertex;
 
 use crate::{
-    Device, FragmentStateBuilder, InstanceRaw, ModelVertex, ShaderModuleBuilder, Surface,
-    TextureDepthMetadatas, VertexStateBuilder
+    Device, FragmentStateBuilder, InstanceRaw, ShaderModuleBuilder, Surface, VertexStateBuilder
 };
+use crate::texture_metas::TextureDepthMetadatas;
 
 
 //= PIPELINE LAYOUT ================================================================================
@@ -18,7 +18,6 @@ pub struct PipelineLayoutBuilder<'a> {
 
 
 impl<'a> PipelineLayoutBuilder<'a> {
-
     //- Constructors -------------------------------------------------------------------------------
 
     ///
@@ -81,17 +80,16 @@ pub struct PrimitiveStateBuilder {
 
 
 impl PrimitiveStateBuilder {
-
     //- Constructors -------------------------------------------------------------------------------
 
     ///
-    pub fn new() -> Self {  // TODO: bug! a me puzza sto static
+    pub fn new() -> Self {
         Self {
             primitive_state: wgpu::PrimitiveState {
                 topology: wgpu::PrimitiveTopology::TriangleList,
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
-                cull_mode: Some(wgpu::Face::Back),  // TODO: Qui in nannou il cull_mode è None, da controllare in lw_examples cosa servisse esattamente
+                cull_mode: Some(wgpu::Face::Back),
                 // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
                 polygon_mode: wgpu::PolygonMode::Fill,
                 // Requires Features::DEPTH_CLAMPING
@@ -165,7 +163,6 @@ pub struct RenderPipelineBuilder<'a> {
 
 // TODO: here we have to create directly an irid pipeline and not a wgpu pipeline
 impl<'a> RenderPipelineBuilder<'a> {
-
     //- Constructors -------------------------------------------------------------------------------
 
     ///
@@ -261,7 +258,6 @@ pub struct RenderPipeline {
 
 
 impl RenderPipeline {
-
     //- Constructors -------------------------------------------------------------------------------
 
     ///
@@ -310,7 +306,7 @@ impl RenderPipeline {
         }
     }
 
-    //- Crate-Level Methods ------------------------------------------------------------------------
+    //- Crate-Public Methods -----------------------------------------------------------------------
 
     // This method MUST remains public at the crate level.
     pub(crate) fn expose_wrapped_render_pipeline(&self) -> &wgpu::RenderPipeline {

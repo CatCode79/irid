@@ -16,7 +16,6 @@ pub struct DiffuseImage {
 }
 
 impl DiffuseImage {
-
     //- Constructor Handler ------------------------------------------------------------------------
 
     fn handle_new(filepath: &std::path::Path, guess_the_format:bool) -> image::ImageResult<Self> {
@@ -41,7 +40,6 @@ impl DiffuseImage {
 }
 
 impl Image for DiffuseImage {
-
     //- Associated Types ---------------------------------------------------------------------------
 
     type Img = Self;
@@ -116,7 +114,6 @@ struct DiffuseImageSize {
 }
 
 impl ImageSize for DiffuseImageSize {
-
     //- Constructors -------------------------------------------------------------------------------
 
 

@@ -21,7 +21,6 @@ pub struct Surface {
 
 
 impl Surface {
-
     //- Constructors -------------------------------------------------------------------------------
 
     /// Create a new Surface using the window handle and retrieves an Adapter which matches

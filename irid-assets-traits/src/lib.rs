@@ -8,7 +8,7 @@
 /// # Known Implementations:
 ///
 /// - [irid-assets::DiffuseImage](irid-assets::DiffuseImage)
-pub trait Image {
+pub trait Image<S> {
     /// **Associated type** regarding the implementation of this trait.
     type Img;
 
@@ -50,4 +50,25 @@ pub trait ImageSize {
 
     /// Returns the [Image] width and height (in that order) as tuple.
     fn as_tuple(&self) -> (u32, u32);
+}
+
+//= TEXTURE ========================================================================================
+
+///
+pub trait Texture {
+    type Output;
+
+    ///
+    fn load(filepath: &std::path::Path) -> anyhow::Result<Self::Output>;
+
+    ///
+    fn as_bytes(&self) -> Option<&[u8]>;
+}
+
+//= VERTEX =========================================================================================
+
+///
+pub trait Vertex {
+    //
+    //fn desc<'a>() -> wgpu::VertexBufferLayout<'a>;
 }

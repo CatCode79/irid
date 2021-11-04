@@ -1,17 +1,19 @@
 //= USES ===========================================================================================
 
-use irid_renderer_traits::Vertex;
+use irid_assets_traits::Vertex;
+
+use crate::DiffuseTexture;
 
 //= MODEL OBJECT ===================================================================================
 
-pub struct Model {
+pub struct Model<T> {
     pub meshes: Vec<Mesh>,
-    pub materials: Vec<Material>,
+    pub materials: Vec<Material<T>>,
 }
 
-pub struct Material {
+pub struct Material<T> {
     pub name: String,
-    pub texture: DiffuseTexture,
+    pub texture: T,
 }
 
 pub struct Mesh {
@@ -22,7 +24,7 @@ pub struct Mesh {
     pub material: usize,
 }
 
-impl Model {
+impl<T> Model<T> {
     ///
     // TODO also here I have to remove at least surface param
     pub fn load<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<Self> {

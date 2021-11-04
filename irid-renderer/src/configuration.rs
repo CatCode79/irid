@@ -58,7 +58,6 @@ pub struct RendererConfig {
 
 
 impl RendererConfig {
-
     //- Constructors -------------------------------------------------------------------------------
 
     /// Create a Config struct by reading the values from given file path.

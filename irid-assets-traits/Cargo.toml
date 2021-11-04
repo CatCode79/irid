@@ -11,4 +11,5 @@ publish = false
 [lib]
 
 [dependencies]
+anyhow = "1.0"
 image = "0.23"

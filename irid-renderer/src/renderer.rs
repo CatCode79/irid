@@ -1,11 +1,12 @@
 //= USES ===========================================================================================
 
-use irid_assets_traits::Image;
-use irid_renderer_traits::Vertex;
+use irid_assets_traits::{Image, Vertex};
 
 use crate::{
-    Adapter, Camera, CameraController, CameraMetadatas, Device, Instance, ModelVertex,
-    RendererConfig, RenderPipeline, Surface,
+    Adapter, Camera, CameraController, CameraMetadatas, Device, Instance,
+    RendererConfig, RenderPipeline, Surface
+};
+use crate::texture_metas::{
     TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas
 };
 
@@ -26,15 +27,15 @@ trait RendererAssociatedTypes {
 
 ///
 #[derive(Clone, Debug)]
-pub struct RendererBuilder<'a, Image> {
+pub struct RendererBuilder<'a, Texture> {
     window: &'a winit::window::Window,
     shader_source: Option<String>,
-    diffuse_image: Option<&'a Image>,
+    texture_path: Option<&'a Texture>,
     vertices: Option<&'a [ModelVertex]>,  // TODO Probably better to encapsulate the [ModelVertex] logic
     indices: Option<&'a [u32]>,
 }
 
-impl<'a> RendererBuilder<'a> {
+impl<'a> RendererBuilder<'a, Texture> {
     //- Constructors -------------------------------------------------------------------------------
 
     ///

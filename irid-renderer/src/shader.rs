@@ -16,7 +16,6 @@ pub struct ShaderModuleBuilder<'a> {
 
 
 impl<'a> ShaderModuleBuilder<'a> {
-
     //- Constructors -------------------------------------------------------------------------------
 
     /// Create a new ShaderModuleBuilder.
@@ -70,6 +69,8 @@ pub struct VertexStateBuilder<'a> {
 
 
 impl<'a> VertexStateBuilder<'a> {
+    //- Constants ----------------------------------------------------------------------------------
+
     /// This is the default vertex state entry point name that will be used in which case
     /// one will not be passed.
     pub const DEFAULT_ENTRY_POINT: &'static str = "vs_main";
@@ -148,6 +149,8 @@ pub struct FragmentStateBuilder<'a> {
 
 
 impl<'a> FragmentStateBuilder<'a> {
+    //- Constants ----------------------------------------------------------------------------------
+
     /// This is the default fragment state entry point name that will be used in which case
     /// one will not be passed.
     pub const DEFAULT_ENTRY_POINT: &'static str = "fs_main";
