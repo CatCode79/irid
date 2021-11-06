@@ -69,6 +69,10 @@ pub trait Texture {
 
 ///
 pub trait Vertex {
+    type F;
+
+    fn vertex_formats() -> [Self::F];
+
     //
     //fn desc<'a>() -> wgpu::VertexBufferLayout<'a>;
 }

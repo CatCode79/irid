@@ -2,6 +2,7 @@
 //= USES ===========================================================================================
 
 pub use self::adapter::*;
+pub use self::buffer::*;
 pub use self::camera::*;
 pub use self::configuration::*;
 pub use self::device::*;
@@ -15,6 +16,7 @@ pub use self::surface::*;
 //= MODS ===========================================================================================
 
 pub(crate) mod adapter;
+pub(crate) mod buffer;
 pub(crate) mod camera;
 pub(crate) mod configuration;
 pub(crate) mod device;
