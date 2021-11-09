@@ -8,21 +8,21 @@
 /// # Known Implementations:
 ///
 /// - [irid-assets::DiffuseImage](irid-assets::DiffuseImage)
-pub trait Image<S> {
+pub trait Image {
     /// **Associated type** regarding the implementation of this trait.
-    type Img;
+    type I;
 
     /// **Associated type** regarding the implementation of the [ImageSize] trait.
-    type ImgSz;
+    type S;
 
     /// Open and decode a file to read, format will be guessed from path.
-    fn new(filepath: &std::path::Path) -> image::ImageResult<Self::Img>;  // TODO utilise anyhow instead, also below
+    fn new(filepath: &std::path::Path) -> image::ImageResult<Self::I>;  // TODO utilise anyhow instead, also below
 
     /// Open and decode a file to read, format will be guessed from content.
-    fn new_with_guessed_format(filepath: &std::path::Path) -> image::ImageResult<Self::Img>;
+    fn new_with_guessed_format(filepath: &std::path::Path) -> image::ImageResult<Self::I>;
 
     /// Returns a value that implements the [ImageSize](ImageSize) trait.
-    fn size(&self) -> Self::ImgSz;
+    fn size(&self) -> Self::S;
 
     /// The width of this image.
     fn width(&self) -> u32;
@@ -63,16 +63,4 @@ pub trait Texture {
 
     ///
     fn as_bytes(&self) -> Option<&[u8]>;
-}
-
-//= VERTEX =========================================================================================
-
-///
-pub trait Vertex {
-    type F;
-
-    fn vertex_formats() -> [Self::F];
-
-    //
-    //fn desc<'a>() -> wgpu::VertexBufferLayout<'a>;
 }

@@ -1,30 +1,29 @@
 //= USES ===========================================================================================
 
-use irid_assets_traits::Vertex;
-
-use crate::DiffuseTexture;
+use irid_assets_traits::Image;
+use irid_renderer_traits::Vertex;
 
 //= MODEL OBJECT ===================================================================================
 
-pub struct Model<T> {
-    pub meshes: Vec<Mesh>,
-    pub materials: Vec<Material<T>>,
+pub struct Model<'a, V: Vertex, I: Image> {
+    pub meshes: Vec<Mesh<'a, V>>,
+    pub materials: Vec<Material<I>>,
 }
 
-pub struct Material<T> {
+pub struct Material<I: Image> {
     pub name: String,
-    pub texture: T,
+    pub image: I,
 }
 
-pub struct Mesh {
+pub struct Mesh<'a, V: Vertex> {
     pub name: String,
-    pub vertex_buffer: wgpu::Buffer,
-    pub index_buffer: wgpu::Buffer,
+    pub vertices: &'a [V],
+    pub indices: &'a [u32],
     pub num_elements: u32,
     pub material: usize,
 }
 
-impl<T> Model<T> {
+impl<'a, V: Vertex, I: Image> Model<'a, V, I> {
     ///
     // TODO also here I have to remove at least surface param
     pub fn load<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<Self> {
@@ -46,51 +45,43 @@ impl<T> Model<T> {
 
         let mut materials = Vec::new();
         for mat in obj_materials {
-            use std::ops::Deref;
             let filepath = containing_folder.join(mat.diffuse_texture);
-            let texture = DiffuseImage::load(*filepath)?;
+            let texture = I::load(*filepath)?;
 
             materials.push(Material {
                 name: mat.name,
-                texture,
+                image: texture,
             });
         }
 
         let mut meshes = Vec::new();
-        for m in obj_models {
+        for obj_model in obj_models {
             let mut vertices = Vec::new();
-            for i in 0..m.mesh.positions.len() / 3 {
-                vertices.push(ModelVertex {
-                    position: [
-                        m.mesh.positions[i * 3],
-                        m.mesh.positions[i * 3 + 1],
-                        m.mesh.positions[i * 3 + 2],
-                    ],
-                    tex_coords: [m.mesh.texcoords[i * 2], m.mesh.texcoords[i * 2 + 1]],
-                    normal: [
-                        m.mesh.normals[i * 3],
-                        m.mesh.normals[i * 3 + 1],
-                        m.mesh.normals[i * 3 + 2],
-                    ],
-                });
+            for i in 0..obj_model.mesh.positions.len() / 3 {
+                let mut vertex = V::new();
+                vertex.position([
+                    obj_model.mesh.positions[i * 3],
+                    obj_model.mesh.positions[i * 3 + 1],
+                    obj_model.mesh.positions[i * 3 + 2],
+                ]);
+                vertex.tex_coords([
+                    obj_model.mesh.texcoords[i * 2],
+                    obj_model.mesh.texcoords[i * 2 + 1]
+                ]);
+                vertex.normal([
+                    obj_model.mesh.normals[i * 3],
+                    obj_model.mesh.normals[i * 3 + 1],
+                    obj_model.mesh.normals[i * 3 + 2],
+                ]);
+                vertices.push(vertex);
             }
 
-            let vertex_buffer = device.create_vertex_buffer_init(
-                &format!("{:?} Vertex Buffer", path.as_ref()),
-                vertices.as_slice(),
-            );
-
-            let index_buffer = device.create_indices_buffer_init(
-                &format!("{:?} Index Buffer", path.as_ref()),
-                m.mesh.indices.as_slice(),
-            );
-
             meshes.push(Mesh {
-                name: m.name,
-                vertex_buffer,
-                index_buffer,
-                num_elements: m.mesh.indices.len() as u32,
-                material: m.mesh.material_id.unwrap_or(0),
+                name: obj_model.name,
+                vertices: vertices.as_slice(),
+                indices: obj_model.mesh.indices.as_slice(),
+                num_elements: obj_model.mesh.indices.len() as u32,
+                material: obj_model.mesh.material_id.unwrap_or(0),
             });
         }
 

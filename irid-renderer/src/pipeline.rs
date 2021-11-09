@@ -1,6 +1,6 @@
 //= USES ===========================================================================================
 
-use irid_assets_traits::Vertex;
+use irid_renderer_traits::Vertex;
 
 use crate::{
     Device, FragmentStateBuilder, InstanceRaw, ShaderModuleBuilder, Surface, VertexStateBuilder
@@ -252,12 +252,12 @@ impl<'a> RenderPipelineBuilder<'a> {
 /// Wrapper to the wgpu handle's rendering graphics pipeline.
 ///
 /// See [`wgpu::RenderPipeline`](wgpu::RenderPipeline).
-pub struct RenderPipeline {
+pub struct RenderPipeline<Vertex> {
     wgpu_render_pipeline: wgpu::RenderPipeline,
 }
 
 
-impl RenderPipeline {
+impl<Vertex> RenderPipeline<Vertex> {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
@@ -273,8 +273,8 @@ impl RenderPipeline {
             .build(device);
 
         let buffers = &[
-            ModelVertex::desc(),
-            //VertexTexture::desc(),
+            Vertex::desc(),
+            //TextureVertex::desc(),
             InstanceRaw::desc()
         ];
         let shader_module = ShaderModuleBuilder::new(

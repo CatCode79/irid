@@ -1,6 +1,7 @@
 //= USES ===========================================================================================
 
-use irid_assets_traits::{Image, Vertex};
+use irid_assets_traits::{Image, Texture};
+use irid_renderer_traits::Vertex;
 
 use crate::{
     Adapter, Camera, CameraController, CameraMetadatas, Device, Instance,
@@ -27,15 +28,15 @@ trait RendererAssociatedTypes {
 
 ///
 #[derive(Clone, Debug)]
-pub struct RendererBuilder<'a, Texture> {
+pub struct RendererBuilder<'a, T: Texture, V: Vertex> {
     window: &'a winit::window::Window,
     shader_source: Option<String>,
-    texture_path: Option<&'a Texture>,
-    vertices: Option<&'a [ModelVertex]>,  // TODO Probably better to encapsulate the [ModelVertex] logic
+    texture: Option<&'a T>,
+    vertices: Option<&'a [V]>,  // TODO Probably better to encapsulate the [ModelVertex] logic
     indices: Option<&'a [u32]>,
 }
 
-impl<'a> RendererBuilder<'a, Texture> {
+impl<'a, T, V> RendererBuilder<'a, T, V> {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
@@ -43,7 +44,7 @@ impl<'a> RendererBuilder<'a, Texture> {
         Self {
             window,
             shader_source: None,
-            texture_path: None,
+            texture: None,
             vertices: None,
             indices: None,
         }
@@ -52,31 +53,31 @@ impl<'a> RendererBuilder<'a, Texture> {
     //- Setters ------------------------------------------------------------------------------------
 
     ///
-    pub fn with_window(self, window: &'a winit::window::Window) {
+    pub fn with_window(mut self, window: &'a winit::window::Window) -> Self {
         self.window = window;
         self
     }
 
     ///
-    pub fn with_shader_source(self, shader_source: String) -> Self {
+    pub fn with_shader_source(mut self, shader_source: String) -> Self {
         self.shader_source = Some(shader_source);
         self
     }
 
     ///
-    pub fn with_diffuse_image(self, diffuse_image: &'a impl Image) -> Self {
-        self.diffuse_image = Some(diffuse_image);
+    pub fn with_texture(mut self, texture: &'a T) -> Self {
+        self.texture = Some(texture);
         self
     }
 
     ///
-    pub fn with_vertices(self, vertices: &'a [ModelVertex]) -> Self {
+    pub fn with_vertices(mut self, vertices: &'a [V]) -> Self {
         self.vertices = Some(vertices);
         self
     }
 
     ///
-    pub fn with_indices(self, indices: &'a [u32]) -> Self {
+    pub fn with_indices(mut self, indices: &'a [u32]) -> Self {
         self.indices = Some(indices);
         self
     }
@@ -214,7 +215,7 @@ pub struct Renderer {
     texture_image_metadatas: TextureImageMetadatas,
     texture_bind_group_metadatas: TextureBindGroupMetadatas,
     texture_depth_metadatas: TextureDepthMetadatas,
-    pipeline: RenderPipeline,
+    pipeline: RenderPipeline<ModelVertex>,
     vertex_buffer: wgpu::Buffer,  // TODO: maybe this is better to move this buffer, and the index buffer, inside the render_pass or pipeline object
     index_buffer: wgpu::Buffer,
     num_indices: u32,

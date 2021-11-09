@@ -7,15 +7,13 @@ use irid_assets_traits::{Image, ImageSize};
 //= DYNAMIC IMAGE ==================================================================================
 
 /// A Diffuse Image
-///
-/// It is a wrapper of [image::DynamicImage](image::DynamicImage) object.
 #[derive(Clone, Debug)]
-pub struct DiffuseImage {
+pub struct DiffuseImage<S: ImageSize> {
     image: image::DynamicImage,
-    size: ImageSize,
+    size: S,
 }
 
-impl DiffuseImage {
+impl DiffuseImage<DiffuseImageSize> {
     //- Constructor Handler ------------------------------------------------------------------------
 
     fn handle_new(filepath: &std::path::Path, guess_the_format:bool) -> image::ImageResult<Self> {
@@ -39,11 +37,11 @@ impl DiffuseImage {
     }
 }
 
-impl Image for DiffuseImage {
+impl Image for DiffuseImage<DiffuseImageSize> {
     //- Associated Types ---------------------------------------------------------------------------
 
-    type Img = Self;
-    type ImgSz = DiffuseImageSize;
+    type I = Self;
+    type S = DiffuseImageSize;
 
     //- Constructors -------------------------------------------------------------------------------
 
@@ -51,13 +49,13 @@ impl Image for DiffuseImage {
     ///
     /// If you want to inspect the content for a better guess on the format,
     /// which does not depend on file extensions, see
-    /// [new_with_guessed_format](DynamicImage::new_with_guessed_format).
+    /// [new_with_guessed_format](DiffuseImage::new_with_guessed_format).
     fn new(filepath: &std::path::Path) -> image::ImageResult<Self> {
         DiffuseImage::handle_new(filepath, false)
     }
 
     /// Open and decode a file to read, format will be guessed from path first
-    /// (like the [DynamicImage::new](DynamicImage::new) method) and then make a format guess
+    /// (like the [new](DiffuseImage::new) method) and then make a format guess
     /// based on the content, replacing it on success.
     ///
     /// If the guess was unable to determine a format then the format from path is used.
@@ -79,8 +77,8 @@ impl Image for DiffuseImage {
     //- Getters ------------------------------------------------------------------------------------
 
     /// The width and height of this image.
-    fn size(&self) -> &Self::ImgSz {
-        &self.size
+    fn size(&self) -> Self::S {
+        self.size
     }
 
     /// The width of this image.
@@ -134,7 +132,7 @@ impl ImageSize for DiffuseImageSize {
 }
 
 
-impl From<((u32, u32))> for DiffuseImageSize {  // TODO it's actually works?
+impl From<(u32, u32)> for DiffuseImageSize {  // TODO it's actually works?
     fn from(tuple: (u32, u32)) -> Self {
         ImageSize::new(tuple.0, tuple.1)
     }
