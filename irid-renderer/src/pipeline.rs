@@ -1,5 +1,6 @@
 //= USES ===========================================================================================
 
+use irid_assets_traits::Image;
 use irid_renderer_traits::Vertex;
 
 use crate::{
@@ -12,12 +13,12 @@ use crate::texture_metas::TextureDepthMetadatas;
 
 ///
 #[derive(Clone, Debug, Default)]
-pub struct PipelineLayoutBuilder<'a> {
+pub struct PipelineLayoutBuilder<'a, I: Image, V: Vertex> {
     pipeline_layout_desc: wgpu::PipelineLayoutDescriptor<'a>
 }
 
 
-impl<'a> PipelineLayoutBuilder<'a> {
+impl<'a, I, V> PipelineLayoutBuilder<'a, I, V> {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
@@ -64,7 +65,7 @@ impl<'a> PipelineLayoutBuilder<'a> {
     //- Build --------------------------------------------------------------------------------------
 
     /// Build a new [PipelineLayout](wgpu::PipelineLayout).
-    pub fn build(self, device: &Device) -> wgpu::PipelineLayout {
+    pub fn build(self, device: &Device<I, V>) -> wgpu::PipelineLayout {
         device.create_pipeline_layout(&self.pipeline_layout_desc)
     }
 }
@@ -156,13 +157,13 @@ impl PrimitiveStateBuilder {
 //= PIPELINE DESCRIPTOR ============================================================================
 
 ///
-pub struct RenderPipelineBuilder<'a> {
+pub struct RenderPipelineBuilder<'a, I: Image, V: Vertex> {
     render_pipeline_desc: wgpu::RenderPipelineDescriptor<'a>
 }
 
 
 // TODO: here we have to create directly an irid pipeline and not a wgpu pipeline
-impl<'a> RenderPipelineBuilder<'a> {
+impl<'a, I, V> RenderPipelineBuilder<'a, I, V> {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
@@ -241,7 +242,7 @@ impl<'a> RenderPipelineBuilder<'a> {
     //- Build --------------------------------------------------------------------------------------
 
     ///
-    pub fn build(&mut self, device: &Device) -> wgpu::RenderPipeline {
+    pub fn build(&mut self, device: &Device<I, V>) -> wgpu::RenderPipeline {
         device.create_render_pipeline(&self.render_pipeline_desc)
     }
 }
@@ -252,18 +253,18 @@ impl<'a> RenderPipelineBuilder<'a> {
 /// Wrapper to the wgpu handle's rendering graphics pipeline.
 ///
 /// See [`wgpu::RenderPipeline`](wgpu::RenderPipeline).
-pub struct RenderPipeline<Vertex> {
+pub struct RenderPipeline<I: Image, V: Vertex> {
     wgpu_render_pipeline: wgpu::RenderPipeline,
 }
 
 
-impl<Vertex> RenderPipeline<Vertex> {
+impl<I, V> RenderPipeline<I, V> {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
     pub fn new(
         surface: &Surface,
-        device: &Device,
+        device: &Device<I, V>,
         texture_bind_group_layout: &wgpu::BindGroupLayout,
         camera_bind_group_layout: &wgpu::BindGroupLayout,
         shader_source: String

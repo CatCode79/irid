@@ -1,6 +1,6 @@
 //= USES ===========================================================================================
 
-use irid_assets_traits::{Image, Texture};
+use irid_assets_traits::{Image, Model, Texture};
 use irid_renderer_traits::Vertex;
 
 use crate::{
@@ -28,7 +28,7 @@ trait RendererAssociatedTypes {
 
 ///
 #[derive(Clone, Debug)]
-pub struct RendererBuilder<'a, T: Texture, V: Vertex> {
+pub struct RendererBuilder<'a, M: Model, T: Texture, V: Vertex> {
     window: &'a winit::window::Window,
     shader_source: Option<String>,
     texture: Option<&'a T>,
@@ -36,7 +36,7 @@ pub struct RendererBuilder<'a, T: Texture, V: Vertex> {
     indices: Option<&'a [u32]>,
 }
 
-impl<'a, T, V> RendererBuilder<'a, T, V> {
+impl<'a, M, T, V> RendererBuilder<'a, M, T, V> {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
@@ -85,7 +85,7 @@ impl<'a, T, V> RendererBuilder<'a, T, V> {
     //- Build --------------------------------------------------------------------------------------
 
     ///
-    pub fn build(self) -> anyhow::Result<Renderer> {
+    pub fn build(self) -> anyhow::Result<Renderer<M, T, V>> {
         let window_size = self.window.inner_size();
 
         let backends = wgpu::Backends::VULKAN | wgpu::Backends::DX12;
@@ -203,11 +203,11 @@ impl<'a, T, V> RendererBuilder<'a, T, V> {
 //= RENDERER OBJECT ================================================================================
 
 ///
-pub struct Renderer {
+pub struct Renderer<I: Image, M: Model, V: Vertex> {
     window_size: winit::dpi::PhysicalSize<u32>,
     surface: Surface,
     adapter: Adapter,
-    device: Device,
+    device: Device<I, V>,
     queue: wgpu::Queue,
     camera: Camera,
     camera_metadatas: CameraMetadatas,
@@ -215,7 +215,7 @@ pub struct Renderer {
     texture_image_metadatas: TextureImageMetadatas,
     texture_bind_group_metadatas: TextureBindGroupMetadatas,
     texture_depth_metadatas: TextureDepthMetadatas,
-    pipeline: RenderPipeline<ModelVertex>,
+    pipeline: RenderPipeline<M>,
     vertex_buffer: wgpu::Buffer,  // TODO: maybe this is better to move this buffer, and the index buffer, inside the render_pass or pipeline object
     index_buffer: wgpu::Buffer,
     num_indices: u32,
@@ -223,7 +223,7 @@ pub struct Renderer {
     instance_buffer: wgpu::Buffer,
 }
 
-impl Renderer {
+impl Renderer<I, M, V> {
     //- SwapChain/Surface Size ---------------------------------------------------------------------
 
     /// Getter for the windows's physical size attribute.

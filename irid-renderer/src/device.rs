@@ -16,12 +16,12 @@ use crate::texture_metas::TextureImageMetadatas;
 /// A device may be requested from an adapter with
 /// [`Adapter::request_device`](Adapter::request_device).
 #[derive(Debug)]
-pub struct Device {
+pub struct Device<I: Image, V: Vertex> {
     label_text: String,
     wgpu_device: wgpu::Device,
 }
 
-impl Device {
+impl<I, V> Device<I, V> {
     //- Constructors -------------------------------------------------------------------------------
 
     /// Create a new Device and Queue given ad adapter.
@@ -63,7 +63,7 @@ impl Device {
     pub fn create_vertex_buffer_init(
         &self,
         label_text: &str,
-        vertices: &[Vertex]
+        vertices: &[V]
     ) -> wgpu::Buffer {
         use wgpu::util::DeviceExt;
         self.wgpu_device.create_buffer_init(
@@ -139,7 +139,7 @@ impl Device {
     pub fn create_texture(
         &self,
         surface: &Surface,
-        image: &Image,
+        image: &I,
         texture_desc: &wgpu::TextureDescriptor
     ) -> wgpu::Texture {
         // TODO: I need to create this and get it as reference

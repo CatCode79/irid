@@ -1,5 +1,7 @@
 //= USES ===========================================================================================
 
+use irid_assets_traits::Image;
+use irid_renderer_traits::Vertex;
 use crate::{
     device::Device,
     surface::Surface,
@@ -9,13 +11,13 @@ use crate::{
 //= SHADER MODULE ==================================================================================
 
 /// [ShaderModule](wgpu::ShaderModule)'s Builder.
-pub struct ShaderModuleBuilder<'a> {
+pub struct ShaderModuleBuilder<'a, I: Image, V: Vertex> {
     label: Option<&'a str>,
     source: wgpu::ShaderSource<'static>,  //TODO avoid this static lifetime
 }
 
 
-impl<'a> ShaderModuleBuilder<'a> {
+impl<'a, I, V> ShaderModuleBuilder<'a, I, V> {
     //- Constructors -------------------------------------------------------------------------------
 
     /// Create a new ShaderModuleBuilder.
@@ -48,7 +50,7 @@ impl<'a> ShaderModuleBuilder<'a> {
     //- Build --------------------------------------------------------------------------------------
 
     /// Build the shader module.
-    pub fn build(self, device: &Device) -> wgpu::ShaderModule {
+    pub fn build(self, device: &Device<I, V>) -> wgpu::ShaderModule {
         device.create_shader_module(&wgpu::ShaderModuleDescriptor {
             label: Some(self.label.unwrap()),  // TODO mancano dei check
             source: self.source,

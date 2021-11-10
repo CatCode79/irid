@@ -1,6 +1,8 @@
 //= USES ===========================================================================================
 
 use anyhow::anyhow;
+use irid_assets_traits::Image;
+use irid_renderer_traits::Vertex;
 
 use crate::{
     adapter::Adapter,
@@ -12,7 +14,7 @@ use crate::{
 
 /// A Surface represents a platform-specific surface (e.g. a window) onto which rendered images
 /// may be presented.
-pub struct Surface {
+pub struct Surface<I: Image, V: Vertex> {
     wgpu_surface: wgpu::Surface,
     preferred_format: wgpu::TextureFormat,
     configuration: wgpu::SurfaceConfiguration,
@@ -20,7 +22,7 @@ pub struct Surface {
 }
 
 
-impl Surface {
+impl Surface<I, V> {
     //- Constructors -------------------------------------------------------------------------------
 
     /// Create a new Surface using the window handle and retrieves an Adapter which matches
@@ -104,12 +106,12 @@ impl Surface {
     // Swapchain -----------------------------------------------------------------------------------
 
     /// Initializes Surface for presentation.
-    pub fn configure(&self, device: &Device) {
+    pub fn configure(&self, device: &Device<I, V>) {
         self.wgpu_surface.configure(device.expose_wrapped_device(), &self.configuration);
     }
 
     /// Updates the Surface for presentation.
-    pub fn update(&mut self, device: &Device, size: winit::dpi::PhysicalSize<u32>) {
+    pub fn update(&mut self, device: &Device<I, V>, size: winit::dpi::PhysicalSize<u32>) {
         if size.width > 0 && size.height > 0 {
             self.configuration.width = size.width;
             self.configuration.height = size.height;

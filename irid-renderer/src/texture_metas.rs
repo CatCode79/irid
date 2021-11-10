@@ -1,22 +1,24 @@
 //= USES ===========================================================================================
 
+use irid_assets_traits::Image;
+use irid_renderer_traits::Vertex;
 use crate::{Device, Surface};
 
 //= TEXTURE IMAGE METADATAS ========================================================================
 
 /// Struct containing values used by queue.write_texture()
 #[derive(Debug)]
-pub struct TextureImageMetadatas {
+pub struct TextureImageMetadatas<I: Image, V: Vertex> {
     texture: wgpu::Texture,
     image_data_layout: wgpu::ImageDataLayout,
     image_size: wgpu::Extent3d,
 }
 
-impl TextureImageMetadatas {
+impl TextureImageMetadatas<I, V> {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
-    pub fn new(surface: &Surface, device: &Device, width: u32, height: u32) -> Self {
+    pub fn new(surface: &Surface<I, V>, device: &Device<I, V>, width: u32, height: u32) -> Self {
         let image_size = wgpu::Extent3d {
             width,
             height,
@@ -81,16 +83,16 @@ impl TextureImageMetadatas {
 
 ///
 #[derive(Debug)]
-pub struct TextureBindGroupMetadatas {
+pub struct TextureBindGroupMetadatas<I: Image, V: Vertex> {
     bind_group_layout: wgpu::BindGroupLayout,
     bind_group: wgpu::BindGroup,
 }
 
-impl TextureBindGroupMetadatas {
+impl TextureBindGroupMetadatas<I, V> {
     //- Constructors -------------------------------------------------------------------------------
 
     pub fn new(
-        device: &Device,
+        device: &Device<I, V>,
         texture: &wgpu::Texture
     ) -> Self {
         let bind_group_layout = TextureBindGroupMetadatas::create_bind_group_layout(
@@ -125,7 +127,7 @@ impl TextureBindGroupMetadatas {
     }
 
     fn create_bind_group_layout(
-        device: &Device
+        device: &Device<I, V>
     ) -> wgpu::BindGroupLayout {
         device.create_bind_group_layout(
             &wgpu::BindGroupLayoutDescriptor {
@@ -168,7 +170,7 @@ impl TextureBindGroupMetadatas {
         )
     }
 
-    fn create_sampler(device: &Device) -> wgpu::Sampler {
+    fn create_sampler(device: &Device<I, V>) -> wgpu::Sampler {
         device.create_sampler(
             &wgpu::SamplerDescriptor {
                 label: Some("Diffuse Texture Sampler"),
@@ -198,13 +200,13 @@ impl TextureBindGroupMetadatas {
 
 ///
 #[derive(Debug)]
-pub struct TextureDepthMetadatas {
+pub struct TextureDepthMetadatas<I: Image, V: Vertex> {
     _texture: wgpu::Texture,
     view: wgpu::TextureView,
     _sampler: wgpu::Sampler,
 }
 
-impl TextureDepthMetadatas {
+impl TextureDepthMetadatas<I, V> {
     //- Constants ----------------------------------------------------------------------------------
 
     pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
@@ -214,7 +216,7 @@ impl TextureDepthMetadatas {
     /// Our depth texture needs to be the same size as our screen if we want things
     /// to render correctly so we give to constructor windows_size value.
     pub fn new(
-        device: &Device,
+        device: &Device<I, V>,
         window_size: winit::dpi::PhysicalSize<u32>,
     ) -> Self {
         let size = wgpu::Extent3d {

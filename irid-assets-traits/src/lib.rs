@@ -52,6 +52,15 @@ pub trait ImageSize {
     fn as_tuple(&self) -> (u32, u32);
 }
 
+//= MODEL ==========================================================================================
+
+///
+pub trait Model {
+    type Output;
+
+    fn load<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<Self::Output>;
+}
+
 //= TEXTURE ========================================================================================
 
 ///
