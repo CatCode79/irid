@@ -14,7 +14,7 @@ pub struct TextureImageMetadatas<I: Image, V: Vertex> {
     image_size: wgpu::Extent3d,
 }
 
-impl TextureImageMetadatas<I, V> {
+impl<I, V> TextureImageMetadatas<I, V> {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
@@ -88,7 +88,7 @@ pub struct TextureBindGroupMetadatas<I: Image, V: Vertex> {
     bind_group: wgpu::BindGroup,
 }
 
-impl TextureBindGroupMetadatas<I, V> {
+impl<I, V> TextureBindGroupMetadatas<I, V> {
     //- Constructors -------------------------------------------------------------------------------
 
     pub fn new(
@@ -206,7 +206,7 @@ pub struct TextureDepthMetadatas<I: Image, V: Vertex> {
     _sampler: wgpu::Sampler,
 }
 
-impl TextureDepthMetadatas<I, V> {
+impl<I, V> TextureDepthMetadatas<I, V> {
     //- Constants ----------------------------------------------------------------------------------
 
     pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;

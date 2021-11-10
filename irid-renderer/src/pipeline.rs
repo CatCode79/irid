@@ -263,7 +263,7 @@ impl<I, V> RenderPipeline<I, V> {
 
     ///
     pub fn new(
-        surface: &Surface,
+        surface: &Surface<I, V>,
         device: &Device<I, V>,
         texture_bind_group_layout: &wgpu::BindGroupLayout,
         camera_bind_group_layout: &wgpu::BindGroupLayout,

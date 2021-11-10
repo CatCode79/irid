@@ -22,7 +22,7 @@ pub struct Surface<I: Image, V: Vertex> {
 }
 
 
-impl Surface<I, V> {
+impl<I, V> Surface<I, V> {
     //- Constructors -------------------------------------------------------------------------------
 
     /// Create a new Surface using the window handle and retrieves an Adapter which matches

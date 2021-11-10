@@ -205,17 +205,17 @@ impl<'a, M, T, V> RendererBuilder<'a, M, T, V> {
 ///
 pub struct Renderer<I: Image, M: Model, V: Vertex> {
     window_size: winit::dpi::PhysicalSize<u32>,
-    surface: Surface,
+    surface: Surface<I, V>,
     adapter: Adapter,
     device: Device<I, V>,
     queue: wgpu::Queue,
     camera: Camera,
     camera_metadatas: CameraMetadatas,
     camera_controller: CameraController,
-    texture_image_metadatas: TextureImageMetadatas,
-    texture_bind_group_metadatas: TextureBindGroupMetadatas,
-    texture_depth_metadatas: TextureDepthMetadatas,
-    pipeline: RenderPipeline<M>,
+    texture_image_metadatas: TextureImageMetadatas<I, V>,
+    texture_bind_group_metadatas: TextureBindGroupMetadatas<I, V>,
+    texture_depth_metadatas: TextureDepthMetadatas<I, V>,
+    pipeline: RenderPipeline<M, V>,
     vertex_buffer: wgpu::Buffer,  // TODO: maybe this is better to move this buffer, and the index buffer, inside the render_pass or pipeline object
     index_buffer: wgpu::Buffer,
     num_indices: u32,
@@ -223,7 +223,7 @@ pub struct Renderer<I: Image, M: Model, V: Vertex> {
     instance_buffer: wgpu::Buffer,
 }
 
-impl Renderer<I, M, V> {
+impl<I, M, V> Renderer<I, M, V> {
     //- SwapChain/Surface Size ---------------------------------------------------------------------
 
     /// Getter for the windows's physical size attribute.
@@ -337,7 +337,7 @@ impl Renderer<I, M, V> {
     //- Getters ------------------------------------------------------------------------------------
 
     ///
-    pub fn texture_bind_group_metadatas(&self) -> &TextureBindGroupMetadatas {
+    pub fn texture_bind_group_metadatas(&self) -> &TextureBindGroupMetadatas<I, V> {
         &self.texture_bind_group_metadatas
     }
 }

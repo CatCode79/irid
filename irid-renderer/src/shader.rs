@@ -143,14 +143,14 @@ impl<'a> VertexStateBuilder<'a> {
 
 /// [FragmentState](wgpu::FragmentState)'s Builder.
 #[derive(Clone, Debug)]
-pub struct FragmentStateBuilder<'a> {
+pub struct FragmentStateBuilder<'a, I: Image, V: Vertex> {
     module: &'a wgpu::ShaderModule,
     entry_point: Option<&'a str>,
     targets: Option<&'a [wgpu::ColorTargetState]>,
 }
 
 
-impl<'a> FragmentStateBuilder<'a> {
+impl<'a, I, V> FragmentStateBuilder<'a, I, V> {
     //- Constants ----------------------------------------------------------------------------------
 
     /// This is the default fragment state entry point name that will be used in which case
@@ -199,7 +199,7 @@ impl<'a> FragmentStateBuilder<'a> {
     //- Build --------------------------------------------------------------------------------------
 
     /// Build a new Fragment State.
-    pub fn build(self, surface: &'a Surface) -> wgpu::FragmentState<'a> {
+    pub fn build(self, surface: &'a Surface<I, V>) -> wgpu::FragmentState<'a> {
         wgpu::FragmentState {
             module: self.module,
 

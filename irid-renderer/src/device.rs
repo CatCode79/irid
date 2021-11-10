@@ -138,7 +138,7 @@ impl<I, V> Device<I, V> {
     /// - texture_desc specifies the general format of the texture.
     pub fn create_texture(
         &self,
-        surface: &Surface,
+        surface: &Surface<I, V>,
         image: &I,
         texture_desc: &wgpu::TextureDescriptor
     ) -> wgpu::Texture {
