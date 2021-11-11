@@ -7,12 +7,12 @@ use irid_assets_traits::{Image, Texture};
 
 ///
 #[derive(Debug)]
-pub struct DiffuseTexture<I> {
+pub struct DiffuseTexture<I: Image> {
     image: I,
 }
 
 
-impl<I> Texture for DiffuseTexture<I> {
+impl<I: Image> Texture for DiffuseTexture<I> {
     //- Associated Types ---------------------------------------------------------------------------
 
     type Output = Self;

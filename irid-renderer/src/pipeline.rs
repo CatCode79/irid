@@ -8,159 +8,12 @@ use crate::{
 };
 use crate::texture_metas::TextureDepthMetadatas;
 
-
-//= PIPELINE LAYOUT ================================================================================
-
-///
-#[derive(Clone, Debug, Default)]
-pub struct PipelineLayoutBuilder<'a, I: Image, V: Vertex> {
-    pipeline_layout_desc: wgpu::PipelineLayoutDescriptor<'a>
-}
-
-
-impl<'a, I, V> PipelineLayoutBuilder<'a, I, V> {
-    //- Constructors -------------------------------------------------------------------------------
-
-    ///
-    pub fn new() -> Self {
-        Self {
-            pipeline_layout_desc: wgpu::PipelineLayoutDescriptor {
-                label: Some("Pipeline Layout Default Label"),
-                bind_group_layouts: &[],
-                push_constant_ranges: &[],
-            },
-        }
-    }
-
-    //- Setters ------------------------------------------------------------------------------------
-
-    ///
-    pub fn with_label(mut self, label_text: &'a str) -> Self {
-        self.pipeline_layout_desc.label = if label_text.is_empty() {
-            wgpu::Label::default()
-        } else {
-            Some(label_text)
-        };
-        self
-    }
-
-    ///
-    pub fn with_bind_group_layouts(
-        mut self,
-        bind_group_layouts: &'a [&wgpu::BindGroupLayout]
-    ) -> Self {
-        self.pipeline_layout_desc.bind_group_layouts = bind_group_layouts;
-        self
-    }
-
-    ///
-    pub fn with_push_constant_ranges(
-        mut self,
-        push_constant_ranges: &'a [wgpu::PushConstantRange]
-    ) -> Self {
-        self.pipeline_layout_desc.push_constant_ranges = push_constant_ranges;
-        self
-    }
-
-    //- Build --------------------------------------------------------------------------------------
-
-    /// Build a new [PipelineLayout](wgpu::PipelineLayout).
-    pub fn build(self, device: &Device<I, V>) -> wgpu::PipelineLayout {
-        device.create_pipeline_layout(&self.pipeline_layout_desc)
-    }
-}
-
-
-//= PRIMITIVE STATE ================================================================================
-
-///
-#[derive(Clone, Debug, Default)]
-pub struct PrimitiveStateBuilder {
-    primitive_state: wgpu::PrimitiveState,
-}
-
-
-impl PrimitiveStateBuilder {
-    //- Constructors -------------------------------------------------------------------------------
-
-    ///
-    pub fn new() -> Self {
-        Self {
-            primitive_state: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
-                strip_index_format: None,
-                front_face: wgpu::FrontFace::Ccw,
-                cull_mode: Some(wgpu::Face::Back),
-                // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
-                polygon_mode: wgpu::PolygonMode::Fill,
-                // Requires Features::DEPTH_CLAMPING
-                clamp_depth: false,
-                // Requires Features::CONSERVATIVE_RASTERIZATION
-                conservative: false,
-            },
-        }
-    }
-
-    //- Setters ------------------------------------------------------------------------------------
-
-    ///
-    pub fn with_topology(&mut self, topology: wgpu::PrimitiveTopology) -> &mut Self {
-        self.primitive_state.topology = topology;
-        self
-    }
-
-    ///
-    pub fn with_strip_index_format(&mut self, strip_index_format: wgpu::IndexFormat) -> &mut Self {
-        self.primitive_state.strip_index_format = Some(strip_index_format);
-        self
-    }
-
-    ///
-    pub fn with_front_face(&mut self, front_face: wgpu::FrontFace) -> &mut Self {
-        self.primitive_state.front_face = front_face;
-        self
-    }
-
-    ///
-    pub fn with_cull_mode(&mut self, cull_mode: wgpu::Face) -> &mut Self {
-        self.primitive_state.cull_mode = Some(cull_mode);
-        self
-    }
-
-    ///
-    pub fn with_polygon_mode(&mut self, polygon_mode: wgpu::PolygonMode) -> &mut Self {
-        self.primitive_state.polygon_mode = polygon_mode;
-        self
-    }
-
-    ///
-    pub fn with_clamp_depth(&mut self, clamp_depth: bool) -> &mut Self {
-        self.primitive_state.clamp_depth = clamp_depth;
-        self
-    }
-
-    ///
-    pub fn with_conservative(&mut self, conservative: bool) -> &mut Self {
-        self.primitive_state.conservative = conservative;
-        self
-    }
-
-    //- Build --------------------------------------------------------------------------------------
-
-    ///
-    pub fn build(self) -> wgpu::PrimitiveState {
-        self.primitive_state
-    }
-}
-
-
-//= PIPELINE DESCRIPTOR ============================================================================
+//= RENDERER PIPELINE BUILDER ======================================================================
 
 ///
 pub struct RenderPipelineBuilder<'a, I: Image, V: Vertex> {
     render_pipeline_desc: wgpu::RenderPipelineDescriptor<'a>
 }
-
 
 // TODO: here we have to create directly an irid pipeline and not a wgpu pipeline
 impl<'a, I, V> RenderPipelineBuilder<'a, I, V> {
@@ -247,8 +100,7 @@ impl<'a, I, V> RenderPipelineBuilder<'a, I, V> {
     }
 }
 
-
-//= PIPELINE WRAPPER ===============================================================================
+//= RENDERER PIPELINE OBJECT =======================================================================
 
 /// Wrapper to the wgpu handle's rendering graphics pipeline.
 ///
@@ -256,7 +108,6 @@ impl<'a, I, V> RenderPipelineBuilder<'a, I, V> {
 pub struct RenderPipeline<I: Image, V: Vertex> {
     wgpu_render_pipeline: wgpu::RenderPipeline,
 }
-
 
 impl<I, V> RenderPipeline<I, V> {
     //- Constructors -------------------------------------------------------------------------------
@@ -312,5 +163,146 @@ impl<I, V> RenderPipeline<I, V> {
     // This method MUST remains public at the crate level.
     pub(crate) fn expose_wrapped_render_pipeline(&self) -> &wgpu::RenderPipeline {
         &self.wgpu_render_pipeline
+    }
+}
+
+//= PIPELINE LAYOUT BUILDER ========================================================================
+
+///
+#[derive(Clone, Debug, Default)]
+pub struct PipelineLayoutBuilder<'a, I: Image, V: Vertex> {
+    pipeline_layout_desc: wgpu::PipelineLayoutDescriptor<'a>
+}
+
+impl<'a, I, V> PipelineLayoutBuilder<'a, I, V> {
+    //- Constructors -------------------------------------------------------------------------------
+
+    ///
+    pub fn new() -> Self {
+        Self {
+            pipeline_layout_desc: wgpu::PipelineLayoutDescriptor {
+                label: Some("Pipeline Layout Default Label"),
+                bind_group_layouts: &[],
+                push_constant_ranges: &[],
+            },
+        }
+    }
+
+    //- Setters ------------------------------------------------------------------------------------
+
+    ///
+    pub fn with_label(mut self, label_text: &'a str) -> Self {
+        self.pipeline_layout_desc.label = if label_text.is_empty() {
+            wgpu::Label::default()
+        } else {
+            Some(label_text)
+        };
+        self
+    }
+
+    ///
+    pub fn with_bind_group_layouts(
+        mut self,
+        bind_group_layouts: &'a [&wgpu::BindGroupLayout]
+    ) -> Self {
+        self.pipeline_layout_desc.bind_group_layouts = bind_group_layouts;
+        self
+    }
+
+    ///
+    pub fn with_push_constant_ranges(
+        mut self,
+        push_constant_ranges: &'a [wgpu::PushConstantRange]
+    ) -> Self {
+        self.pipeline_layout_desc.push_constant_ranges = push_constant_ranges;
+        self
+    }
+
+    //- Build --------------------------------------------------------------------------------------
+
+    /// Build a new [PipelineLayout](wgpu::PipelineLayout).
+    pub fn build(self, device: &Device<I, V>) -> wgpu::PipelineLayout {
+        device.create_pipeline_layout(&self.pipeline_layout_desc)
+    }
+}
+
+//= PRIMITIVE STATE BUILDER ========================================================================
+
+///
+#[derive(Clone, Debug, Default)]
+pub struct PrimitiveStateBuilder {
+    primitive_state: wgpu::PrimitiveState,
+}
+
+impl PrimitiveStateBuilder {
+    //- Constructors -------------------------------------------------------------------------------
+
+    ///
+    pub fn new() -> Self {
+        Self {
+            primitive_state: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleList,
+                strip_index_format: None,
+                front_face: wgpu::FrontFace::Ccw,
+                cull_mode: Some(wgpu::Face::Back),
+                // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
+                polygon_mode: wgpu::PolygonMode::Fill,
+                // Requires Features::DEPTH_CLAMPING
+                clamp_depth: false,
+                // Requires Features::CONSERVATIVE_RASTERIZATION
+                conservative: false,
+            },
+        }
+    }
+
+    //- Setters ------------------------------------------------------------------------------------
+
+    ///
+    pub fn with_topology(&mut self, topology: wgpu::PrimitiveTopology) -> &mut Self {
+        self.primitive_state.topology = topology;
+        self
+    }
+
+    ///
+    pub fn with_strip_index_format(&mut self, strip_index_format: wgpu::IndexFormat) -> &mut Self {
+        self.primitive_state.strip_index_format = Some(strip_index_format);
+        self
+    }
+
+    ///
+    pub fn with_front_face(&mut self, front_face: wgpu::FrontFace) -> &mut Self {
+        self.primitive_state.front_face = front_face;
+        self
+    }
+
+    ///
+    pub fn with_cull_mode(&mut self, cull_mode: wgpu::Face) -> &mut Self {
+        self.primitive_state.cull_mode = Some(cull_mode);
+        self
+    }
+
+    ///
+    pub fn with_polygon_mode(&mut self, polygon_mode: wgpu::PolygonMode) -> &mut Self {
+        self.primitive_state.polygon_mode = polygon_mode;
+        self
+    }
+
+    ///
+    pub fn with_clamp_depth(&mut self, clamp_depth: bool) -> &mut Self {
+        self.primitive_state.clamp_depth = clamp_depth;
+        self
+    }
+
+    ///
+    pub fn with_conservative(&mut self, conservative: bool) -> &mut Self {
+        self.primitive_state.conservative = conservative;
+        self
+    }
+
+    //- Build --------------------------------------------------------------------------------------
+
+    ///
+    pub fn build(self) -> wgpu::PrimitiveState {
+        self.primitive_state
     }
 }

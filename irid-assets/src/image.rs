@@ -13,7 +13,7 @@ pub struct DiffuseImage<S: ImageSize> {
     size: S,
 }
 
-impl DiffuseImage<DiffuseImageSize> {
+impl<S: ImageSize> DiffuseImage<S> {
     //- Constructor Handler ------------------------------------------------------------------------
 
     fn handle_new(filepath: &std::path::Path, guess_the_format:bool) -> image::ImageResult<Self> {
@@ -27,7 +27,7 @@ impl DiffuseImage<DiffuseImageSize> {
 
         let size = {
             use image::GenericImageView;
-            ImageSize::from(image.dimensions())
+            S::from(image.dimensions())
         };
 
         Ok(Self {
@@ -115,22 +115,20 @@ impl ImageSize for DiffuseImageSize {
     //- Constructors -------------------------------------------------------------------------------
 
 
-
     //- Getters ------------------------------------------------------------------------------------
 
     fn width(&self) -> u32 {
-        self.width.unwrap()
+        self.width.get()
     }
 
     fn height(&self) -> u32 {
-        self.height.unwrap()
+        self.height.get()
     }
 
     fn as_tuple(&self) -> (u32, u32) {
-        (self.width.unwrap(), self.height.unwrap())
+        (self.width.get(), self.height.get())
     }
 }
-
 
 impl From<(u32, u32)> for DiffuseImageSize {  // TODO it's actually works?
     fn from(tuple: (u32, u32)) -> Self {
@@ -138,8 +136,8 @@ impl From<(u32, u32)> for DiffuseImageSize {  // TODO it's actually works?
     }
 }
 
-impl From<[(u32, u32); 2]> for DiffuseImageSize {
-    fn from(tuple: (u32, u32)) -> Self {
-        ImageSize::new(tuple.0, tuple.1)
+impl From<[u32; 2]> for DiffuseImageSize {
+    fn from(array: [u32; 2]) -> Self {
+        ImageSize::new(array[0], array[1])
     }
 }
