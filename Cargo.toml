@@ -6,4 +6,5 @@ members = [
     "irid-assets-traits",
     "irid-renderer",
     "irid-renderer-traits",
+    "irid-wgpu",
 ]

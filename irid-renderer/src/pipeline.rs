@@ -4,7 +4,7 @@ use irid_assets_traits::Image;
 use irid_renderer_traits::Vertex;
 
 use crate::{
-    Device, FragmentStateBuilder, InstanceRaw, ShaderModuleBuilder, Surface, VertexStateBuilder
+    Device, FragmentStateBuilder, InstanceRaw, ShaderModuleBuilder, VertexStateBuilder
 };
 use crate::texture_metas::TextureDepthMetadatas;
 

@@ -1,0 +1,67 @@
+[package]
+name = "wgpu"
+version = "0.11.0"
+authors = ["wgpu developers"]
+edition = "2021"
+description = "Rusty WebGPU API wrapper"
+keywords = ["graphics"]
+license = "MIT OR Apache-2.0"
+exclude = [
+    "Cargo.lock",
+    "target/**/*"
+]
+autotests = false
+publish = false
+
+[lib]
+
+[features]
+default = []
+trace = ["serde", "wgc/trace"]
+replay = ["serde", "wgc/replay"]
+
+[dependencies.wgc]
+package = "wgpu-core"
+git = "https://github.com/gfx-rs/wgpu/"
+version = "0.11"
+features = ["raw-window-handle"]
+
+[dependencies.wgt]
+package = "wgpu-types"
+git = "https://github.com/gfx-rs/wgpu/"
+version = "0.11"
+
+[dependencies.hal]
+package = "wgpu-hal"
+git = "https://github.com/gfx-rs/wgpu/"
+version = "0.11"
+
+[dependencies]
+arrayvec = "0.7"
+log = "0.4"
+parking_lot = "0.11"
+raw-window-handle = "0.3"
+serde = { version = "1", features = ["derive"], optional = true }
+smallvec = "1"
+
+[dev-dependencies]
+async-executor = "1.0"
+bitflags = "1"
+bytemuck = { version = "1.4", features = ["derive"] }
+cgmath = "0.18"
+ddsfile = "0.4"
+env_logger = "0.9"
+# Opt out of noise's "default-features" to avoid "image" feature as a dependency count optimization.
+# This will not be required in the next release since it has been removed from the default feature in https://github.com/Razaekel/noise-rs/commit/1af9e1522236b2c584fb9a02150c9c67a5e6bb04#diff-2e9d962a08321605940b5a657135052fbcef87b5e360662bb527c96d9a615542
+noise = { version = "0.7", default-features = false }
+obj = "0.10"
+png = "0.17"
+pollster = "0.2"
+rand = "0.8"
+winit = "0.25"
+
+[dependencies.naga]
+git = "https://github.com/gfx-rs/naga"
+rev = "eda078d"
+#version = "0.7"
+optional = true
