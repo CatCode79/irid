@@ -122,18 +122,8 @@ impl<'a> VertexStateBuilder<'a> {
     pub fn build(self) -> wgpu::VertexState<'a> {
         wgpu::VertexState {
             module: self.module,
-
-            entry_point: if self.entry_point.is_some() {
-                self.entry_point.unwrap()
-            } else {
-                VertexStateBuilder::DEFAULT_ENTRY_POINT
-            },
-
-            buffers: if self.buffers.is_some() {
-                self.buffers.unwrap()
-            } else {
-                &[]
-            },
+            entry_point: self.entry_point.unwrap_or(VertexStateBuilder::DEFAULT_ENTRY_POINT),
+            buffers: self.buffers.unwrap_or(&[]),
         }
     }
 }
