@@ -6,7 +6,7 @@ edition = "2021"
 rust-version = "1.56"
 description = "Irid Game Framework Renderer"
 repository = "https://github.com/CatCode79/irid-framework"
-license = "MIT OR Apache-2.0 OR Zlib"
+license = "MIT OR Apache-2.0"
 publish = false
 
 [dependencies]
