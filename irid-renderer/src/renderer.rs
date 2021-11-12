@@ -116,11 +116,11 @@ impl<'a, M, T, V> RendererBuilder<'a, M, T, V> {
         //- Pipeline -------------------------------------------------------------------------------
 
         let pipeline = RenderPipeline::new(
-            &surface,
             &device,
             texture_bind_group_metadatas.bind_group_layout(),
             camera_metadatas.bind_group_layout(),
-            self.shader_source
+            self.shader_source.unwrap(),  // TODO si, è temporaneamente unwrap, refactoring in corso
+            surface.preferred_format()
         );
 
         //- Queue Schedule -------------------------------------------------------------------------

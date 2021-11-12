@@ -199,21 +199,11 @@ impl<'a, I, V> FragmentStateBuilder<'a, I, V> {
     //- Build --------------------------------------------------------------------------------------
 
     /// Build a new Fragment State.
-    pub fn build(self, surface: &'a Surface<I, V>) -> wgpu::FragmentState<'a> {
+    pub fn build(self, color_target_state: wgpu::ColorTargetState) -> wgpu::FragmentState<'a> {
         wgpu::FragmentState {
             module: self.module,
-
-            entry_point: if self.entry_point.is_some() {
-                self.entry_point.unwrap()
-            } else {
-                FragmentStateBuilder::DEFAULT_ENTRY_POINT
-            },
-
-            targets: if self.targets.is_some() {
-                self.targets.unwrap()
-            } else {
-                surface.color_target_states()
-            },
+            entry_point: self.entry_point.unwrap_or(FragmentStateBuilder::DEFAULT_ENTRY_POINT),
+            targets: self.targets.unwrap_or(&[color_target_state]),
         }
     }
 }

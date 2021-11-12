@@ -114,11 +114,11 @@ impl<I, V> RenderPipeline<I, V> {
 
     ///
     pub fn new(
-        surface: &Surface<I, V>,
         device: &Device<I, V>,
         texture_bind_group_layout: &wgpu::BindGroupLayout,
         camera_bind_group_layout: &wgpu::BindGroupLayout,
-        shader_source: String
+        shader_source: String,
+        preferred_format: wgpu::TextureFormat,
     ) -> Self {
         let pipeline_layout = PipelineLayoutBuilder::new()
             .with_bind_group_layouts(&[texture_bind_group_layout, camera_bind_group_layout])
@@ -135,8 +135,16 @@ impl<I, V> RenderPipeline<I, V> {
         let vertex_state = VertexStateBuilder::new(&shader_module)
             .with_buffers(buffers)
             .build();
+        let color_target_state = wgpu::ColorTargetState {
+            format: preferred_format,
+            blend: Some(wgpu::BlendState {
+                color: wgpu::BlendComponent::REPLACE,
+                alpha: wgpu::BlendComponent::REPLACE,
+            }),
+            write_mask: wgpu::ColorWrites::ALL,
+        };
         let fragment_state = FragmentStateBuilder::new(&shader_module)
-            .build(surface);
+            .build(color_target_state);
 
         let primitive_state = PrimitiveStateBuilder::new().build();
 

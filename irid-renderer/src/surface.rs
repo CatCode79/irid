@@ -18,7 +18,6 @@ pub struct Surface<I: Image, V: Vertex> {
     wgpu_surface: wgpu::Surface,
     preferred_format: wgpu::TextureFormat,
     configuration: wgpu::SurfaceConfiguration,
-    color_target_states: [wgpu::ColorTargetState; 1],
 }
 
 
@@ -69,20 +68,10 @@ impl<I, V> Surface<I, V> {
             present_mode: wgpu::PresentMode::Fifo,  // TODO user choosable
         };
 
-        let color_target_states = [wgpu::ColorTargetState {
-            format: preferred_format,
-            blend: Some(wgpu::BlendState {
-                color: wgpu::BlendComponent::REPLACE,
-                alpha: wgpu::BlendComponent::REPLACE,
-            }),
-            write_mask: wgpu::ColorWrites::ALL,
-        }];
-
         let surface = Self {
             wgpu_surface,
             preferred_format,
             configuration,
-            color_target_states,
         };
 
         Ok((surface, adapter))
@@ -92,7 +81,7 @@ impl<I, V> Surface<I, V> {
 
     /// Returns an optimal texture format to use for with the previously created Surface
     /// and Adapter.
-    pub fn get_preferred_format(&self) -> wgpu::TextureFormat {
+    pub fn preferred_format(&self) -> wgpu::TextureFormat {
         self.preferred_format
     }
 
