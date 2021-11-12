@@ -21,5 +21,6 @@ irid-renderer = { path = "../irid-renderer" }
 log = "0.4"
 pollster = "0.2"
 tobj = "3.2"
-wgpu = "0.11"
+#wgpu = "0.11"
+wgpu = { path = "../irid-wgpu" }
 winit = "0.25"
