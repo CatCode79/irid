@@ -18,9 +18,7 @@ impl Vertex for ModelVertex {
         self.position = position;
     }
 
-    fn colors(&mut self, colors: [f32; 3]) {
-        let _ = colors;
-    }
+    fn colors(&mut self, _: [f32; 3]) { }
 
     fn tex_coords(&mut self, tex_coords: [f32; 2]) {
         self.tex_coords = tex_coords;
@@ -63,7 +61,7 @@ impl Vertex for ModelVertex {
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct ColorVertex {
     pub position: [f32; 3],
-    pub color: [f32; 3],
+    pub colors: [f32; 3],
 }
 
 impl Vertex for ColorVertex {
@@ -72,16 +70,12 @@ impl Vertex for ColorVertex {
     }
 
     fn colors(&mut self, colors: [f32; 3]) {
-        todo!()
+        self.colors = colors
     }
 
-    fn tex_coords(&mut self, tex_coords: [f32; 2]) {
-        let _ = tex_coords;
-    }
+    fn tex_coords(&mut self, _: [f32; 2]) { }
 
-    fn normal(&mut self, normal: [f32; 3]) {
-        let _ = normal;
-    }
+    fn normal(&mut self, _: [f32; 3]) { }
 
     fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
         wgpu::VertexBufferLayout {
@@ -119,17 +113,13 @@ impl Vertex for TextCoordsVertex {
         self.position = position;
     }
 
-    fn colors(&mut self, colors: [f32; 3]) {
-        let _ = colors;
-    }
+    fn colors(&mut self, _: [f32; 3]) { }
 
     fn tex_coords(&mut self, tex_coords: [f32; 2]) {
         self.tex_coords = tex_coords;
     }
 
-    fn normal(&mut self, normal: [f32; 3]) {
-        let _ = normal;
-    }
+    fn normal(&mut self, _: [f32; 3]) { }
 
     fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
         wgpu::VertexBufferLayout {
