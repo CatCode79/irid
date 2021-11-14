@@ -2,7 +2,6 @@
 
 use crate::Device;
 
-
 //= CONSTS =========================================================================================
 
 /// The coordinate system in Wgpu is based on DirectX, and Metal's coordinate systems.
@@ -19,7 +18,6 @@ const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
     0.0, 0.0, 0.5, 0.0,
     0.0, 0.0, 0.5, 1.0,
 );
-
 
 //= CAMERA =========================================================================================
 
@@ -145,7 +143,6 @@ impl CameraUniform {
     }
 }
 
-
 //= CAMERA METADATAS ===============================================================================
 
 ///
@@ -175,7 +172,6 @@ impl CameraMetadatas {
     }
 }
 
-
 //= CAMERA CONTROLLER ==============================================================================
 
 ///
@@ -188,7 +184,6 @@ pub struct CameraController {
     is_left_pressed: bool,
     is_right_pressed: bool,
 }
-
 
 impl CameraController {
     ///
