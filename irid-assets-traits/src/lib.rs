@@ -41,7 +41,10 @@ pub trait Image {
 /// # Known Implementations:
 ///
 /// - [irid-assets::DiffuseImageSize](irid-assets::DiffuseImageSize)
-pub trait ImageSize {
+pub trait ImageSize: From<(u32, u32)> + From<[u32; 2]> {
+    ///
+    fn new(width: u32, height: u32) -> Self;
+
     /// Returns the [Image] width.
     fn width(&self) -> u32;
 

@@ -6,7 +6,7 @@ use irid_renderer_traits::Vertex;
 
 /// This is the Vertex Trait main implementation.
 #[repr(C)]
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Copy, Clone, Debug, Default, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct ModelVertex {
     position: [f32; 3],
     tex_coords: [f32; 2],
@@ -14,6 +14,10 @@ pub struct ModelVertex {
 }
 
 impl Vertex for ModelVertex {
+    fn new() -> Self {
+        Self::default()
+    }
+
     fn position(&mut self, position: [f32; 3]) {
         self.position = position;
     }
@@ -58,13 +62,17 @@ impl Vertex for ModelVertex {
 
 ///
 #[repr(C)]
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Copy, Clone, Debug, Default, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct ColorVertex {
     pub position: [f32; 3],
     pub colors: [f32; 3],
 }
 
 impl Vertex for ColorVertex {
+    fn new() -> Self {
+        Self::default()
+    }
+
     fn position(&mut self, position: [f32; 3]) {
         self.position = position;
     }
@@ -101,7 +109,7 @@ impl Vertex for ColorVertex {
 
 ///
 #[repr(C)]
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Copy, Clone, Debug, Default, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct TextCoordsVertex {
     pub position: [f32; 3],
     pub tex_coords: [f32; 2],
@@ -109,6 +117,10 @@ pub struct TextCoordsVertex {
 
 
 impl Vertex for TextCoordsVertex {
+    fn new() -> Self {
+        Self::default()
+    }
+
     fn position(&mut self, position: [f32; 3]) {
         self.position = position;
     }

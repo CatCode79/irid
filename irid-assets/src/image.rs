@@ -27,7 +27,7 @@ impl<S: ImageSize> DiffuseImage<S> {
 
         let size = {
             use image::GenericImageView;
-            S::from(image.dimensions())
+            image.dimensions().into()
         };
 
         Ok(Self {
@@ -114,6 +114,12 @@ struct DiffuseImageSize {
 impl ImageSize for DiffuseImageSize {
     //- Constructors -------------------------------------------------------------------------------
 
+    fn new(width: u32, height: u32) -> Self {
+        Self {
+            width: NonZeroU32::new(width).unwrap(),  // TODO: we have to create try_new constructor here, to check the non-zeroity
+            height: NonZeroU32::new(height).unwrap(),
+        }
+    }
 
     //- Getters ------------------------------------------------------------------------------------
 
@@ -130,14 +136,14 @@ impl ImageSize for DiffuseImageSize {
     }
 }
 
-impl From<(u32, u32)> for DiffuseImageSize {  // TODO it's actually works?
+impl From<(u32, u32)> for DiffuseImageSize {
     fn from(tuple: (u32, u32)) -> Self {
-        ImageSize::new(tuple.0, tuple.1)
+        Self::new(tuple.0, tuple.1)
     }
 }
 
 impl From<[u32; 2]> for DiffuseImageSize {
     fn from(array: [u32; 2]) -> Self {
-        ImageSize::new(array[0], array[1])
+        Self::new(array[0], array[1])
     }
 }

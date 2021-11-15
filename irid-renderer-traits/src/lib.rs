@@ -3,6 +3,9 @@
 ///
 pub trait Vertex {
     ///
+    fn new() -> Self;
+
+    ///
     fn position(&mut self, position: [f32; 3]);
 
     ///

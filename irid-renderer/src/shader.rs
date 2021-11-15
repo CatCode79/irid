@@ -2,22 +2,18 @@
 
 use irid_assets_traits::Image;
 use irid_renderer_traits::Vertex;
-use crate::{
-    device::Device,
-    surface::Surface,
-};
 
+use crate::{device::Device};
 
 //= SHADER MODULE ==================================================================================
 
 /// [ShaderModule](wgpu::ShaderModule)'s Builder.
-pub struct ShaderModuleBuilder<'a, I: Image, V: Vertex> {
+pub struct ShaderModuleBuilder<'a> {
     label: Option<&'a str>,
-    source: wgpu::ShaderSource<'static>,  //TODO avoid this static lifetime
+    source: wgpu::ShaderSource<'static>,  // TODO: avoid this static lifetime
 }
 
-
-impl<'a, I, V> ShaderModuleBuilder<'a, I, V> {
+impl<'a> ShaderModuleBuilder<'a> {
     //- Constructors -------------------------------------------------------------------------------
 
     /// Create a new ShaderModuleBuilder.
@@ -50,14 +46,13 @@ impl<'a, I, V> ShaderModuleBuilder<'a, I, V> {
     //- Build --------------------------------------------------------------------------------------
 
     /// Build the shader module.
-    pub fn build(self, device: &Device<I, V>) -> wgpu::ShaderModule {
+    pub fn build<I: Image, V: Vertex>(self, device: &Device<I, V>) -> wgpu::ShaderModule {
         device.create_shader_module(&wgpu::ShaderModuleDescriptor {
             label: Some(self.label.unwrap()),  // TODO mancano dei check
             source: self.source,
         })
     }
 }
-
 
 //= VERTEX STATE BUILDER ===========================================================================
 
@@ -68,7 +63,6 @@ pub struct VertexStateBuilder<'a> {
     entry_point: Option<&'a str>,
     buffers: Option<&'a [wgpu::VertexBufferLayout<'a>]>,
 }
-
 
 impl<'a> VertexStateBuilder<'a> {
     //- Constants ----------------------------------------------------------------------------------
@@ -128,7 +122,6 @@ impl<'a> VertexStateBuilder<'a> {
     }
 }
 
-
 //= FRAGMENT STATE BUILDER =========================================================================
 
 /// [FragmentState](wgpu::FragmentState)'s Builder.
@@ -138,7 +131,6 @@ pub struct FragmentStateBuilder<'a, I: Image, V: Vertex> {
     entry_point: Option<&'a str>,
     targets: Option<&'a [wgpu::ColorTargetState]>,
 }
-
 
 impl<'a, I, V> FragmentStateBuilder<'a, I, V> {
     //- Constants ----------------------------------------------------------------------------------
