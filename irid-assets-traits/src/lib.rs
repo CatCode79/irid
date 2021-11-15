@@ -16,10 +16,10 @@ pub trait Image {
     type S;
 
     /// Open and decode a file to read, format will be guessed from path.
-    fn new(filepath: &std::path::Path) -> image::ImageResult<Self::I>;  // TODO utilise anyhow instead, also below
+    fn load(filepath: &std::path::Path) -> image::ImageResult<Self::I>;  // TODO utilise anyhow instead, also below
 
     /// Open and decode a file to read, format will be guessed from content.
-    fn new_with_guessed_format(filepath: &std::path::Path) -> image::ImageResult<Self::I>;
+    fn load_with_guessed_format(filepath: &std::path::Path) -> image::ImageResult<Self::I>;
 
     /// Returns a value that implements the [ImageSize](ImageSize) trait.
     fn size(&self) -> Self::S;
@@ -69,6 +69,9 @@ pub trait Texture {
 
     ///
     fn load(filepath: &std::path::Path) -> anyhow::Result<Self::Output>;
+
+    ///
+    fn load_with_guessed_format(filepath: &std::path::Path) -> anyhow::Result<Self::Output>;
 
     ///
     fn as_bytes(&self) -> Option<&[u8]>;

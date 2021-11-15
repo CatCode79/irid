@@ -50,7 +50,7 @@ impl Image for DiffuseImage<DiffuseImageSize> {
     /// If you want to inspect the content for a better guess on the format,
     /// which does not depend on file extensions, see
     /// [new_with_guessed_format](DiffuseImage::new_with_guessed_format).
-    fn new(filepath: &std::path::Path) -> image::ImageResult<Self> {
+    fn load(filepath: &std::path::Path) -> image::ImageResult<Self> {
         DiffuseImage::handle_new(filepath, false)
     }
 
@@ -70,7 +70,7 @@ impl Image for DiffuseImage<DiffuseImageSize> {
     ///
     /// **When an error occurs, the reader may not have been properly reset and it is potentially
     /// hazardous to continue with more IO operations**.
-    fn new_with_guessed_format(filepath: &std::path::Path) -> image::ImageResult<Self> {
+    fn load_with_guessed_format(filepath: &std::path::Path) -> image::ImageResult<Self> {
         DiffuseImage::handle_new(filepath, true)
     }
 

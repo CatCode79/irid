@@ -1,5 +1,8 @@
 //= USES ===========================================================================================
 
+use irid_assets_traits::Image;
+use irid_renderer_traits::Vertex;
+
 use crate::Device;
 
 //= CONSTS =========================================================================================
@@ -22,6 +25,7 @@ const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
 //= CAMERA =========================================================================================
 
 ///
+#[derive(Debug, Clone)]
 pub struct Camera {
     eye: cgmath::Point3<f32>,
     target: cgmath::Point3<f32>,
@@ -65,7 +69,7 @@ impl Camera {
     }
 
     /// Create a new CameraMetadatas from this camera.
-    pub fn create_metadatas(&self, device: &Device<I, V>) -> CameraMetadatas {
+    pub fn create_metadatas<I: Image, V: Vertex>(&self, device: &Device<I, V>) -> CameraMetadatas {
         let mut uniform = CameraUniform::new();
         uniform.update_view_proj(self);
 
@@ -152,7 +156,6 @@ pub struct CameraMetadatas {
     bind_group_layout: wgpu::BindGroupLayout,
     bind_group: wgpu::BindGroup,
 }
-
 
 impl CameraMetadatas {
     pub fn uniform(&self) -> &CameraUniform {
