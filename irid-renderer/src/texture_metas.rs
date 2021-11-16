@@ -1,7 +1,7 @@
 //= USES ===========================================================================================
 
-use irid_assets_traits::Image;
-use irid_renderer_traits::Vertex;
+use irid_assets_traits::{Image, Vertex};
+
 use crate::{Device, Surface};
 
 //= TEXTURE IMAGE METADATAS ========================================================================

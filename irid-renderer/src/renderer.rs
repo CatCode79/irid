@@ -1,7 +1,6 @@
 //= USES ===========================================================================================
 
-use irid_assets_traits::{Image, Model, Texture};
-use irid_renderer_traits::Vertex;
+use irid_assets_traits::{Image, Model, Texture, Vertex};
 
 use crate::{
     Adapter, Camera, CameraController, CameraMetadatas, Device, Instance,

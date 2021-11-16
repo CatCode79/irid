@@ -11,7 +11,6 @@ pub use self::pipeline::*;
 pub use self::renderer::*;
 pub use self::shader::*;
 pub use self::surface::*;
-pub use self::vertex::*;
 
 
 //= MODS ===========================================================================================
@@ -27,7 +26,7 @@ pub(crate) mod pipeline;
 pub(crate) mod renderer;
 pub(crate) mod shader;
 pub(crate) mod surface;
-pub(crate) mod vertex;
 
 // Used only internally
-pub(crate) mod texture_metas;
+mod texture_metas;
+mod vertex_buffer;
