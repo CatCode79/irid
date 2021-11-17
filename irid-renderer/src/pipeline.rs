@@ -10,12 +10,12 @@ use crate::texture_metas::TextureDepthMetadatas;
 //= RENDERER PIPELINE BUILDER ======================================================================
 
 ///
-pub struct RenderPipelineBuilder<'a, I: Image, V: Vertex> {
+pub struct RenderPipelineBuilder<'a> {
     render_pipeline_desc: wgpu::RenderPipelineDescriptor<'a>
 }
 
 // TODO: here we have to create directly an irid pipeline and not a wgpu pipeline
-impl<'a, I, V> RenderPipelineBuilder<'a, I, V> {
+impl<'a> RenderPipelineBuilder<'a> {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
@@ -94,7 +94,10 @@ impl<'a, I, V> RenderPipelineBuilder<'a, I, V> {
     //- Build --------------------------------------------------------------------------------------
 
     ///
-    pub fn build(&mut self, device: &Device<I, V>) -> wgpu::RenderPipeline {
+    pub fn build<I: Image, V: Vertex>(
+        &mut self,
+        device: &Device
+    ) -> wgpu::RenderPipeline {
         device.create_render_pipeline(&self.render_pipeline_desc)
     }
 }
@@ -104,16 +107,16 @@ impl<'a, I, V> RenderPipelineBuilder<'a, I, V> {
 /// Wrapper to the wgpu handle's rendering graphics pipeline.
 ///
 /// See [`wgpu::RenderPipeline`](wgpu::RenderPipeline).
-pub struct RenderPipeline<I: Image, V: Vertex> {
+pub struct RenderPipeline {
     wgpu_render_pipeline: wgpu::RenderPipeline,
 }
 
-impl<I, V> RenderPipeline<I, V> {
+impl RenderPipeline {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
     pub fn new(
-        device: &Device<I, V>,
+        device: &Device,
         texture_bind_group_layout: &wgpu::BindGroupLayout,
         camera_bind_group_layout: &wgpu::BindGroupLayout,
         shader_source: String,
@@ -177,11 +180,11 @@ impl<I, V> RenderPipeline<I, V> {
 
 ///
 #[derive(Clone, Debug, Default)]
-pub struct PipelineLayoutBuilder<'a, I: Image, V: Vertex> {
+pub struct PipelineLayoutBuilder<'a> {
     pipeline_layout_desc: wgpu::PipelineLayoutDescriptor<'a>
 }
 
-impl<'a, I, V> PipelineLayoutBuilder<'a, I, V> {
+impl<'a> PipelineLayoutBuilder<'a> {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
@@ -228,7 +231,7 @@ impl<'a, I, V> PipelineLayoutBuilder<'a, I, V> {
     //- Build --------------------------------------------------------------------------------------
 
     /// Build a new [PipelineLayout](wgpu::PipelineLayout).
-    pub fn build(self, device: &Device<I, V>) -> wgpu::PipelineLayout {
+    pub fn build(self, device: &Device) -> wgpu::PipelineLayout {
         device.create_pipeline_layout(&self.pipeline_layout_desc)
     }
 }

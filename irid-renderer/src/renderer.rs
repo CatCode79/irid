@@ -1,6 +1,6 @@
 //= USES ===========================================================================================
 
-use irid_assets_traits::{Image, Model, Texture, Vertex};
+use irid_assets_traits::{Image, Texture, Vertex};
 
 use crate::{
     Adapter, Camera, CameraController, CameraMetadatas, Device, Instance,
@@ -21,13 +21,9 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 
 //= RENDERER BUILDER ===============================================================================
 
-trait RendererAssociatedTypes {
-
-}
-
 ///
 #[derive(Clone, Debug)]
-pub struct RendererBuilder<'a, M: Model, T: Texture, V: Vertex> {
+pub struct RendererBuilder<'a, T: Texture, V: Vertex> {
     window: &'a winit::window::Window,
     shader_source: Option<String>,
     texture: Option<&'a T>,
@@ -35,7 +31,7 @@ pub struct RendererBuilder<'a, M: Model, T: Texture, V: Vertex> {
     indices: Option<&'a [u32]>,
 }
 
-impl<'a, M, T, V> RendererBuilder<'a, M, T, V> {
+impl<'a, T, V> RendererBuilder<'a, T, V> {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
@@ -84,7 +80,7 @@ impl<'a, M, T, V> RendererBuilder<'a, M, T, V> {
     //- Build --------------------------------------------------------------------------------------
 
     ///
-    pub fn build(self) -> anyhow::Result<Renderer<M, T, V>> {
+    pub fn build(self) -> anyhow::Result<Renderer> {
         let window_size = self.window.inner_size();
 
         let backends = wgpu::Backends::VULKAN | wgpu::Backends::DX12;
@@ -134,8 +130,8 @@ impl<'a, M, T, V> RendererBuilder<'a, M, T, V> {
 
         //- Vertex and Index Buffers ---------------------------------------------------------------
 
-        let vertex_buffer = device.create_vertex_buffer_init("Vertex Buffer", self.vertices);
-        let index_buffer = device.create_indices_buffer_init("Index Buffer", self.indices);
+        let vertex_buffer = device.create_vertex_buffer_init("Vertex Buffer", self.vertices.unwrap());
+        let index_buffer = device.create_indices_buffer_init("Index Buffer", self.indices.unwrap());
 
         let num_indices = self.indices.len() as u32;
 
@@ -167,34 +163,23 @@ impl<'a, M, T, V> RendererBuilder<'a, M, T, V> {
 
         let instance_data = instances.iter().map(Instance::to_raw)
             .collect::<Vec<_>>();
-        let instance_buffer = device.create_buffer_init(  // TODO when we will create the generics avout Vertices we will use the Device.create_vertex_buffer_init instead
-                                                          &wgpu::util::BufferInitDescriptor {
-                                                              label: Some("Instance Buffer"),
-                                                              contents: bytemuck::cast_slice(&instance_data),
-                                                              usage: wgpu::BufferUsages::VERTEX,
-                                                          }
+        // TODO when we will create the generics avout Vertices we will use the Device.create_vertex_buffer_init instead
+        let instance_buffer = device.create_buffer_init(
+              &wgpu::util::BufferInitDescriptor {
+                  label: Some("Instance Buffer"),
+                  contents: bytemuck::cast_slice(&instance_data),
+                  usage: wgpu::BufferUsages::VERTEX,
+              }
         );
 
         //- Renderer Creation ----------------------------------------------------------------------
 
         Ok(Self {
-            window_size,
-            surface,
-            adapter,
-            device,
-            queue,
-            texture_image_metadatas,
-            texture_bind_group_metadatas,
-            texture_depth_metadatas,
-            camera,
-            camera_metadatas,
-            camera_controller,
-            pipeline,
-            vertex_buffer,
-            index_buffer,
-            num_indices,
-            instances,
-            instance_buffer,
+            window: &(),
+            shader_source: None,
+            texture: None,
+            vertices: None,
+            indices: None
         })
     }
 }
@@ -202,19 +187,19 @@ impl<'a, M, T, V> RendererBuilder<'a, M, T, V> {
 //= RENDERER OBJECT ================================================================================
 
 ///
-pub struct Renderer<I: Image, M: Model, V: Vertex> {
+pub struct Renderer {
     window_size: winit::dpi::PhysicalSize<u32>,
-    surface: Surface<I, V>,
+    surface: Surface,
     adapter: Adapter,
-    device: Device<I, V>,
+    device: Device,
     queue: wgpu::Queue,
     camera: Camera,
     camera_metadatas: CameraMetadatas,
     camera_controller: CameraController,
-    texture_image_metadatas: TextureImageMetadatas<I, V>,
-    texture_bind_group_metadatas: TextureBindGroupMetadatas<I, V>,
-    texture_depth_metadatas: TextureDepthMetadatas<I, V>,
-    pipeline: RenderPipeline<M, V>,
+    texture_image_metadatas: TextureImageMetadatas,
+    texture_bind_group_metadatas: TextureBindGroupMetadatas,
+    texture_depth_metadatas: TextureDepthMetadatas,
+    pipeline: RenderPipeline,
     vertex_buffer: wgpu::Buffer,  // TODO: maybe this is better to move this buffer, and the index buffer, inside the render_pass or pipeline object
     index_buffer: wgpu::Buffer,
     num_indices: u32,
@@ -222,7 +207,7 @@ pub struct Renderer<I: Image, M: Model, V: Vertex> {
     instance_buffer: wgpu::Buffer,
 }
 
-impl<I, M, V> Renderer<I, M, V> {
+impl Renderer {
     //- SwapChain/Surface Size ---------------------------------------------------------------------
 
     /// Getter for the windows's physical size attribute.
@@ -336,7 +321,7 @@ impl<I, M, V> Renderer<I, M, V> {
     //- Getters ------------------------------------------------------------------------------------
 
     ///
-    pub fn texture_bind_group_metadatas(&self) -> &TextureBindGroupMetadatas<I, V> {
+    pub fn texture_bind_group_metadatas(&self) -> &TextureBindGroupMetadatas {
         &self.texture_bind_group_metadatas
     }
 }

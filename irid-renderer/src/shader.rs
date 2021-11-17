@@ -1,7 +1,5 @@
 //= USES ===========================================================================================
 
-use irid_assets_traits::{Image, Vertex};
-
 use crate::{device::Device};
 
 //= SHADER MODULE ==================================================================================
@@ -45,7 +43,7 @@ impl<'a> ShaderModuleBuilder<'a> {
     //- Build --------------------------------------------------------------------------------------
 
     /// Build the shader module.
-    pub fn build<I: Image, V: Vertex>(self, device: &Device<I, V>) -> wgpu::ShaderModule {
+    pub fn build(self, device: &Device) -> wgpu::ShaderModule {
         device.create_shader_module(&wgpu::ShaderModuleDescriptor {
             label: Some(self.label.unwrap()),  // TODO mancano dei check
             source: self.source,
@@ -125,13 +123,13 @@ impl<'a> VertexStateBuilder<'a> {
 
 /// [FragmentState](wgpu::FragmentState)'s Builder.
 #[derive(Clone, Debug)]
-pub struct FragmentStateBuilder<'a, I: Image, V: Vertex> {
+pub struct FragmentStateBuilder<'a> {
     module: &'a wgpu::ShaderModule,
     entry_point: Option<&'a str>,
     targets: Option<&'a [wgpu::ColorTargetState]>,
 }
 
-impl<'a, I, V> FragmentStateBuilder<'a, I, V> {
+impl<'a> FragmentStateBuilder<'a> {
     //- Constants ----------------------------------------------------------------------------------
 
     /// This is the default fragment state entry point name that will be used in which case

@@ -68,7 +68,7 @@ impl Camera {
     }
 
     /// Create a new CameraMetadatas from this camera.
-    pub fn create_metadatas<I: Image, V: Vertex>(&self, device: &Device<I, V>) -> CameraMetadatas {
+    pub fn create_metadatas<I: Image, V: Vertex>(&self, device: &Device) -> CameraMetadatas {
         let mut uniform = CameraUniform::new();
         uniform.update_view_proj(self);
 

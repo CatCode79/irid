@@ -15,14 +15,12 @@ use crate::texture_metas::TextureImageMetadatas;
 /// A device may be requested from an adapter with
 /// [`Adapter::request_device`](Adapter::request_device).
 #[derive(Debug)]
-pub struct Device<I: Image, V: Vertex> {  // TODO: here we can convert generics to funzions and associated types
+pub struct Device {  // TODO: here we can convert generics to funzions and associated types
     label_text: String,
     wgpu_device: wgpu::Device,
 }
 
-impl<I, V> Device<I, V> where
-    I: Image,
-    V: Vertex {
+impl Device {
     //- Constructors -------------------------------------------------------------------------------
 
     /// Create a new Device and Queue given ad adapter.
@@ -64,7 +62,7 @@ impl<I, V> Device<I, V> where
     }
 
     /// Creates a vertex Buffer with data to initialize it.
-    pub fn create_vertex_buffer_init(
+    pub fn create_vertex_buffer_init<V: Vertex>(
         &self,
         label_text: &str,
         vertices: &[V]
@@ -140,9 +138,9 @@ impl<I, V> Device<I, V> where
     ///
     /// # Param
     /// - texture_desc specifies the general format of the texture.
-    pub fn create_texture(
+    pub fn create_texture<I: Image>(
         &self,
-        surface: &Surface<I, V>,
+        surface: &Surface,
         image: &I,
         texture_desc: &wgpu::TextureDescriptor
     ) -> wgpu::Texture {

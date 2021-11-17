@@ -14,14 +14,14 @@ use crate::{
 
 /// A Surface represents a platform-specific surface (e.g. a window) onto which rendered images
 /// may be presented.
-pub struct Surface<I: Image, V: Vertex> {
+pub struct Surface {
     wgpu_surface: wgpu::Surface,
     preferred_format: wgpu::TextureFormat,
     configuration: wgpu::SurfaceConfiguration,
 }
 
 
-impl<I, V> Surface<I, V> {
+impl Surface {
     //- Constructors -------------------------------------------------------------------------------
 
     /// Create a new Surface using the window handle and retrieves an Adapter which matches
@@ -95,12 +95,12 @@ impl<I, V> Surface<I, V> {
     // Swapchain -----------------------------------------------------------------------------------
 
     /// Initializes Surface for presentation.
-    pub fn configure(&self, device: &Device<I, V>) {
+    pub fn configure(&self, device: &Device) {
         self.wgpu_surface.configure(device.expose_wrapped_device(), &self.configuration);
     }
 
     /// Updates the Surface for presentation.
-    pub fn update(&mut self, device: &Device<I, V>, size: winit::dpi::PhysicalSize<u32>) {
+    pub fn update(&mut self, device: &Device, size: winit::dpi::PhysicalSize<u32>) {
         if size.width > 0 && size.height > 0 {
             self.configuration.width = size.width;
             self.configuration.height = size.height;
