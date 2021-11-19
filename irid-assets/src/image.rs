@@ -40,8 +40,8 @@ impl<S: ImageSize> DiffuseImage<S> {
 impl Image for DiffuseImage<DiffuseImageSize> {
     //- Associated Types ---------------------------------------------------------------------------
 
-    type I = Self;
-    type S = DiffuseImageSize;
+    type Img = Self;
+    type ImgSz = DiffuseImageSize;
 
     //- Constructors -------------------------------------------------------------------------------
 
@@ -77,18 +77,8 @@ impl Image for DiffuseImage<DiffuseImageSize> {
     //- Getters ------------------------------------------------------------------------------------
 
     /// The width and height of this image.
-    fn size(&self) -> Self::S {
+    fn size(&self) -> Self::ImgSz {
         self.size
-    }
-
-    /// The width of this image.
-    fn width(&self) -> u32 {
-        self.size.width()
-    }
-
-    /// The height of this image.
-    fn height(&self) -> u32 {
-        self.size.height()
     }
 
     //- Color Data Conversions ---------------------------------------------------------------------
@@ -106,7 +96,7 @@ impl Image for DiffuseImage<DiffuseImageSize> {
 //= DIFFUSE IMAGE SIZE =============================================================================
 
 #[derive(Clone, Copy, Debug)]
-struct DiffuseImageSize {
+pub struct DiffuseImageSize {
     width: NonZeroU32,
     height: NonZeroU32,
 }
@@ -123,14 +113,17 @@ impl ImageSize for DiffuseImageSize {
 
     //- Getters ------------------------------------------------------------------------------------
 
+    /// The value is non-zero guaranteed.
     fn width(&self) -> u32 {
         self.width.get()
     }
 
+    /// The value is non-zero guaranteed.
     fn height(&self) -> u32 {
         self.height.get()
     }
 
+    /// The values are non-zero guaranteed.
     fn as_tuple(&self) -> (u32, u32) {
         (self.width.get(), self.height.get())
     }

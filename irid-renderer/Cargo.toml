@@ -15,6 +15,7 @@ bytemuck = { version = "1.7", features = ["derive"] }
 cgmath = "0.18"
 env_logger = "0.9"
 image = "0.23"
+#irid-assets = { path = "../irid-assets" }
 irid-assets-traits = { path = "../irid-assets-traits" }
 irid-renderer-traits = { path = "../irid-renderer-traits" }
 log = "0.4"

@@ -4,6 +4,8 @@ use std::path::Path;
 
 use irid_assets_traits::{Image, Texture};
 
+use crate::image::DiffuseImageSize;
+
 //= DIFFUSE TEXTURE ================================================================================
 
 ///
@@ -12,21 +14,22 @@ pub struct DiffuseTexture<I: Image> {
     image: I,
 }
 
-impl<I: Image + Image<I = I>> Texture for DiffuseTexture<I> {
+impl<I: Image + Image<Img= I>> Texture for DiffuseTexture<I> {
     //- Associated Types ---------------------------------------------------------------------------
 
-    type Output = Self;
+    type Txtr = Self;
+    type ImgSz = DiffuseImageSize;
 
     //- Constructors -------------------------------------------------------------------------------
 
     ///
-    fn load(filepath: &std::path::Path) -> anyhow::Result<Self::Output> {
+    fn load(filepath: &std::path::Path) -> anyhow::Result<Self::Txtr> {
         Ok(Self {
             image: I::load(filepath)?
         })
     }
 
-    fn load_with_guessed_format(filepath: &Path) -> anyhow::Result<Self::Output> {
+    fn load_with_guessed_format(filepath: &Path) -> anyhow::Result<Self::Txtr> {
         Ok(Self {
             image: I::load_with_guessed_format(filepath)?
         })
@@ -35,5 +38,9 @@ impl<I: Image + Image<I = I>> Texture for DiffuseTexture<I> {
     // TODO: to be used instead dynamic_image.as_rgba8_bytes on queue.create_texture after created the IridQueue
     fn as_bytes(&self) -> Option<&[u8]> {
         self.image.as_rgba8_bytes()
+    }
+
+    fn size(&self) -> Self::ImgSz {
+        self.image.size()
     }
 }

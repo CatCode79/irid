@@ -25,10 +25,9 @@ pub struct Mesh<V: Vertex> {
     pub material: usize,
 }
 
-impl<I: Image + Image<I = I>, V: Vertex> Model<I, V> {
+impl<I, V> Model<I, V> {
     ///
-    pub fn load<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<Self>
-        where <I as Image>::I: Image {
+    pub fn load<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<Self> {
         let (obj_models, obj_materials) = tobj::load_obj(
             path.as_ref(),
             &tobj::LoadOptions {

@@ -2,8 +2,6 @@
 
 use anyhow::anyhow;
 
-use irid_assets_traits::{Image, Vertex};
-
 use crate::{
     adapter::Adapter,
     device::Device,
@@ -83,13 +81,6 @@ impl Surface {
     /// and Adapter.
     pub fn preferred_format(&self) -> wgpu::TextureFormat {
         self.preferred_format
-    }
-
-    /// Returns an array with a [ColorTargetState](wgpu::ColorTargetState) single value,
-    /// it's a default value mainly used on
-    /// [FragmentStateBuilder](crate::shader::FragmentStateBuilder).
-    pub fn color_target_states(&self) -> &[wgpu::ColorTargetState] {
-        &self.color_target_states
     }
 
     // Swapchain -----------------------------------------------------------------------------------

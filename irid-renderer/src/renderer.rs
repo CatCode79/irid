@@ -1,7 +1,5 @@
 //= USES ===========================================================================================
 
-use irid_assets_traits::{Image, Texture, Vertex};
-
 use crate::{
     Adapter, Camera, CameraController, CameraMetadatas, Device, Instance,
     RendererConfig, RenderPipeline, Surface
@@ -23,11 +21,11 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 
 ///
 #[derive(Clone, Debug)]
-pub struct RendererBuilder<'a, T: Texture, V: Vertex> {
-    window: &'a winit::window::Window,
+pub struct RendererBuilder<'a, T, V> {
+    window: Option<&'a winit::window::Window>,
     shader_source: Option<String>,
     texture: Option<&'a T>,
-    vertices: Option<&'a [V]>,  // TODO Probably better to encapsulate the [ModelVertex] logic
+    vertices: Option<&'a [V]>,  // TODO: Probably better to encapsulate the [V] logic
     indices: Option<&'a [u32]>,
 }
 
@@ -35,9 +33,9 @@ impl<'a, T, V> RendererBuilder<'a, T, V> {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
-    pub fn new(window: &'a winit::window::Window) -> Self {
+    pub fn new() -> Self {
         Self {
-            window,
+            window: None,  // TODO: is optional to prepare shader computation support without GUI
             shader_source: None,
             texture: None,
             vertices: None,
@@ -49,7 +47,7 @@ impl<'a, T, V> RendererBuilder<'a, T, V> {
 
     ///
     pub fn with_window(mut self, window: &'a winit::window::Window) -> Self {
-        self.window = window;
+        self.window = Some(window);
         self
     }
 
@@ -81,10 +79,21 @@ impl<'a, T, V> RendererBuilder<'a, T, V> {
 
     ///
     pub fn build(self) -> anyhow::Result<Renderer> {
-        let window_size = self.window.inner_size();
+        //- Value Checks ---------------------------------------------------------------------------
 
-        let backends = wgpu::Backends::VULKAN | wgpu::Backends::DX12;
-        let (surface, adapter) = Surface::new(backends, self.window, window_size)?;
+        // TODO: modify those rogue checks
+        self.window.unwrap();
+        self.shader_source.unwrap();
+        self.texture.unwrap();
+        self.vertices.unwrap();
+        self.indices.unwrap();
+
+        //- Surface, Device, Queue -----------------------------------------------------------------
+
+        let window_size = self.window.unwrap().inner_size();
+
+        let backends = wgpu::Backends::VULKAN | wgpu::Backends::DX12;  // TODO: choosable by user
+        let (surface, adapter) = Surface::new(backends, self.window.unwrap(), window_size)?;
 
         let (device, queue) = pollster::block_on(Device::new(&adapter))?;
 
@@ -99,11 +108,15 @@ impl<'a, T, V> RendererBuilder<'a, T, V> {
         //- Texture --------------------------------------------------------------------------------
 
         let texture_image_metadatas = TextureImageMetadatas::new(
-            &surface, &device, self.diffuse_image.width(), self.diffuse_image.height()
+            &surface,
+            &device,
+            self.texture.unwrap().size().width(),
+            self.texture.unwrap().size().height()
         );
 
         let texture_bind_group_metadatas= TextureBindGroupMetadatas::new(
-            &device, texture_image_metadatas.texture()
+            &device,
+            texture_image_metadatas.texture()
         );
 
         let texture_depth_metadatas = TextureDepthMetadatas::new(&device, window_size);
@@ -114,7 +127,7 @@ impl<'a, T, V> RendererBuilder<'a, T, V> {
             &device,
             texture_bind_group_metadatas.bind_group_layout(),
             camera_metadatas.bind_group_layout(),
-            self.shader_source.unwrap(),  // TODO si, è temporaneamente unwrap, refactoring in corso
+            self.shader_source.unwrap(),
             surface.preferred_format()
         );
 
@@ -123,7 +136,7 @@ impl<'a, T, V> RendererBuilder<'a, T, V> {
         // TODO we have to create a IridQueue object to remove those args (also we have to think about clones)
         queue.write_texture(
             texture_image_metadatas.create_image_copy(),
-            self.diffuse_image.as_rgba8_bytes().unwrap(),  // TODO: piace poco l'unwrap
+            self.texture.unwrap().as_bytes().unwrap(),  // TODO: remove the unwrap (the second)
             *texture_image_metadatas.image_data_layout(),
             *texture_image_metadatas.image_size()
         );
@@ -133,7 +146,7 @@ impl<'a, T, V> RendererBuilder<'a, T, V> {
         let vertex_buffer = device.create_vertex_buffer_init("Vertex Buffer", self.vertices.unwrap());
         let index_buffer = device.create_indices_buffer_init("Index Buffer", self.indices.unwrap());
 
-        let num_indices = self.indices.len() as u32;
+        let num_indices = self.indices.unwrap().len() as u32;
 
         //- Instances ------------------------------------------------------------------------------
 
@@ -174,12 +187,24 @@ impl<'a, T, V> RendererBuilder<'a, T, V> {
 
         //- Renderer Creation ----------------------------------------------------------------------
 
-        Ok(Self {
-            window: &(),
-            shader_source: None,
-            texture: None,
-            vertices: None,
-            indices: None
+        Ok(Renderer {
+            window_size,
+            surface,
+            adapter,
+            device,
+            queue,
+            camera,
+            camera_metadatas,
+            camera_controller,
+            texture_image_metadatas,
+            texture_bind_group_metadatas,
+            texture_depth_metadatas,
+            pipeline,
+            vertex_buffer,
+            index_buffer,
+            num_indices,
+            instances,
+            instance_buffer
         })
     }
 }

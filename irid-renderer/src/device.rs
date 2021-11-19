@@ -1,9 +1,8 @@
 //= USES ===========================================================================================
 
-use irid_assets_traits::{Image, Vertex};
+use irid_assets_traits::Vertex;
 
-use crate::{Adapter, Surface};
-use crate::texture_metas::TextureImageMetadatas;
+use crate::{Adapter};
 
 //= DEVICE WRAPPER =================================================================================
 
@@ -36,7 +35,7 @@ impl Device {
                 &wgpu::DeviceDescriptor {
                     label: Some(label_text.as_str()),
                     features: wgpu::Features::empty(),
-                    limits: wgpu::Limits::downlevel_defaults(),  // TODO to be choosable by user
+                    limits: wgpu::Limits::downlevel_defaults(),  // TODO: choosable by user
                 },
                 None, // Trace path
             ).await
@@ -138,19 +137,10 @@ impl Device {
     ///
     /// # Param
     /// - texture_desc specifies the general format of the texture.
-    pub fn create_texture<I: Image>(
+    pub fn create_texture(
         &self,
-        surface: &Surface,
-        image: &I,
         texture_desc: &wgpu::TextureDescriptor
     ) -> wgpu::Texture {
-        // TODO: I need to create this and get it as reference
-        let metadatas = TextureImageMetadatas::new(
-            surface,
-            self,
-            image.width(),
-            image.height()
-        );
         self.wgpu_device.create_texture(texture_desc)
     }
 

@@ -10,25 +10,19 @@
 /// - [irid-assets::DiffuseImage](irid-assets::DiffuseImage)
 pub trait Image {
     /// **Associated type** regarding the implementation of this trait.
-    type I;
+    type Img;
 
     /// **Associated type** regarding the implementation of the [ImageSize] trait.
-    type S;
+    type ImgSz;
 
     /// Open and decode a file to read, format will be guessed from path.
-    fn load(filepath: &std::path::Path) -> image::ImageResult<Self::I>;  // TODO utilise anyhow instead, also below
+    fn load(filepath: &std::path::Path) -> image::ImageResult<Self::Img>;  // TODO utilise anyhow instead, also below
 
     /// Open and decode a file to read, format will be guessed from content.
-    fn load_with_guessed_format(filepath: &std::path::Path) -> image::ImageResult<Self::I>;
+    fn load_with_guessed_format(filepath: &std::path::Path) -> image::ImageResult<Self::Img>;
 
     /// Returns a value that implements the [ImageSize](ImageSize) trait.
-    fn size(&self) -> Self::S;
-
-    /// The width of this image.
-    fn width(&self) -> u32;
-
-    /// The height of this image.
-    fn height(&self) -> u32;
+    fn size(&self) -> Self::ImgSz;
 
     /// Get the bytes from the image as 8bit RGBA.
     fn as_rgba8_bytes(&self) -> Option<&[u8]>;
@@ -59,25 +53,29 @@ pub trait ImageSize: From<(u32, u32)> + From<[u32; 2]> {
 
 ///
 pub trait Model {
-    type Output;
+    type Mdl;
 
-    fn load<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<Self::Output>;
+    fn load<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<Self::Mdl>;
 }
 
 //= TEXTURE ========================================================================================
 
 ///
 pub trait Texture {
-    type Output;
+    type Txtr;
+    type ImgSz;
 
     ///
-    fn load(filepath: &std::path::Path) -> anyhow::Result<Self::Output>;
+    fn load(filepath: &std::path::Path) -> anyhow::Result<Self::Txtr>;
 
     ///
-    fn load_with_guessed_format(filepath: &std::path::Path) -> anyhow::Result<Self::Output>;
+    fn load_with_guessed_format(filepath: &std::path::Path) -> anyhow::Result<Self::Txtr>;
 
     ///
     fn as_bytes(&self) -> Option<&[u8]>;
+
+    ///
+    fn size(&self) -> Self::ImgSz;
 }
 
 //= VERTEX =========================================================================================
