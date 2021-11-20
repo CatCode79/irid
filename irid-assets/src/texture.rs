@@ -2,13 +2,12 @@
 
 use std::path::Path;
 
-use crate::GenericImage;
-
-use crate::image::DiffuseImageSize;
+use crate::image::{DiffuseImageSize, GenericImage};
 
 //= TEXTURE INTERFACE ==============================================================================
 
 ///
+// TODO: create a super trait with GenericImage
 pub trait GenericTexture {
     type Txtr;
     type ImgSz;
@@ -20,7 +19,7 @@ pub trait GenericTexture {
     fn load_with_guessed_format(filepath: &std::path::Path) -> anyhow::Result<Self::Txtr>;
 
     ///
-    fn as_bytes(&self) -> Option<&[u8]>;
+    fn as_rgba8_bytes(&self) -> Option<&[u8]>;
 
     ///
     fn size(&self) -> Self::ImgSz;
@@ -34,7 +33,7 @@ pub struct DiffuseTexture<I: GenericImage> {
     image: I,
 }
 
-impl<I: GenericImage + GenericImage<Img= I>> GenericTexture for DiffuseTexture<I> {
+impl<I: GenericImage + GenericImage<Img=I>> GenericTexture for DiffuseTexture<I> {
     //- Associated Types ---------------------------------------------------------------------------
 
     type Txtr = Self;
@@ -56,7 +55,7 @@ impl<I: GenericImage + GenericImage<Img= I>> GenericTexture for DiffuseTexture<I
     }
 
     // TODO: to be used instead dynamic_image.as_rgba8_bytes on queue.create_texture after created the IridQueue
-    fn as_bytes(&self) -> Option<&[u8]> {
+    fn as_rgba8_bytes(&self) -> Option<&[u8]> {
         self.image.as_rgba8_bytes()
     }
 
@@ -64,3 +63,7 @@ impl<I: GenericImage + GenericImage<Img= I>> GenericTexture for DiffuseTexture<I
         self.image.size()
     }
 }
+
+//= TEXTURE SIZE INTERFACE =========================================================================
+
+// TODO: aliases and wrapper from GenericImageSize

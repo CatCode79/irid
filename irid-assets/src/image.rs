@@ -17,7 +17,7 @@ pub trait GenericImage {
     type ImgSz;
 
     /// Open and decode a file to read, format will be guessed from path.
-    fn load(filepath: &std::path::Path) -> image::ImageResult<Self::Img>;  // TODO utilise anyhow instead, also below
+    fn load(filepath: &std::path::Path) -> image::ImageResult<Self::Img>;
 
     /// Open and decode a file to read, format will be guessed from content.
     fn load_with_guessed_format(filepath: &std::path::Path) -> image::ImageResult<Self::Img>;

@@ -19,5 +19,6 @@ irid-assets = { path = "../irid-assets" }
 log = "0.4"
 pollster = "0.2"
 tobj = "3.2"
-wgpu = "0.11"
+wgpu = { path = "../irid-wgpu" }
+#wgpu = "0.11"
 winit = "0.25"
