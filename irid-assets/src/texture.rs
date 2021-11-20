@@ -2,21 +2,22 @@
 
 use std::path::Path;
 
-use crate::image::{DiffuseImageSize, GenericImage};
+use crate::{DiffuseImage, DiffuseImageSize, GenericImage};
 
 //= TEXTURE INTERFACE ==============================================================================
 
 ///
 // TODO: create a super trait with GenericImage
 pub trait GenericTexture {
-    type Txtr;
+    type Output;
+    type Img;
     type ImgSz;
 
     ///
-    fn load(filepath: &std::path::Path) -> anyhow::Result<Self::Txtr>;
+    fn load(filepath: &std::path::Path) -> anyhow::Result<Self::Output>;
 
     ///
-    fn load_with_guessed_format(filepath: &std::path::Path) -> anyhow::Result<Self::Txtr>;
+    fn load_with_guessed_format(filepath: &std::path::Path) -> anyhow::Result<Self::Output>;
 
     ///
     fn as_rgba8_bytes(&self) -> Option<&[u8]>;
@@ -29,28 +30,29 @@ pub trait GenericTexture {
 
 ///
 #[derive(Debug)]
-pub struct DiffuseTexture<I: GenericImage> {
-    image: I,
+pub struct DiffuseTexture {
+    image: DiffuseImage,
 }
 
-impl<I: GenericImage + GenericImage<Img=I>> GenericTexture for DiffuseTexture<I> {
+impl GenericTexture for DiffuseTexture {
     //- Associated Types ---------------------------------------------------------------------------
 
-    type Txtr = Self;
+    type Output = Self;
+    type Img = DiffuseImage;
     type ImgSz = DiffuseImageSize;
 
     //- Constructors -------------------------------------------------------------------------------
 
     ///
-    fn load(filepath: &std::path::Path) -> anyhow::Result<Self::Txtr> {
+    fn load(filepath: &std::path::Path) -> anyhow::Result<Self::Output> {
         Ok(Self {
-            image: I::load(filepath)?
+            image: Self::Img::load(filepath)?
         })
     }
 
-    fn load_with_guessed_format(filepath: &Path) -> anyhow::Result<Self::Txtr> {
+    fn load_with_guessed_format(filepath: &Path) -> anyhow::Result<Self::Output> {
         Ok(Self {
-            image: I::load_with_guessed_format(filepath)?
+            image: Self::Img::load_with_guessed_format(filepath)?
         })
     }
 
@@ -59,7 +61,7 @@ impl<I: GenericImage + GenericImage<Img=I>> GenericTexture for DiffuseTexture<I>
         self.image.as_rgba8_bytes()
     }
 
-    fn size(&self) -> Self::ImgSz {
+    fn size(&self) -> DiffuseImageSize {
         self.image.size()
     }
 }

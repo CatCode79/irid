@@ -1,6 +1,6 @@
 //= USES ===========================================================================================
 
-use irid_assets_traits::{GenericTexture, GenericVertex};
+use irid_assets::{DiffuseImageSize, GenericSize, GenericTexture, GenericVertex};
 
 use crate::{
     Adapter, Camera, CameraController, CameraMetadatas, Device, Instance,
@@ -31,7 +31,7 @@ pub struct RendererBuilder<'a, T: GenericTexture, V: GenericVertex> {
     indices: Option<&'a [u32]>,
 }
 
-impl<'a, T, V> RendererBuilder<'a, T, V> {
+impl<'a, T: GenericTexture, V: GenericVertex> RendererBuilder<'a, T, V> {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
@@ -109,11 +109,12 @@ impl<'a, T, V> RendererBuilder<'a, T, V> {
 
         //- Texture --------------------------------------------------------------------------------
 
+        let size= (self.texture.unwrap().size()) as DiffuseImageSize;  // TODO: here we lost the "genericiness" of the implementation
         let texture_image_metadatas = TextureImageMetadatas::new(
             &surface,
             &device,
-            self.texture.unwrap().size().width(),
-            self.texture.unwrap().size().height()
+            size.width(),
+            size.height()
         );
 
         let texture_bind_group_metadatas= TextureBindGroupMetadatas::new(

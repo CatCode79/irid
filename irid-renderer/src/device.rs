@@ -1,8 +1,8 @@
 //= USES ===========================================================================================
 
-use irid_assets_traits::GenericVertex;
+use irid_assets::GenericVertex;
 
-use crate::{Adapter};
+use crate::Adapter;
 
 //= DEVICE WRAPPER =================================================================================
 

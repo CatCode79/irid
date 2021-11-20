@@ -1,6 +1,6 @@
 //= USES ===========================================================================================
 
-use irid_assets_traits::{GenericImage, GenericVertex};
+use irid_assets::{GenericImage, GenericVertex};
 
 use crate::Device;
 

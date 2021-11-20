@@ -11,16 +11,16 @@ use std::num::NonZeroU32;
 /// - [irid-assets::DiffuseImage](irid-assets::DiffuseImage)
 pub trait GenericImage {
     /// **Associated type** regarding the implementation of this trait.
-    type Img;
+    type Output;
 
     /// **Associated type** regarding the implementation of the [ImageSize] trait.
-    type ImgSz;
+    type ImgSz: GenericSize;
 
     /// Open and decode a file to read, format will be guessed from path.
-    fn load(filepath: &std::path::Path) -> image::ImageResult<Self::Img>;
+    fn load(filepath: &std::path::Path) -> image::ImageResult<Self::Output>;
 
     /// Open and decode a file to read, format will be guessed from content.
-    fn load_with_guessed_format(filepath: &std::path::Path) -> image::ImageResult<Self::Img>;
+    fn load_with_guessed_format(filepath: &std::path::Path) -> image::ImageResult<Self::Output>;
 
     /// Returns a value that implements the [ImageSize](ImageSize) trait.
     fn size(&self) -> Self::ImgSz;
@@ -33,12 +33,12 @@ pub trait GenericImage {
 
 /// A Diffuse Image
 #[derive(Clone, Debug)]
-pub struct DiffuseImage<S: GenericSize> {
+pub struct DiffuseImage {
     image: image::DynamicImage,
-    size: S,
+    size: DiffuseImageSize,
 }
 
-impl<S: GenericSize> DiffuseImage<S> {
+impl DiffuseImage {
     //- Constructor Handler ------------------------------------------------------------------------
 
     fn handle_new(filepath: &std::path::Path, guess_the_format:bool) -> image::ImageResult<Self> {
@@ -62,10 +62,10 @@ impl<S: GenericSize> DiffuseImage<S> {
     }
 }
 
-impl GenericImage for DiffuseImage<DiffuseImageSize> {
+impl GenericImage for DiffuseImage {
     //- Associated Types ---------------------------------------------------------------------------
 
-    type Img = Self;
+    type Output = Self;
     type ImgSz = DiffuseImageSize;
 
     //- Constructors -------------------------------------------------------------------------------

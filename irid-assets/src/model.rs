@@ -1,6 +1,6 @@
 //= USES ===========================================================================================
 
-use crate::{GenericImage, GenericVertex};
+/*use crate::{GenericImage, GenericVertex};
 
 //= MODEL INTERFACE ================================================================================
 
@@ -97,4 +97,4 @@ impl<I, V> Model<I, V> {
 
         Ok(Self { meshes, materials })
     }
-}
+}*/
