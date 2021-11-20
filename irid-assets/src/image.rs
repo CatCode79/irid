@@ -2,9 +2,34 @@
 
 use std::num::NonZeroU32;
 
-use irid_assets_traits::{GenericImage, GenericSize};
+//= IMAGE INTERFACE ================================================================================
 
-//= DYNAMIC IMAGE ==================================================================================
+/// Trait that describes the generic behavior of an image object.
+///
+/// # Known Implementations:
+///
+/// - [irid-assets::DiffuseImage](irid-assets::DiffuseImage)
+pub trait GenericImage {
+    /// **Associated type** regarding the implementation of this trait.
+    type Img;
+
+    /// **Associated type** regarding the implementation of the [ImageSize] trait.
+    type ImgSz;
+
+    /// Open and decode a file to read, format will be guessed from path.
+    fn load(filepath: &std::path::Path) -> image::ImageResult<Self::Img>;  // TODO utilise anyhow instead, also below
+
+    /// Open and decode a file to read, format will be guessed from content.
+    fn load_with_guessed_format(filepath: &std::path::Path) -> image::ImageResult<Self::Img>;
+
+    /// Returns a value that implements the [ImageSize](ImageSize) trait.
+    fn size(&self) -> Self::ImgSz;
+
+    /// Get the bytes from the image as 8bit RGBA.
+    fn as_rgba8_bytes(&self) -> Option<&[u8]>;
+}
+
+//= DIFFUSE IMAGE ==================================================================================
 
 /// A Diffuse Image
 #[derive(Clone, Debug)]
@@ -91,6 +116,27 @@ impl GenericImage for DiffuseImage<DiffuseImageSize> {
             Some(rgba8) => { Some(rgba8.as_bytes()) }
         }
     }
+}
+
+//= IMAGE SIZE INTERFACE ===========================================================================
+
+/// Trait that describes the generic behavior of an image size info object.
+///
+/// # Known Implementations:
+///
+/// - [irid-assets::DiffuseImageSize](irid-assets::DiffuseImageSize)
+pub trait GenericSize: From<(u32, u32)> + From<[u32; 2]> {
+    ///
+    fn new(width: u32, height: u32) -> Self;
+
+    /// Returns the [Image] width.
+    fn width(&self) -> u32;
+
+    /// Returns the [Image] height.
+    fn height(&self) -> u32;
+
+    /// Returns the [Image] width and height (in that order) as tuple.
+    fn as_tuple(&self) -> (u32, u32);
 }
 
 //= DIFFUSE IMAGE SIZE =============================================================================

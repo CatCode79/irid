@@ -2,9 +2,29 @@
 
 use std::path::Path;
 
-use irid_assets_traits::{GenericImage, GenericTexture};
+use crate::GenericImage;
 
 use crate::image::DiffuseImageSize;
+
+//= TEXTURE INTERFACE ==============================================================================
+
+///
+pub trait GenericTexture {
+    type Txtr;
+    type ImgSz;
+
+    ///
+    fn load(filepath: &std::path::Path) -> anyhow::Result<Self::Txtr>;
+
+    ///
+    fn load_with_guessed_format(filepath: &std::path::Path) -> anyhow::Result<Self::Txtr>;
+
+    ///
+    fn as_bytes(&self) -> Option<&[u8]>;
+
+    ///
+    fn size(&self) -> Self::ImgSz;
+}
 
 //= DIFFUSE TEXTURE ================================================================================
 

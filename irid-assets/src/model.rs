@@ -1,6 +1,15 @@
 //= USES ===========================================================================================
 
-use irid_assets_traits::{GenericImage, GenericVertex};
+use crate::{GenericImage, GenericVertex};
+
+//= MODEL INTERFACE ================================================================================
+
+///
+pub trait GenericModel {
+    type Mdl;
+
+    fn load<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<Self::Mdl>;
+}
 
 //= MODEL OBJECT ===================================================================================
 
