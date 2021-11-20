@@ -9,12 +9,12 @@ use std::num::NonZeroU32;
 /// # Known Implementations:
 ///
 /// - [irid-assets::DiffuseImage](irid-assets::DiffuseImage)
-pub trait GenericImage {
+pub trait GenericImage<S: GenericSize> {
     /// **Associated type** regarding the implementation of this trait.
     type Output;
 
     /// **Associated type** regarding the implementation of the [ImageSize] trait.
-    type ImgSz: GenericSize;
+    //type ImgSz: GenericSize;
 
     /// Open and decode a file to read, format will be guessed from path.
     fn load(filepath: &std::path::Path) -> image::ImageResult<Self::Output>;
@@ -23,7 +23,7 @@ pub trait GenericImage {
     fn load_with_guessed_format(filepath: &std::path::Path) -> image::ImageResult<Self::Output>;
 
     /// Returns a value that implements the [ImageSize](ImageSize) trait.
-    fn size(&self) -> Self::ImgSz;
+    fn size(&self) -> S;
 
     /// Get the bytes from the image as 8bit RGBA.
     fn as_rgba8_bytes(&self) -> Option<&[u8]>;
@@ -33,12 +33,12 @@ pub trait GenericImage {
 
 /// A Diffuse Image
 #[derive(Clone, Debug)]
-pub struct DiffuseImage {
+pub struct DiffuseImage<S: GenericSize + Copy> {
     image: image::DynamicImage,
-    size: DiffuseImageSize,
+    size: S,
 }
 
-impl DiffuseImage {
+impl<S: GenericSize + Copy> DiffuseImage<S> {
     //- Constructor Handler ------------------------------------------------------------------------
 
     fn handle_new(filepath: &std::path::Path, guess_the_format:bool) -> image::ImageResult<Self> {
@@ -62,11 +62,11 @@ impl DiffuseImage {
     }
 }
 
-impl GenericImage for DiffuseImage {
+impl<S: GenericSize + Copy> GenericImage<S> for DiffuseImage<S> {
     //- Associated Types ---------------------------------------------------------------------------
 
     type Output = Self;
-    type ImgSz = DiffuseImageSize;
+    //type ImgSz = DiffuseImageSize;
 
     //- Constructors -------------------------------------------------------------------------------
 
@@ -102,7 +102,7 @@ impl GenericImage for DiffuseImage {
     //- Getters ------------------------------------------------------------------------------------
 
     /// The width and height of this image.
-    fn size(&self) -> Self::ImgSz {
+    fn size(&self) -> S {
         self.size
     }
 

@@ -1,6 +1,8 @@
 //= USES ===========================================================================================
 
-use irid_assets::{DiffuseImageSize, GenericSize, GenericTexture, GenericVertex};
+use std::marker::PhantomData;
+
+use irid_assets::{GenericSize, GenericTexture, GenericVertex};
 
 use crate::{
     Adapter, Camera, CameraController, CameraMetadatas, Device, Instance,
@@ -23,15 +25,16 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 
 ///
 #[derive(Clone, Debug)]
-pub struct RendererBuilder<'a, T: GenericTexture, V: GenericVertex> {
+pub struct RendererBuilder<'a, S: GenericSize, T: GenericTexture<S>, V: GenericVertex> {
     window: Option<&'a winit::window::Window>,
     shader_source: Option<String>,
     texture: Option<&'a T>,
     vertices: Option<&'a [V]>,  // TODO: Probably better to encapsulate the [V] logic
     indices: Option<&'a [u32]>,
+    phantom_s: PhantomData<S>,
 }
 
-impl<'a, T: GenericTexture, V: GenericVertex> RendererBuilder<'a, T, V> {
+impl<'a, S: GenericSize, T: GenericTexture<S>, V: GenericVertex> RendererBuilder<'a, S, T, V> {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
@@ -42,6 +45,7 @@ impl<'a, T: GenericTexture, V: GenericVertex> RendererBuilder<'a, T, V> {
             texture: None,
             vertices: None,
             indices: None,
+            phantom_s: PhantomData
         }
     }
 
@@ -109,12 +113,11 @@ impl<'a, T: GenericTexture, V: GenericVertex> RendererBuilder<'a, T, V> {
 
         //- Texture --------------------------------------------------------------------------------
 
-        let size= (self.texture.unwrap().size()) as DiffuseImageSize;  // TODO: here we lost the "genericiness" of the implementation
         let texture_image_metadatas = TextureImageMetadatas::new(
             &surface,
             &device,
-            size.width(),
-            size.height()
+            self.texture.unwrap().size().width(),
+            self.texture.unwrap().size().height()
         );
 
         let texture_bind_group_metadatas= TextureBindGroupMetadatas::new(
@@ -139,7 +142,7 @@ impl<'a, T: GenericTexture, V: GenericVertex> RendererBuilder<'a, T, V> {
         // TODO we have to create a IridQueue object to remove those args (also we have to think about clones)
         queue.write_texture(
             texture_image_metadatas.create_image_copy(),
-            self.texture.unwrap().as_bytes().unwrap(),  // TODO: remove the unwrap (the second)
+            self.texture.unwrap().as_rgba8_bytes().unwrap(),  // TODO: remove the unwrap (the second)
             *texture_image_metadatas.image_data_layout(),
             *texture_image_metadatas.image_size()
         );

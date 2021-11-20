@@ -2,16 +2,15 @@
 
 use std::path::Path;
 
-use crate::{DiffuseImage, DiffuseImageSize, GenericImage};
+use crate::{DiffuseImage, DiffuseImageSize, GenericImage, GenericSize};
 
 //= TEXTURE INTERFACE ==============================================================================
 
 ///
 // TODO: create a super trait with GenericImage
-pub trait GenericTexture {
+pub trait GenericTexture<S: GenericSize> {
     type Output;
     type Img;
-    type ImgSz;
 
     ///
     fn load(filepath: &std::path::Path) -> anyhow::Result<Self::Output>;
@@ -23,23 +22,22 @@ pub trait GenericTexture {
     fn as_rgba8_bytes(&self) -> Option<&[u8]>;
 
     ///
-    fn size(&self) -> Self::ImgSz;
+    fn size(&self) -> S;
 }
 
 //= DIFFUSE TEXTURE ================================================================================
 
 ///
 #[derive(Debug)]
-pub struct DiffuseTexture {
-    image: DiffuseImage,
+pub struct DiffuseTexture<S:GenericSize + Copy = DiffuseImageSize> {
+    image: DiffuseImage<S>,
 }
 
-impl GenericTexture for DiffuseTexture {
+impl<S: GenericSize + Copy> GenericTexture<S> for DiffuseTexture<S> {
     //- Associated Types ---------------------------------------------------------------------------
 
     type Output = Self;
-    type Img = DiffuseImage;
-    type ImgSz = DiffuseImageSize;
+    type Img = DiffuseImage<S>;
 
     //- Constructors -------------------------------------------------------------------------------
 
@@ -61,7 +59,7 @@ impl GenericTexture for DiffuseTexture {
         self.image.as_rgba8_bytes()
     }
 
-    fn size(&self) -> DiffuseImageSize {
+    fn size(&self) -> S {
         self.image.size()
     }
 }
