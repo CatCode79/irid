@@ -1,6 +1,6 @@
 //= USES ===========================================================================================
 
-use irid_assets_traits::Vertex;
+use irid_assets_traits::GenericVertex;
 
 //= MODEL VERTEX ===================================================================================
 
@@ -13,7 +13,7 @@ pub struct ModelVertex {
     normal: [f32; 3],
 }
 
-impl Vertex for ModelVertex {
+impl GenericVertex for ModelVertex {
     fn new() -> Self {
         Self::default()
     }
@@ -43,7 +43,7 @@ pub struct ColorVertex {
     pub colors: [f32; 3],
 }
 
-impl Vertex for ColorVertex {
+impl GenericVertex for ColorVertex {
     fn new() -> Self {
         Self::default()
     }
@@ -72,7 +72,7 @@ pub struct TextCoordsVertex {
 }
 
 
-impl Vertex for TextCoordsVertex {
+impl GenericVertex for TextCoordsVertex {
     fn new() -> Self {
         Self::default()
     }

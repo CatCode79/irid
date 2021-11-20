@@ -2,7 +2,7 @@
 
 use std::path::Path;
 
-use irid_assets_traits::{Image, Texture};
+use irid_assets_traits::{GenericImage, GenericTexture};
 
 use crate::image::DiffuseImageSize;
 
@@ -10,11 +10,11 @@ use crate::image::DiffuseImageSize;
 
 ///
 #[derive(Debug)]
-pub struct DiffuseTexture<I: Image> {
+pub struct DiffuseTexture<I: GenericImage> {
     image: I,
 }
 
-impl<I: Image + Image<Img= I>> Texture for DiffuseTexture<I> {
+impl<I: GenericImage + GenericImage<Img= I>> GenericTexture for DiffuseTexture<I> {
     //- Associated Types ---------------------------------------------------------------------------
 
     type Txtr = Self;

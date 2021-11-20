@@ -1,6 +1,6 @@
 //= USES ===========================================================================================
 
-use irid_assets_traits::Vertex;
+use irid_assets_traits::GenericVertex;
 
 use crate::{Adapter};
 
@@ -61,7 +61,7 @@ impl Device {
     }
 
     /// Creates a vertex Buffer with data to initialize it.
-    pub fn create_vertex_buffer_init<V: Vertex>(
+    pub fn create_vertex_buffer_init<V: GenericVertex>(
         &self,
         label_text: &str,
         vertices: &[V]

@@ -1,23 +1,23 @@
 //= USES ===========================================================================================
 
-use irid_assets_traits::{Image, Vertex};
+use irid_assets_traits::{GenericImage, GenericVertex};
 
 //= MODEL OBJECT ===================================================================================
 
 ///
-pub struct Model<I: Image, V: Vertex> {
+pub struct Model<I: GenericImage, V: GenericVertex> {
     pub meshes: Vec<Mesh<V>>,
     pub materials: Vec<Material<I>>,
 }
 
 ///
-pub struct Material<I: Image> {
+pub struct Material<I: GenericImage> {
     pub name: String,
     pub image: I,
 }
 
 ///
-pub struct Mesh<V: Vertex> {
+pub struct Mesh<V: GenericVertex> {
     pub name: String,
     pub vertices: Vec<V>,
     pub num_elements: u32,

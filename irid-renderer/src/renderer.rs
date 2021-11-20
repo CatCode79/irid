@@ -1,5 +1,7 @@
 //= USES ===========================================================================================
 
+use irid_assets_traits::{GenericTexture, GenericVertex};
+
 use crate::{
     Adapter, Camera, CameraController, CameraMetadatas, Device, Instance,
     RendererConfig, RenderPipeline, Surface
@@ -21,7 +23,7 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 
 ///
 #[derive(Clone, Debug)]
-pub struct RendererBuilder<'a, T, V> {
+pub struct RendererBuilder<'a, T: GenericTexture, V: GenericVertex> {
     window: Option<&'a winit::window::Window>,
     shader_source: Option<String>,
     texture: Option<&'a T>,

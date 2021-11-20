@@ -1,6 +1,6 @@
 //= USES ===========================================================================================
 
-use irid_assets_traits::{Image, Vertex};
+use irid_assets_traits::{GenericImage, GenericVertex};
 
 use crate::Device;
 
@@ -68,7 +68,7 @@ impl Camera {
     }
 
     /// Create a new CameraMetadatas from this camera.
-    pub fn create_metadatas<I: Image, V: Vertex>(&self, device: &Device) -> CameraMetadatas {
+    pub fn create_metadatas<I: GenericImage, V: GenericVertex>(&self, device: &Device) -> CameraMetadatas {
         let mut uniform = CameraUniform::new();
         uniform.update_view_proj(self);
 

@@ -1,6 +1,6 @@
 //= USES ===========================================================================================
 
-use irid_assets_traits::{Image, Vertex};
+use irid_assets_traits::{GenericImage, GenericVertex};
 
 use crate::{
     Device, FragmentStateBuilder, InstanceRaw, ShaderModuleBuilder, VertexStateBuilder
@@ -94,7 +94,7 @@ impl<'a> RenderPipelineBuilder<'a> {
     //- Build --------------------------------------------------------------------------------------
 
     ///
-    pub fn build<I: Image, V: Vertex>(
+    pub fn build<I: GenericImage, V: GenericVertex>(
         &mut self,
         device: &Device
     ) -> wgpu::RenderPipeline {
@@ -127,7 +127,7 @@ impl RenderPipeline {
             .build(device);
 
         let buffers = &[
-            Vertex::desc(),
+            GenericVertex::desc(),
             //TextureVertex::desc(),
             InstanceRaw::desc()
         ];

@@ -2,18 +2,18 @@
 
 use std::num::NonZeroU32;
 
-use irid_assets_traits::{Image, ImageSize};
+use irid_assets_traits::{GenericImage, GenericSize};
 
 //= DYNAMIC IMAGE ==================================================================================
 
 /// A Diffuse Image
 #[derive(Clone, Debug)]
-pub struct DiffuseImage<S: ImageSize> {
+pub struct DiffuseImage<S: GenericSize> {
     image: image::DynamicImage,
     size: S,
 }
 
-impl<S: ImageSize> DiffuseImage<S> {
+impl<S: GenericSize> DiffuseImage<S> {
     //- Constructor Handler ------------------------------------------------------------------------
 
     fn handle_new(filepath: &std::path::Path, guess_the_format:bool) -> image::ImageResult<Self> {
@@ -37,7 +37,7 @@ impl<S: ImageSize> DiffuseImage<S> {
     }
 }
 
-impl Image for DiffuseImage<DiffuseImageSize> {
+impl GenericImage for DiffuseImage<DiffuseImageSize> {
     //- Associated Types ---------------------------------------------------------------------------
 
     type Img = Self;
@@ -101,7 +101,7 @@ pub struct DiffuseImageSize {
     height: NonZeroU32,
 }
 
-impl ImageSize for DiffuseImageSize {
+impl GenericSize for DiffuseImageSize {
     //- Constructors -------------------------------------------------------------------------------
 
     fn new(width: u32, height: u32) -> Self {

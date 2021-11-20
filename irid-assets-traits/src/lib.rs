@@ -8,7 +8,7 @@
 /// # Known Implementations:
 ///
 /// - [irid-assets::DiffuseImage](irid-assets::DiffuseImage)
-pub trait Image {
+pub trait GenericImage {
     /// **Associated type** regarding the implementation of this trait.
     type Img;
 
@@ -35,7 +35,7 @@ pub trait Image {
 /// # Known Implementations:
 ///
 /// - [irid-assets::DiffuseImageSize](irid-assets::DiffuseImageSize)
-pub trait ImageSize: From<(u32, u32)> + From<[u32; 2]> {
+pub trait GenericSize: From<(u32, u32)> + From<[u32; 2]> {
     ///
     fn new(width: u32, height: u32) -> Self;
 
@@ -52,7 +52,7 @@ pub trait ImageSize: From<(u32, u32)> + From<[u32; 2]> {
 //= MODEL ==========================================================================================
 
 ///
-pub trait Model {
+pub trait GenericModel {
     type Mdl;
 
     fn load<P: AsRef<std::path::Path>>(path: P) -> anyhow::Result<Self::Mdl>;
@@ -61,7 +61,7 @@ pub trait Model {
 //= TEXTURE ========================================================================================
 
 ///
-pub trait Texture {
+pub trait GenericTexture {
     type Txtr;
     type ImgSz;
 
@@ -81,7 +81,7 @@ pub trait Texture {
 //= VERTEX =========================================================================================
 
 ///
-pub trait Vertex {
+pub trait GenericVertex {
     ///
     fn new() -> Self;
 
