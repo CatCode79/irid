@@ -178,11 +178,11 @@ impl<'a> FragmentStateBuilder<'a> {
     //- Build --------------------------------------------------------------------------------------
 
     /// Build a new Fragment State.
-    pub fn build(self, color_target_state: wgpu::ColorTargetState) -> wgpu::FragmentState<'a> {
+    pub fn build(self) -> wgpu::FragmentState<'a> {
         wgpu::FragmentState {
             module: self.module,
             entry_point: self.entry_point.unwrap_or(FragmentStateBuilder::DEFAULT_ENTRY_POINT),
-            targets: self.targets.unwrap_or(&[color_target_state]),
+            targets: self.targets.unwrap(),  // TODO: manage unwrap
         }
     }
 }

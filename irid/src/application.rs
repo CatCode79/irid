@@ -5,7 +5,7 @@ use anyhow::anyhow;
 use winit::window::Fullscreen;
 
 use irid_assets::ModelVertex;
-use irid_renderer::Renderer;
+use irid_renderer::{Renderer, RendererBuilder};
 
 use crate::{AppConfig, Listener};
 
@@ -134,13 +134,13 @@ impl<'a> Application<'a> {
             //.with_window_icon() // TODO because yes!
             .build(&event_loop)?;
 
-        let mut renderer = Renderer::new(
-            &window,
-            self.shaders.get("shader.wgsl").unwrap().clone(),// TODO Try to remove the clone
-            self.texture_path,
-            self.vertices,
-            self.indices
-        )?;
+        let mut renderer = RendererBuilder::new()
+            .with_window(&window)
+            .with_shader_source(self.shaders.get("shader.wgsl").unwrap().clone())  // TODO Try to remove the clone
+            .with_texture(self.texture_path)
+            .with_vertices(self.vertices)
+            .with_indices(self.indices)
+            .build()?;
 
         // It is preferable to maximize the windows after the surface and renderer setup,
         // but is not mandatory.

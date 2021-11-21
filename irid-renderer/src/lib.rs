@@ -29,4 +29,3 @@ pub(crate) mod surface;
 
 // Used only internally
 mod texture_metas;
-mod vertex_buffer;

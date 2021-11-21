@@ -1,11 +1,11 @@
 //= USES ===========================================================================================
 
-use irid_assets::{GenericImage, GenericSize, GenericVertex};
+use irid_assets::GenericVertex;
 
 use crate::{
-    Device, FragmentStateBuilder, InstanceRaw, ShaderModuleBuilder, VertexStateBuilder
+    Device, FragmentStateBuilder, InstanceRaw, ShaderModuleBuilder, VertexStateBuilder,
+    texture_metas::TextureDepthMetadatas
 };
-use crate::texture_metas::TextureDepthMetadatas;
 
 //= RENDERER PIPELINE BUILDER ======================================================================
 
@@ -94,7 +94,7 @@ impl<'a> RenderPipelineBuilder<'a> {
     //- Build --------------------------------------------------------------------------------------
 
     ///
-    pub fn build<I: GenericImage<S>, S: GenericSize, V: GenericVertex>(
+    pub fn build(
         &mut self,
         device: &Device
     ) -> wgpu::RenderPipeline {
@@ -115,7 +115,7 @@ impl RenderPipeline {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
-    pub fn new(
+    pub fn new<'a, V: GenericVertex<'a>>(
         device: &Device,
         texture_bind_group_layout: &wgpu::BindGroupLayout,
         camera_bind_group_layout: &wgpu::BindGroupLayout,
@@ -126,27 +126,30 @@ impl RenderPipeline {
             .with_bind_group_layouts(&[texture_bind_group_layout, camera_bind_group_layout])
             .build(device);
 
-        let buffers = &[
-            GenericVertex::desc(),
-            //TextureVertex::desc(),
-            InstanceRaw::desc()
-        ];
         let shader_module = ShaderModuleBuilder::new(
             wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(shader_source))
         ).build(device);
-        let vertex_state = VertexStateBuilder::new(&shader_module)
-            .with_buffers(buffers)
-            .build();
-        let color_target_state = wgpu::ColorTargetState {
+
+        let buffers = [V::desc(),InstanceRaw::desc()];
+        let vertex_state = {
+            VertexStateBuilder::new(&shader_module)
+                .with_buffers(&buffers)
+                .build()
+        };
+
+        let targets = [wgpu::ColorTargetState {
             format: preferred_format,
             blend: Some(wgpu::BlendState {
                 color: wgpu::BlendComponent::REPLACE,
                 alpha: wgpu::BlendComponent::REPLACE,
             }),
             write_mask: wgpu::ColorWrites::ALL,
+        }];
+        let fragment_state = {
+            FragmentStateBuilder::new(&shader_module)
+                .with_targets(&targets)
+                .build()
         };
-        let fragment_state = FragmentStateBuilder::new(&shader_module)
-            .build(color_target_state);
 
         let primitive_state = PrimitiveStateBuilder::new().build();
 

@@ -2,14 +2,16 @@
 
 use std::marker::PhantomData;
 
-use irid_assets::{GenericSize, GenericTexture, GenericVertex};
+use bytemuck::Pod;
+
+use irid_assets::{GenericSize, GenericTexture, GenericVertex, ModelVertex};
 
 use crate::{
     Adapter, Camera, CameraController, CameraMetadatas, Device, Instance,
-    RendererConfig, RenderPipeline, Surface
-};
-use crate::texture_metas::{
-    TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas
+    RendererConfig, RenderPipeline, Surface,
+    texture_metas::{
+        TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas
+    }
 };
 
 //= CONSTS =========================================================================================
@@ -25,7 +27,7 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 
 ///
 #[derive(Clone, Debug)]
-pub struct RendererBuilder<'a, S: GenericSize, T: GenericTexture<S>, V: GenericVertex> {
+pub struct RendererBuilder<'a, S: GenericSize, T: GenericTexture<S>, V: GenericVertex<'a>> {
     window: Option<&'a winit::window::Window>,
     shader_source: Option<String>,
     texture: Option<&'a T>,
@@ -34,7 +36,7 @@ pub struct RendererBuilder<'a, S: GenericSize, T: GenericTexture<S>, V: GenericV
     phantom_s: PhantomData<S>,
 }
 
-impl<'a, S: GenericSize, T: GenericTexture<S>, V: GenericVertex> RendererBuilder<'a, S, T, V> {
+impl<'a, S: GenericSize, T: GenericTexture<S>, V: GenericVertex<'a> + Pod> RendererBuilder<'a, S, T, V> {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
@@ -87,19 +89,19 @@ impl<'a, S: GenericSize, T: GenericTexture<S>, V: GenericVertex> RendererBuilder
     pub fn build(self) -> anyhow::Result<Renderer> {
         //- Value Checks ---------------------------------------------------------------------------
 
-        // TODO: modify those rogue checks
-        self.window.unwrap();
-        self.shader_source.unwrap();
-        self.texture.unwrap();
-        self.vertices.unwrap();
-        self.indices.unwrap();
+        // TODO: modify those raw checks
+        let window = self.window.unwrap();
+        let shader_source = self.shader_source.unwrap();
+        let texture = self.texture.unwrap();
+        let vertices = self.vertices.unwrap();
+        let indices = self.indices.unwrap();
 
         //- Surface, Device, Queue -----------------------------------------------------------------
 
-        let window_size = self.window.unwrap().inner_size();
+        let window_size = window.inner_size();
 
         let backends = wgpu::Backends::VULKAN | wgpu::Backends::DX12;  // TODO: choosable by user
-        let (surface, adapter) = Surface::new(backends, self.window.unwrap(), window_size)?;
+        let (surface, adapter) = Surface::new(backends, window, window_size)?;
 
         let (device, queue) = pollster::block_on(Device::new(&adapter))?;
 
@@ -116,8 +118,8 @@ impl<'a, S: GenericSize, T: GenericTexture<S>, V: GenericVertex> RendererBuilder
         let texture_image_metadatas = TextureImageMetadatas::new(
             &surface,
             &device,
-            self.texture.unwrap().size().width(),
-            self.texture.unwrap().size().height()
+            texture.size().width(),
+            texture.size().height()
         );
 
         let texture_bind_group_metadatas= TextureBindGroupMetadatas::new(
@@ -129,11 +131,11 @@ impl<'a, S: GenericSize, T: GenericTexture<S>, V: GenericVertex> RendererBuilder
 
         //- Pipeline -------------------------------------------------------------------------------
 
-        let pipeline = RenderPipeline::new(
+        let pipeline = RenderPipeline::new::<ModelVertex>(
             &device,
             texture_bind_group_metadatas.bind_group_layout(),
             camera_metadatas.bind_group_layout(),
-            self.shader_source.unwrap(),
+            shader_source,
             surface.preferred_format()
         );
 
@@ -142,17 +144,17 @@ impl<'a, S: GenericSize, T: GenericTexture<S>, V: GenericVertex> RendererBuilder
         // TODO we have to create a IridQueue object to remove those args (also we have to think about clones)
         queue.write_texture(
             texture_image_metadatas.create_image_copy(),
-            self.texture.unwrap().as_rgba8_bytes().unwrap(),  // TODO: remove the unwrap (the second)
+            texture.as_rgba8_bytes().unwrap(),  // TODO: remove the unwrap (the second)
             *texture_image_metadatas.image_data_layout(),
             *texture_image_metadatas.image_size()
         );
 
         //- Vertex and Index Buffers ---------------------------------------------------------------
 
-        let vertex_buffer = device.create_vertex_buffer_init("Vertex Buffer", self.vertices.unwrap());
-        let index_buffer = device.create_indices_buffer_init("Index Buffer", self.indices.unwrap());
+        let vertex_buffer = device.create_vertex_buffer_init("Vertex Buffer", vertices);
+        let index_buffer = device.create_indices_buffer_init("Index Buffer", indices);
 
-        let num_indices = self.indices.unwrap().len() as u32;
+        let num_indices = indices.len() as u32;
 
         //- Instances ------------------------------------------------------------------------------
 
@@ -285,7 +287,7 @@ impl Renderer {
     //- Rendering ----------------------------------------------------------------------------------
 
     ///
-    pub(crate) fn redraw(&mut self, config: &RendererConfig) -> Result<(), wgpu::SurfaceError> {
+    pub fn redraw(&mut self, config: &RendererConfig) -> Result<(), wgpu::SurfaceError> {
         self.camera_controller.update_camera(&mut self.camera);
         let mut camera_uniform = *self.camera_metadatas.uniform();
         camera_uniform.update_view_proj(&self.camera);

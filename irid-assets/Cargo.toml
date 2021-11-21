@@ -18,5 +18,5 @@ image = "0.23"
 log = "0.4"
 pollster = "0.2"
 tobj = "3.2"
-wgpu = "0.11"
+wgpu = { path = "../irid-wgpu", features = ["glsl"]  }
 winit = "0.25"

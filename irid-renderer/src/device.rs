@@ -1,5 +1,6 @@
 //= USES ===========================================================================================
 
+use bytemuck::Pod;
 use irid_assets::GenericVertex;
 
 use crate::Adapter;
@@ -19,7 +20,7 @@ pub struct Device {  // TODO: here we can convert generics to funzions and assoc
     wgpu_device: wgpu::Device,
 }
 
-impl Device {
+impl<'a> Device {
     //- Constructors -------------------------------------------------------------------------------
 
     /// Create a new Device and Queue given ad adapter.
@@ -61,7 +62,7 @@ impl Device {
     }
 
     /// Creates a vertex Buffer with data to initialize it.
-    pub fn create_vertex_buffer_init<V: GenericVertex>(
+    pub fn create_vertex_buffer_init<V: GenericVertex<'a> + Pod>(
         &self,
         label_text: &str,
         vertices: &[V]

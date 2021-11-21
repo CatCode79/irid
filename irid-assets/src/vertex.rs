@@ -1,7 +1,11 @@
+//= USES ===========================================================================================
+
+use std::mem;
+
 //= VERTEX INTERFACE ===============================================================================
 
 ///
-pub trait GenericVertex {
+pub trait GenericVertex<'a> {
     ///
     fn new() -> Self;
 
@@ -16,18 +20,10 @@ pub trait GenericVertex {
 
     ///
     fn normal(&mut self, normal: [f32; 3]);
+
+    ///
+    fn desc() -> wgpu::VertexBufferLayout<'a>;
 }
-
-// TODO da togliere da qui e mettere in renderer
-/*            let vertex_buffer = device.create_vertex_buffer_init(
-                &format!("{:?} Vertex Buffer", path.as_ref()),
-                vertices.as_slice(),
-            );
-
-            let index_buffer = device.create_indices_buffer_init(
-                &format!("{:?} Index Buffer", path.as_ref()),
-                obj_model.mesh.indices.as_slice(),
-            );*/
 
 //= MODEL VERTEX ===================================================================================
 
@@ -40,7 +36,7 @@ pub struct ModelVertex {
     normal: [f32; 3],
 }
 
-impl GenericVertex for ModelVertex {
+impl<'a> GenericVertex<'a> for ModelVertex {
     fn new() -> Self {
         Self::default()
     }
@@ -58,6 +54,30 @@ impl GenericVertex for ModelVertex {
     fn normal(&mut self, normal: [f32; 3]) {
         self.normal = normal
     }
+
+    fn desc() -> wgpu::VertexBufferLayout<'a>{
+        wgpu::VertexBufferLayout {
+            array_stride: mem::size_of::<ModelVertex>() as wgpu::BufferAddress,
+            step_mode: wgpu::VertexStepMode::Vertex,
+            attributes: &[
+                wgpu::VertexAttribute {  // position
+                    offset: 0,
+                    shader_location: 0,
+                    format: wgpu::VertexFormat::Float32x3,
+                },
+                wgpu::VertexAttribute {  // tex_coords
+                    offset: mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
+                    shader_location: 1,
+                    format: wgpu::VertexFormat::Float32x2,
+                },
+                wgpu::VertexAttribute {  // normal
+                    offset: mem::size_of::<[f32; 5]>() as wgpu::BufferAddress,
+                    shader_location: 2,
+                    format: wgpu::VertexFormat::Float32x3,
+                },
+            ],
+        }
+    }
 }
 
 //= COLORED VERTEX =================================================================================
@@ -70,7 +90,7 @@ pub struct ColorVertex {
     pub colors: [f32; 3],
 }
 
-impl GenericVertex for ColorVertex {
+impl<'a> GenericVertex<'a> for ColorVertex {
     fn new() -> Self {
         Self::default()
     }
@@ -86,6 +106,25 @@ impl GenericVertex for ColorVertex {
     fn tex_coords(&mut self, _: [f32; 2]) { }
 
     fn normal(&mut self, _: [f32; 3]) { }
+
+    fn desc() -> wgpu::VertexBufferLayout<'a>{
+        wgpu::VertexBufferLayout {
+            array_stride: mem::size_of::<ColorVertex>() as wgpu::BufferAddress,
+            step_mode: wgpu::VertexStepMode::Vertex,
+            attributes: &[
+                wgpu::VertexAttribute {  // position
+                    offset: 0,
+                    shader_location: 0,
+                    format: wgpu::VertexFormat::Float32x3,
+                },
+                wgpu::VertexAttribute {  // color
+                    offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
+                    shader_location: 1,
+                    format: wgpu::VertexFormat::Float32x3,
+                },
+            ],
+        }
+    }
 }
 
 //= TEXTURED VERTEX ================================================================================
@@ -99,7 +138,7 @@ pub struct TextCoordsVertex {
 }
 
 
-impl GenericVertex for TextCoordsVertex {
+impl<'a> GenericVertex<'a> for TextCoordsVertex {
     fn new() -> Self {
         Self::default()
     }
@@ -115,6 +154,26 @@ impl GenericVertex for TextCoordsVertex {
     }
 
     fn normal(&mut self, _: [f32; 3]) { }
+
+    fn desc() -> wgpu::VertexBufferLayout<'a>{
+        wgpu::VertexBufferLayout {
+            array_stride: mem::size_of::<TextCoordsVertex>() as wgpu::BufferAddress,
+            step_mode: wgpu::VertexStepMode::Vertex,
+            attributes: &[
+                wgpu::VertexAttribute {  // position
+                    offset: 0,
+                    shader_location: 0,
+                    format: wgpu::VertexFormat::Float32x3,
+                },
+                wgpu::VertexAttribute {  // tex_coords
+                    offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
+                    shader_location: 1,
+                    format: wgpu::VertexFormat::Float32x2,
+                },
+            ],
+        }
+
+    }
 }
 
 //= MESH CREATION ==================================================================================

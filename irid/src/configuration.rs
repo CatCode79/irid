@@ -74,7 +74,7 @@ impl AppConfigBuilder {
 }
 
 
-impl Default for Self {
+impl Default for AppConfigBuilder {
     fn default() -> Self {
         Self {
             window_inner_width: AppConfigBuilder::DEFAULT_WINDOW_INNER_WIDTH,
