@@ -16,7 +16,7 @@ publish = false
 [lib]
 
 [features]
-default = []
+default = ["glsl"]
 glsl = ["naga/glsl-in"]
 trace = ["serde", "wgc/trace"]
 replay = ["serde", "wgc/replay"]
@@ -40,6 +40,7 @@ version = "0.11"
 [dependencies]
 arrayvec = "0.7"
 log = "0.4"
+naga = { git = "https://github.com/gfx-rs/naga", rev = "eda078d" }
 parking_lot = "0.11"
 raw-window-handle = "0.3"
 serde = { version = "1", features = ["derive"], optional = true }
@@ -52,7 +53,6 @@ bytemuck = { version = "1.4", features = ["derive"] }
 cgmath = "0.18"
 ddsfile = "0.4"
 env_logger = "0.9"
-naga = { git = "https://github.com/gfx-rs/naga", rev = "eda078d" }
 obj = "0.10"
 png = "0.17"
 pollster = "0.2"
