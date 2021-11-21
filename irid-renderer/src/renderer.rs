@@ -1,10 +1,9 @@
 //= USES ===========================================================================================
 
 use std::marker::PhantomData;
-
 use bytemuck::Pod;
 
-use irid_assets::{GenericSize, GenericTexture, GenericVertex, ModelVertex};
+use irid_assets::{DiffuseImageSize, DiffuseTexture, GenericSize, GenericTexture, GenericVertex, ModelVertex};
 
 use crate::{
     Adapter, Camera, CameraController, CameraMetadatas, Device, Instance,
@@ -27,16 +26,28 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 
 ///
 #[derive(Clone, Debug)]
-pub struct RendererBuilder<'a, S: GenericSize, T: GenericTexture<S>, V: GenericVertex<'a>> {
+pub struct RendererBuilder<
+    'a,
+    P: AsRef<std::path::Path>,
+    V: GenericVertex<'a> + Pod,
+    S: GenericSize = DiffuseImageSize,
+    T: GenericTexture<S> = DiffuseTexture
+> {
     window: Option<&'a winit::window::Window>,
     shader_source: Option<String>,
-    texture: Option<&'a T>,
+    texture_path: Option<P>,
     vertices: Option<&'a [V]>,  // TODO: Probably better to encapsulate the [V] logic
     indices: Option<&'a [u32]>,
-    phantom_s: PhantomData<S>,
+    generic_size: PhantomData<S>,
+    generic_texture: PhantomData<T>,
 }
 
-impl<'a, S: GenericSize, T: GenericTexture<S>, V: GenericVertex<'a> + Pod> RendererBuilder<'a, S, T, V> {
+impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
+    P: AsRef<std::path::Path>,
+    V: GenericVertex<'a> + Pod,
+    S: GenericSize,
+    T: GenericTexture<S>,
+{
     //- Constructors -------------------------------------------------------------------------------
 
     ///
@@ -44,10 +55,11 @@ impl<'a, S: GenericSize, T: GenericTexture<S>, V: GenericVertex<'a> + Pod> Rende
         Self {
             window: None,  // TODO: is optional to prepare shader computation support without GUI
             shader_source: None,
-            texture: None,
+            texture_path: None,
             vertices: None,
             indices: None,
-            phantom_s: PhantomData
+            generic_size: Default::default(),
+            generic_texture: Default::default()
         }
     }
 
@@ -66,8 +78,8 @@ impl<'a, S: GenericSize, T: GenericTexture<S>, V: GenericVertex<'a> + Pod> Rende
     }
 
     ///
-    pub fn with_texture(mut self, texture: &'a T) -> Self {
-        self.texture = Some(texture);
+    pub fn with_texture_path(mut self, texture_path: P) -> Self {
+        self.texture_path = Some(texture_path);
         self
     }
 
@@ -92,7 +104,7 @@ impl<'a, S: GenericSize, T: GenericTexture<S>, V: GenericVertex<'a> + Pod> Rende
         // TODO: modify those raw checks
         let window = self.window.unwrap();
         let shader_source = self.shader_source.unwrap();
-        let texture = self.texture.unwrap();
+        let texture_path = self.texture_path.unwrap();
         let vertices = self.vertices.unwrap();
         let indices = self.indices.unwrap();
 
@@ -115,6 +127,7 @@ impl<'a, S: GenericSize, T: GenericTexture<S>, V: GenericVertex<'a> + Pod> Rende
 
         //- Texture --------------------------------------------------------------------------------
 
+        let texture = T::load(texture_path)?;
         let texture_image_metadatas = TextureImageMetadatas::new(
             &surface,
             &device,

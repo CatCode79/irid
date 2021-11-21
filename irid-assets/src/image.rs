@@ -17,10 +17,14 @@ pub trait GenericImage<S: GenericSize> {
     //type ImgSz: GenericSize;
 
     /// Open and decode a file to read, format will be guessed from path.
-    fn load(filepath: &std::path::Path) -> image::ImageResult<Self::Output>;
+    fn load<P: AsRef<std::path::Path>>(
+        filepath: P
+    ) -> image::ImageResult<Self::Output>;
 
     /// Open and decode a file to read, format will be guessed from content.
-    fn load_with_guessed_format(filepath: &std::path::Path) -> image::ImageResult<Self::Output>;
+    fn load_with_guessed_format<P: AsRef<std::path::Path>>(
+        filepath: P
+    ) -> image::ImageResult<Self::Output>;
 
     /// Returns a value that implements the [ImageSize](ImageSize) trait.
     fn size(&self) -> S;
@@ -41,7 +45,10 @@ pub struct DiffuseImage<S: GenericSize + Copy> {
 impl<S: GenericSize + Copy> DiffuseImage<S> {
     //- Constructor Handler ------------------------------------------------------------------------
 
-    fn handle_new(filepath: &std::path::Path, guess_the_format:bool) -> image::ImageResult<Self> {
+    fn handle_new<P: AsRef<std::path::Path>>(
+        filepath: P,
+        guess_the_format:bool
+    ) -> image::ImageResult<Self> {
         let file_reader = if guess_the_format {
             image::io::Reader::open(filepath)?.with_guessed_format()?  // TODO: use anyhow context instead, also below
         } else {
@@ -66,7 +73,6 @@ impl<S: GenericSize + Copy> GenericImage<S> for DiffuseImage<S> {
     //- Associated Types ---------------------------------------------------------------------------
 
     type Output = Self;
-    //type ImgSz = DiffuseImageSize;
 
     //- Constructors -------------------------------------------------------------------------------
 
@@ -75,7 +81,9 @@ impl<S: GenericSize + Copy> GenericImage<S> for DiffuseImage<S> {
     /// If you want to inspect the content for a better guess on the format,
     /// which does not depend on file extensions, see
     /// [new_with_guessed_format](DiffuseImage::new_with_guessed_format).
-    fn load(filepath: &std::path::Path) -> image::ImageResult<Self> {
+    fn load<P: AsRef<std::path::Path>>(
+        filepath: P
+    ) -> image::ImageResult<Self> {
         DiffuseImage::handle_new(filepath, false)
     }
 
@@ -95,7 +103,9 @@ impl<S: GenericSize + Copy> GenericImage<S> for DiffuseImage<S> {
     ///
     /// **When an error occurs, the reader may not have been properly reset and it is potentially
     /// hazardous to continue with more IO operations**.
-    fn load_with_guessed_format(filepath: &std::path::Path) -> image::ImageResult<Self> {
+    fn load_with_guessed_format<P: AsRef<std::path::Path>>(
+        filepath: P
+    ) -> image::ImageResult<Self> {
         DiffuseImage::handle_new(filepath, true)
     }
 

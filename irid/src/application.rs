@@ -1,14 +1,14 @@
 
 //= USES ===========================================================================================
 
+use std::path::Path;
 use anyhow::anyhow;
 use winit::window::Fullscreen;
 
-use irid_assets::ModelVertex;
+use irid_assets::{DiffuseImageSize, DiffuseTexture, ModelVertex};
 use irid_renderer::{Renderer, RendererBuilder};
 
 use crate::{AppConfig, Listener};
-
 
 //= APPLICATION BUILDER ============================================================================
 
@@ -22,7 +22,6 @@ pub struct ApplicationBuilder<'a> {
     vertices: Option<&'a [ModelVertex]>,
     indices: Option<&'a [u32]>
 }
-
 
 impl<'a> ApplicationBuilder<'a> {
     /// Create an ApplicationBuilder using a filepath to load the config file.
@@ -86,8 +85,7 @@ impl<'a> ApplicationBuilder<'a> {
     }
 }
 
-
-//= APPLICATION STRUCT =============================================================================
+//= APPLICATION OBJECT =============================================================================
 
 /// Object that serves to manage the whole game application.
 pub struct Application<'a> {
@@ -134,10 +132,11 @@ impl<'a> Application<'a> {
             //.with_window_icon() // TODO because yes!
             .build(&event_loop)?;
 
-        let mut renderer = RendererBuilder::new()
+        let mut renderer = RendererBuilder::
+        <&Path, ModelVertex, DiffuseImageSize, DiffuseTexture>::new()
             .with_window(&window)
             .with_shader_source(self.shaders.get("shader.wgsl").unwrap().clone())  // TODO Try to remove the clone
-            .with_texture(self.texture_path)
+            .with_texture_path(self.texture_path)
             .with_vertices(self.vertices)
             .with_indices(self.indices)
             .build()?;

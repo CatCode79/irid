@@ -1,22 +1,24 @@
 //= USES ===========================================================================================
 
-use std::path::Path;
-
 use crate::{DiffuseImage, DiffuseImageSize, GenericImage, GenericSize};
 
 //= TEXTURE INTERFACE ==============================================================================
 
 ///
-// TODO: create a super trait with GenericImage
+// TODO: create (maybe) a super trait with GenericImage
 pub trait GenericTexture<S: GenericSize> {
-    type Output;
+    type Output: GenericTexture<S>;
     type Img;
 
     ///
-    fn load(filepath: &std::path::Path) -> anyhow::Result<Self::Output>;
+    fn load<P: AsRef<std::path::Path>>(
+        filepath: P
+    ) -> anyhow::Result<Self::Output>;
 
     ///
-    fn load_with_guessed_format(filepath: &std::path::Path) -> anyhow::Result<Self::Output>;
+    fn load_with_guessed_format<P: AsRef<std::path::Path>>(
+        filepath: P
+    ) -> anyhow::Result<Self::Output>;
 
     ///
     fn as_rgba8_bytes(&self) -> Option<&[u8]>;
@@ -42,13 +44,17 @@ impl<S: GenericSize + Copy> GenericTexture<S> for DiffuseTexture<S> {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
-    fn load(filepath: &std::path::Path) -> anyhow::Result<Self::Output> {
+    fn load<P: AsRef<std::path::Path>>(
+        filepath: P
+    ) -> anyhow::Result<Self> {
         Ok(Self {
             image: Self::Img::load(filepath)?
         })
     }
 
-    fn load_with_guessed_format(filepath: &Path) -> anyhow::Result<Self::Output> {
+    fn load_with_guessed_format<P: AsRef<std::path::Path>>(
+        filepath: P
+    ) -> anyhow::Result<Self> {
         Ok(Self {
             image: Self::Img::load_with_guessed_format(filepath)?
         })
