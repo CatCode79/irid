@@ -4,7 +4,7 @@
 pub use self::adapter::*;
 pub use self::buffer::*;
 pub use self::camera::*;
-pub use self::configuration::*;
+pub use self::config::*;
 pub use self::device::*;
 pub use self::instance::*;
 pub use self::pipeline::*;
@@ -19,7 +19,7 @@ pub use self::surface::*;
 pub(crate) mod adapter;
 pub(crate) mod buffer;
 pub(crate) mod camera;
-pub(crate) mod configuration;
+pub(crate) mod config;
 pub(crate) mod device;
 pub(crate) mod instance;
 pub(crate) mod pipeline;
