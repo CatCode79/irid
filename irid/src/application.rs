@@ -1,7 +1,7 @@
-
 //= USES ===========================================================================================
 
 use std::path::Path;
+
 use anyhow::anyhow;
 use winit::window::Fullscreen;
 
@@ -96,7 +96,6 @@ pub struct Application<'a> {
     vertices: &'a [ModelVertex],
     indices: &'a [u32]
 }
-
 
 impl<'a> Application<'a> {
     /// Starts the

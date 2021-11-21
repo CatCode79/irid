@@ -1,5 +1,4 @@
-
-//= APPLICATION CONFIG BUILDER =====================================================================
+//= APPLICATION CONFIGURATION BUILDER ==============================================================
 
 /// Build a new [AppConfig] with wanted values.
 #[derive(Clone, Debug)]
@@ -8,7 +7,6 @@ pub struct AppConfigBuilder {
     window_inner_height: Option<std::num::NonZeroU32>,
     window_starts_maximized: bool,
 }
-
 
 /// Application configuration.
 impl AppConfigBuilder {
@@ -73,7 +71,6 @@ impl AppConfigBuilder {
     }
 }
 
-
 impl Default for AppConfigBuilder {
     fn default() -> Self {
         Self {
@@ -83,7 +80,6 @@ impl Default for AppConfigBuilder {
         }
     }
 }
-
 
 //= APPLICATION CONFIG OBJECT ======================================================================
 
@@ -95,7 +91,6 @@ pub struct AppConfig {
     window_inner_height: std::num::NonZeroU32,
     window_starts_maximized: bool,
 }
-
 
 impl AppConfig {
     //- Constructors -------------------------------------------------------------------------------
@@ -146,7 +141,6 @@ impl AppConfig {
         }
     }
 }
-
 
 impl Default for AppConfig {
     fn default() -> Self {
