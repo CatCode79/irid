@@ -17,6 +17,7 @@ publish = false
 
 [features]
 default = []
+glsl = ["naga/glsl-in"]
 trace = ["serde", "wgc/trace"]
 replay = ["serde", "wgc/replay"]
 
