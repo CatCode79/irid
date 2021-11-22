@@ -11,5 +11,4 @@ Cargo.lock
 
 # Intellij Idea stuffs
 /.idea/
-bad.iml
-workspace.iml
+*.iml

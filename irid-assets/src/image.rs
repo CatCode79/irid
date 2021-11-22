@@ -13,9 +13,6 @@ pub trait GenericImage<S: GenericSize> {
     /// **Associated type** regarding the implementation of this trait.
     type Output;
 
-    /// **Associated type** regarding the implementation of the [ImageSize] trait.
-    //type ImgSz: GenericSize;
-
     /// Open and decode a file to read, format will be guessed from path.
     fn load<P: AsRef<std::path::Path>>(
         filepath: P

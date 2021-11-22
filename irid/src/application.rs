@@ -85,7 +85,7 @@ impl<'a> ApplicationBuilder<'a> {
     }
 }
 
-//= APPLICATION OBJECT =============================================================================
+//= APPLICATION ====================================================================================
 
 /// Object that serves to manage the whole game application.
 pub struct Application<'a> {

@@ -1,6 +1,7 @@
 //= USES ===========================================================================================
 
 use std::marker::PhantomData;
+
 use bytemuck::Pod;
 
 use irid_assets::{DiffuseImageSize, DiffuseTexture, GenericSize, GenericTexture, GenericVertex, ModelVertex};
@@ -254,7 +255,7 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    //- SwapChain/Surface Size ---------------------------------------------------------------------
+    //- Surface (Re)size ---------------------------------------------------------------------------
 
     /// Getter for the windows's physical size attribute.
     pub fn get_size(&self) -> winit::dpi::PhysicalSize<u32> {

@@ -53,6 +53,7 @@ impl TextureImageMetadatas {
 
     //- ImageCopyTexture ---------------------------------------------------------------------------
 
+    ///
     pub fn create_image_copy(&self) -> wgpu::ImageCopyTexture {
         wgpu::ImageCopyTexture {
             texture: &self.texture,
@@ -64,14 +65,17 @@ impl TextureImageMetadatas {
 
     //- Getters ------------------------------------------------------------------------------------
 
+    ///
     pub fn texture(&self) -> &wgpu::Texture {
         &self.texture
     }
 
+    ///
     pub fn image_data_layout(&self) -> &wgpu::ImageDataLayout {
         &self.image_data_layout
     }
 
+    ///
     pub fn image_size(&self) -> &wgpu::Extent3d {
         &self.image_size
     }
@@ -89,6 +93,7 @@ pub struct TextureBindGroupMetadatas {
 impl TextureBindGroupMetadatas {
     //- Constructors -------------------------------------------------------------------------------
 
+    ///
     pub fn new(
         device: &Device,
         texture: &wgpu::Texture
@@ -185,10 +190,12 @@ impl TextureBindGroupMetadatas {
 
     //- Getters ------------------------------------------------------------------------------------
 
+    ///
     pub fn bind_group_layout(&self) -> &wgpu::BindGroupLayout {
         &self.bind_group_layout
     }
 
+    ///
     pub fn bind_group(&self) -> &wgpu::BindGroup {
         &self.bind_group
     }
@@ -207,6 +214,7 @@ pub struct TextureDepthMetadatas {
 impl TextureDepthMetadatas {
     //- Constants ----------------------------------------------------------------------------------
 
+    ///
     pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
 
     //- Constructors -------------------------------------------------------------------------------
@@ -271,6 +279,7 @@ impl TextureDepthMetadatas {
 
     //- Getters ------------------------------------------------------------------------------------
 
+    ///
     pub fn view(&self) -> &wgpu::TextureView {
         &self.view
     }

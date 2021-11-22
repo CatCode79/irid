@@ -1,4 +1,3 @@
-
 //= INSTANCE =======================================================================================
 
 /// Instances allows us to draw the same object multiple times with different properties
@@ -8,7 +7,6 @@ pub struct Instance {
     pub rotation: cgmath::Quaternion<f32>,
 
 }
-
 
 impl Instance {
     /// Convert an Instance to a structure GPU readable.
@@ -20,7 +18,6 @@ impl Instance {
     }
 }
 
-
 //= INSTANCE FOR SHADERS ===========================================================================
 
 /// This is the data that will go into the wgpu::Buffer.
@@ -31,7 +28,6 @@ impl Instance {
 pub struct InstanceRaw {
     model: [[f32; 4]; 4],
 }
-
 
 impl InstanceRaw {
     ///

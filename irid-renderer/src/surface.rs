@@ -7,7 +7,6 @@ use crate::{
     device::Device,
 };
 
-
 //= SURFACE WRAPPER ================================================================================
 
 /// A Surface represents a platform-specific surface (e.g. a window) onto which rendered images
@@ -17,7 +16,6 @@ pub struct Surface {
     preferred_format: wgpu::TextureFormat,
     configuration: wgpu::SurfaceConfiguration,
 }
-
 
 impl Surface {
     //- Constructors -------------------------------------------------------------------------------

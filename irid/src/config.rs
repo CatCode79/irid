@@ -1,4 +1,4 @@
-//= APPLICATION CONFIGURATION BUILDER ==============================================================
+//= APPLICATION CONFIG BUILDER =====================================================================
 
 /// Build a new [AppConfig] with wanted values.
 #[derive(Clone, Debug)]
@@ -81,7 +81,7 @@ impl Default for AppConfigBuilder {
     }
 }
 
-//= APPLICATION CONFIG OBJECT ======================================================================
+//= APPLICATION CONFIG =============================================================================
 
 /// The [Application](crate::app::Application) configuration, TODO: readable by file with
 /// [serde](https://crates.io/crates/serde).

@@ -1,4 +1,3 @@
-
 //= RENDERER CONFIG BUILDER ========================================================================
 
 /// Build a new [RendererConfig] with wanted values.
@@ -6,7 +5,6 @@
 pub struct RendererConfigBuilder {
     clear_color: Option<wgpu::Color>,
 }
-
 
 /// Application configuration.
 impl RendererConfigBuilder {
@@ -37,7 +35,6 @@ impl RendererConfigBuilder {
     }
 }
 
-
 impl Default for RendererConfigBuilder {
     fn default() -> Self {
         Self {
@@ -46,8 +43,7 @@ impl Default for RendererConfigBuilder {
     }
 }
 
-
-//= RENDERER CONFIG OBJECT =========================================================================
+//= RENDERER CONFIG ================================================================================
 
 /// The [Renderer](irid-renderer::Renderer) configuration, TODO: readable by file with
 /// [serde](https://crates.io/crates/serde).
@@ -55,7 +51,6 @@ impl Default for RendererConfigBuilder {
 pub struct RendererConfig {
     clear_color: wgpu::Color,
 }
-
 
 impl RendererConfig {
     //- Constructors -------------------------------------------------------------------------------
@@ -73,7 +68,6 @@ impl RendererConfig {
         self.clear_color
     }
 }
-
 
 impl Default for RendererConfig {
     fn default() -> Self {

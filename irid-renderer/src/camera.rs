@@ -33,7 +33,6 @@ pub struct Camera {
     zfar: f32,
 }
 
-
 impl Camera {
     /// Create a new camera given the window's width and height
     pub fn new(width: f32, height: f32) -> Self {
@@ -121,7 +120,6 @@ impl Camera {
     }
 }
 
-
 //= CAMERA UNIFORM BUFFER ==========================================================================
 
 ///
@@ -132,7 +130,6 @@ pub struct CameraUniform {
     // to convert the Matrix4 into a 4x4 f32 array
     view_proj: [[f32; 4]; 4],
 }
-
 
 impl CameraUniform {
     fn new() -> Self {
@@ -158,18 +155,22 @@ pub struct CameraMetadatas {
 }
 
 impl CameraMetadatas {
+    ///
     pub fn uniform(&self) -> &CameraUniform {
         &self.uniform
     }
 
+    ///
     pub fn buffer(&self) -> &wgpu::Buffer {
         &self.buffer
     }
 
+    ///
     pub fn bind_group_layout(&self) -> &wgpu::BindGroupLayout {
         &self.bind_group_layout
     }
 
+    ///
     pub fn bind_group(&self) -> &wgpu::BindGroup {
         &self.bind_group
     }
@@ -189,6 +190,8 @@ pub struct CameraController {
 }
 
 impl CameraController {
+    //- Constructors -------------------------------------------------------------------------------
+
     ///
     pub fn new(speed: f32) -> Self {
         Self {
@@ -243,6 +246,7 @@ impl CameraController {
         }
     }
 
+    ///
     pub fn update_camera(&self, camera: &mut Camera) {
         use cgmath::InnerSpace;
 

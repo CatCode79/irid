@@ -1,6 +1,7 @@
 //= USES ===========================================================================================
 
 use bytemuck::Pod;
+
 use irid_assets::GenericVertex;
 
 use crate::Adapter;
