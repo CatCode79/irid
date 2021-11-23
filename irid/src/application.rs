@@ -6,7 +6,7 @@ use anyhow::anyhow;
 use winit::window::Fullscreen;
 
 use irid_assets::{DiffuseImageSize, DiffuseTexture, ModelVertex};
-use irid_renderer::{Renderer, RendererBuilder};
+use irid_renderer::{Renderer, RendererBuilder, RendererConfigBuilder};
 
 use crate::{AppConfig, Listener};
 
@@ -128,13 +128,14 @@ impl<'a> Application<'a> {
             .with_resizable(true)
             .with_title(&self.title)
             .with_visible(false)
-            //.with_window_icon() // TODO because yes!
+            //.with_window_icon() // TODO: because yes!
             .build(&event_loop)?;
 
         let mut renderer = RendererBuilder::
-        <&Path, ModelVertex, DiffuseImageSize, DiffuseTexture>::new()
+        <&Path, ModelVertex, DiffuseImageSize, DiffuseTexture>
+        ::new(RendererConfigBuilder::default().build())
             .with_window(&window)
-            .with_shader_source(self.shaders.get("shader.wgsl").unwrap().clone())  // TODO Try to remove the clone
+            .with_shader_source(self.shaders.get("shader.wgsl").unwrap().clone())  // TODO: we have to remove the clone
             .with_texture_path(self.texture_path)
             .with_vertices(self.vertices)
             .with_indices(self.indices)
@@ -357,12 +358,12 @@ impl<'a> Application<'a> {
     ) {
         let use_default_behaviour: bool = listener.on_redraw();
         if use_default_behaviour {
-            match renderer.redraw(&self.config) {
+            match renderer.redraw() {
                 Ok(_) => {},
                 Err(error) => match error {
                     // These errors should be resolved by the next frame
                     wgpu::SurfaceError::Timeout | wgpu::SurfaceError::Outdated =>
-                        eprintln!("{:?}", error),  // TODO better error messages?
+                        eprintln!("{:?}", error),  // TODO: better error messages?
 
                     // Recreate the swap chain if lost
                     wgpu::SurfaceError::Lost => renderer.refresh_current_size(),

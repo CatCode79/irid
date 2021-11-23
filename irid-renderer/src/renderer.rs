@@ -34,6 +34,7 @@ pub struct RendererBuilder<
     S: GenericSize = DiffuseImageSize,
     T: GenericTexture<S> = DiffuseTexture
 > {
+    config: RendererConfig,
     window: Option<&'a winit::window::Window>,
     shader_source: Option<String>,
     texture_path: Option<P>,
@@ -52,8 +53,9 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
     //- Constructors -------------------------------------------------------------------------------
 
     ///
-    pub fn new() -> Self {
+    pub fn new(config: RendererConfig) -> Self {
         Self {
+            config,
             window: None,  // TODO: is optional to prepare shader computation support without GUI
             shader_source: None,
             texture_path: None,
@@ -65,6 +67,12 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
     }
 
     //- Setters ------------------------------------------------------------------------------------
+
+    ///
+    pub fn with_config(mut self, config: RendererConfig) -> Self {
+        self.config = config;
+        self
+    }
 
     ///
     pub fn with_window(mut self, window: &'a winit::window::Window) -> Self {
@@ -210,6 +218,7 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
         //- Renderer Creation ----------------------------------------------------------------------
 
         Ok(Renderer {
+            config: self.config,
             window_size,
             surface,
             adapter,
@@ -235,14 +244,17 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
 
 ///
 pub struct Renderer {
+    config: RendererConfig,
     window_size: winit::dpi::PhysicalSize<u32>,
     surface: Surface,
+    #[allow(dead_code)]
     adapter: Adapter,
     device: Device,
     queue: wgpu::Queue,
     camera: Camera,
     camera_metadatas: CameraMetadatas,
     camera_controller: CameraController,
+    #[allow(dead_code)]
     texture_image_metadatas: TextureImageMetadatas,
     texture_bind_group_metadatas: TextureBindGroupMetadatas,
     texture_depth_metadatas: TextureDepthMetadatas,
@@ -301,7 +313,7 @@ impl Renderer {
     //- Rendering ----------------------------------------------------------------------------------
 
     ///
-    pub fn redraw(&mut self, config: &RendererConfig) -> Result<(), wgpu::SurfaceError> {
+    pub fn redraw(&mut self) -> Result<(), wgpu::SurfaceError> {
         self.camera_controller.update_camera(&mut self.camera);
         let mut camera_uniform = *self.camera_metadatas.uniform();
         camera_uniform.update_view_proj(&self.camera);
@@ -334,7 +346,7 @@ impl Renderer {
                         view: &frame_view,
                         resolve_target: None,
                         ops: wgpu::Operations {
-                            load: wgpu::LoadOp::Clear(config.clear_color()),
+                            load: wgpu::LoadOp::Clear(self.config.clear_color()),
                             store: true,
                         },
                     }],
