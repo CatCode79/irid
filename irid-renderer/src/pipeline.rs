@@ -259,7 +259,7 @@ impl PrimitiveStateBuilder {
                 front_face: wgpu::FrontFace::Ccw,
                 cull_mode: Some(wgpu::Face::Back),
                 // Requires Features::DEPTH_CLAMPING
-                unclipped_depth: false,
+                clamp_depth: false,
                 // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
                 polygon_mode: wgpu::PolygonMode::Fill,
                 // Requires Features::CONSERVATIVE_RASTERIZATION
@@ -301,8 +301,8 @@ impl PrimitiveStateBuilder {
     }
 
     ///
-    pub fn with_unclipped_depth(&mut self, unclipped_depth: bool) -> &mut Self {
-        self.primitive_state.unclipped_depth = unclipped_depth;
+    pub fn with_clamp_depth(&mut self, clamp_depth: bool) -> &mut Self {
+        self.primitive_state.clamp_depth = clamp_depth;
         self
     }
 
