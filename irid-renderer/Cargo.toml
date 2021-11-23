@@ -20,5 +20,6 @@ irid-config = { path = "../irid-config" }
 log = "0.4"
 pollster = "0.2"
 tobj = "3.2"
-wgpu = { path = "../irid-wgpu", features = ["glsl"]  }
+#wgpu = { path = "../irid-wgpu", features = ["glsl"]  }
+wgpu = "0.11"
 winit = "0.25"
