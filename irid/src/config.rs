@@ -58,8 +58,8 @@ impl AppConfigBuilder {
     }
 
     /// Build a new [AppConfig] with the set values.
-    pub fn build(self) -> AppConfig {
-        AppConfig {
+    pub fn build(self) -> ApplicationConfig {
+        ApplicationConfig {
             window_inner_width: if self.window_inner_width
                 .is_some() { self.window_inner_width.unwrap() }
                 else { AppConfigBuilder::DEFAULT_WINDOW_INNER_WIDTH.unwrap() },
@@ -86,18 +86,18 @@ impl Default for AppConfigBuilder {
 /// The [Application](crate::app::Application) configuration, TODO: readable by file with
 /// [serde](https://crates.io/crates/serde).
 #[derive(Clone, Debug)]
-pub struct AppConfig {
+pub struct ApplicationConfig {
     window_inner_width: std::num::NonZeroU32,
     window_inner_height: std::num::NonZeroU32,
     window_starts_maximized: bool,
 }
 
-impl AppConfig {
+impl ApplicationConfig {
     //- Constructors -------------------------------------------------------------------------------
 
     /// Create a Config struct by reading the values from given file path.
     pub fn new(_filepath: &std::path::Path) -> Self {
-        AppConfig::default()
+        ApplicationConfig::default()
     }
 
     //- Getters ------------------------------------------------------------------------------------
@@ -142,7 +142,7 @@ impl AppConfig {
     }
 }
 
-impl Default for AppConfig {
+impl Default for ApplicationConfig {
     fn default() -> Self {
         Self {
             window_inner_width: AppConfigBuilder::DEFAULT_WINDOW_INNER_WIDTH.unwrap(),

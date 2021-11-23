@@ -24,10 +24,10 @@ pub trait Listener {
     }
 
     /// Emitted when the application has been suspended.
-    fn on_suspend(&self) -> bool;
+    fn on_suspend(&self) -> bool { true }
 
     /// Emitted when the application has been resumed.
-    fn on_resume(&self) -> bool;
+    fn on_resume(&self) -> bool { true }
 
     /// Emitted when all of the event loop's input events have been processed and redraw
     /// processing is about to begin.
@@ -41,7 +41,7 @@ pub trait Listener {
     ///
     /// Programs that draw graphics continuously, like most games, can render here
     /// unconditionally for simplicity.
-    fn on_redraw(&self) -> bool;
+    fn on_redraw(&self) -> bool { true }
 
     /// Emitted after `on_redraw_begin` when a window should be redrawn.
     ///
@@ -75,7 +75,7 @@ pub trait Listener {
     ///
     /// This is irreversible - if this event is emitted, it is guaranteed to be the last event that
     /// gets emitted. You generally want to treat this as an "do on quit" event.
-    fn on_destroy(&self) -> bool;
+    fn on_destroy(&self) -> bool { true }
 
     //- Window Events ------------------------------------------------------------------------------
 
@@ -83,7 +83,7 @@ pub trait Listener {
     ///
     /// * `new_size` - Contains the client area's new dimensions.
     #[allow(unused_variables)]
-    fn on_window_resize(&self, new_size: winit::dpi::PhysicalSize<u32>) -> bool;
+    fn on_window_resize(&self, new_size: winit::dpi::PhysicalSize<u32>) -> bool { true }
 
     /// The position of the window has changed.
     ///
@@ -290,3 +290,11 @@ pub trait Listener {
     //- Device Events ------------------------------------------------------------------------------
     // TODO: I don't know exactely why I have to use those events, but maybe for the joypad...
 }
+
+//= EMPTY LISTENER =================================================================================
+
+/// Empty listener, with no concrete implementation.
+/// Usable for tests or default values.
+pub struct EmptyListener;
+
+impl Listener for EmptyListener { }
