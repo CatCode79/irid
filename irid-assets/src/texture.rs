@@ -1,13 +1,13 @@
 //= USES ===========================================================================================
 
-use crate::{DiffuseImage, DiffuseImageSize, GenericImage, GenericSize};
+use crate::{DiffuseImage, DiffuseImageSize, Image, ImageSize};
 
 //= TEXTURE INTERFACE ==============================================================================
 
 ///
 // TODO: create (maybe) a super trait with GenericImage
-pub trait GenericTexture<S: GenericSize> {
-    type Output: GenericTexture<S>;
+pub trait Texture<S: ImageSize> {
+    type Output: Texture<S>;
     type Img;
 
     ///
@@ -31,11 +31,11 @@ pub trait GenericTexture<S: GenericSize> {
 
 ///
 #[derive(Debug)]
-pub struct DiffuseTexture<S:GenericSize + Copy = DiffuseImageSize> {
+pub struct DiffuseTexture<S: ImageSize + Copy = DiffuseImageSize> {
     image: DiffuseImage<S>,
 }
 
-impl<S: GenericSize + Copy> GenericTexture<S> for DiffuseTexture<S> {
+impl<S: ImageSize + Copy> Texture<S> for DiffuseTexture<S> {
     //- Associated Types ---------------------------------------------------------------------------
 
     type Output = Self;

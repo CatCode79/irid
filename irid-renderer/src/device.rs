@@ -2,7 +2,7 @@
 
 use bytemuck::Pod;
 
-use irid_assets::GenericVertex;
+use irid_assets::Vertex;
 
 use crate::Adapter;
 
@@ -63,7 +63,7 @@ impl<'a> Device {
     }
 
     /// Creates a vertex Buffer with data to initialize it.
-    pub fn create_vertex_buffer_init<V: GenericVertex<'a> + Pod>(
+    pub fn create_vertex_buffer_init<V: Vertex<'a> + Pod>(
         &self,
         label_text: &str,
         vertices: &[V]

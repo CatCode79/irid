@@ -1,6 +1,6 @@
 //= USES ===========================================================================================
 
-use irid_assets::GenericVertex;
+use irid_assets::Vertex;
 
 use crate::{
     Device, FragmentStateBuilder, InstanceRaw, ShaderModuleBuilder, VertexStateBuilder,
@@ -115,7 +115,7 @@ impl RenderPipeline {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
-    pub fn new<'a, V: GenericVertex<'a>>(
+    pub fn new<'a, V: Vertex<'a>>(
         device: &Device,
         texture_bind_group_layout: &wgpu::BindGroupLayout,
         camera_bind_group_layout: &wgpu::BindGroupLayout,

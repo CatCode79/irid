@@ -4,7 +4,7 @@ use std::marker::PhantomData;
 
 use bytemuck::Pod;
 
-use irid_assets::{DiffuseImageSize, DiffuseTexture, GenericSize, GenericTexture, GenericVertex, ModelVertex};
+use irid_assets::{DiffuseImageSize, DiffuseTexture, ImageSize, Texture, Vertex, ModelVertex};
 
 use crate::{
     Adapter, Camera, CameraController, CameraMetadatas, Device, Instance,
@@ -30,9 +30,9 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 pub struct RendererBuilder<
     'a,
     P: AsRef<std::path::Path>,
-    V: GenericVertex<'a> + Pod,
-    S: GenericSize = DiffuseImageSize,
-    T: GenericTexture<S> = DiffuseTexture
+    V: Vertex<'a> + Pod,
+    S: ImageSize = DiffuseImageSize,
+    T: Texture<S> = DiffuseTexture
 > {
     config: RendererConfig,
     window: Option<&'a winit::window::Window>,
@@ -46,9 +46,9 @@ pub struct RendererBuilder<
 
 impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
     P: AsRef<std::path::Path>,
-    V: GenericVertex<'a> + Pod,
-    S: GenericSize,
-    T: GenericTexture<S>,
+    V: Vertex<'a> + Pod,
+    S: ImageSize,
+    T: Texture<S>,
 {
     //- Constructors -------------------------------------------------------------------------------
 

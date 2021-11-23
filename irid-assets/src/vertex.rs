@@ -5,7 +5,7 @@ use std::mem;
 //= VERTEX INTERFACE ===============================================================================
 
 ///
-pub trait GenericVertex<'a> {
+pub trait Vertex<'a> {
     ///
     fn new() -> Self;
 
@@ -36,7 +36,7 @@ pub struct ModelVertex {
     normal: [f32; 3],
 }
 
-impl<'a> GenericVertex<'a> for ModelVertex {
+impl<'a> Vertex<'a> for ModelVertex {
     fn new() -> Self {
         Self::default()
     }
@@ -90,7 +90,7 @@ pub struct ColorVertex {
     pub colors: [f32; 3],
 }
 
-impl<'a> GenericVertex<'a> for ColorVertex {
+impl<'a> Vertex<'a> for ColorVertex {
     fn new() -> Self {
         Self::default()
     }
@@ -138,7 +138,7 @@ pub struct TextCoordsVertex {
 }
 
 
-impl<'a> GenericVertex<'a> for TextCoordsVertex {
+impl<'a> Vertex<'a> for TextCoordsVertex {
     fn new() -> Self {
         Self::default()
     }

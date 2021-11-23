@@ -9,7 +9,7 @@ use std::num::NonZeroU32;
 /// # Known Implementations:
 ///
 /// - [irid-assets::DiffuseImage](irid-assets::DiffuseImage)
-pub trait GenericImage<S: GenericSize> {
+pub trait Image<S: ImageSize> {
     /// **Associated type** regarding the implementation of this trait.
     type Output;
 
@@ -34,12 +34,12 @@ pub trait GenericImage<S: GenericSize> {
 
 /// A Diffuse Image
 #[derive(Clone, Debug)]
-pub struct DiffuseImage<S: GenericSize + Copy> {
+pub struct DiffuseImage<S: ImageSize + Copy> {
     image: image::DynamicImage,
     size: S,
 }
 
-impl<S: GenericSize + Copy> DiffuseImage<S> {
+impl<S: ImageSize + Copy> DiffuseImage<S> {
     //- Constructor Handler ------------------------------------------------------------------------
 
     fn handle_new<P: AsRef<std::path::Path>>(
@@ -66,7 +66,7 @@ impl<S: GenericSize + Copy> DiffuseImage<S> {
     }
 }
 
-impl<S: GenericSize + Copy> GenericImage<S> for DiffuseImage<S> {
+impl<S: ImageSize + Copy> Image<S> for DiffuseImage<S> {
     //- Associated Types ---------------------------------------------------------------------------
 
     type Output = Self;
@@ -132,7 +132,7 @@ impl<S: GenericSize + Copy> GenericImage<S> for DiffuseImage<S> {
 /// # Known Implementations:
 ///
 /// - [irid-assets::DiffuseImageSize](irid-assets::DiffuseImageSize)
-pub trait GenericSize: From<(u32, u32)> + From<[u32; 2]> {
+pub trait ImageSize: From<(u32, u32)> + From<[u32; 2]> {
     ///
     fn new(width: u32, height: u32) -> Self;
 
@@ -154,7 +154,7 @@ pub struct DiffuseImageSize {
     height: NonZeroU32,
 }
 
-impl GenericSize for DiffuseImageSize {
+impl ImageSize for DiffuseImageSize {
     //- Constructors -------------------------------------------------------------------------------
 
     fn new(width: u32, height: u32) -> Self {
