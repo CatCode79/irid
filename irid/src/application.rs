@@ -2,6 +2,7 @@
 
 use std::{
     collections::HashMap,
+    default::Default,
     path::{Path, PathBuf}
 };
 
@@ -18,8 +19,8 @@ use crate::{ApplicationConfig, Listener};
 /// Build a new [Application] with wanted values.
 #[derive(Debug, Default)]
 pub struct ApplicationBuilder<'a, L: Listener> {
-    config: ApplicationConfig,
-    listener: Option<L>,
+    listener: L,
+    config: Option<ApplicationConfig>,
     title: Option<String>,
     shaders: Option<HashMap<String, String>>,
     texture_path: Option<&'a Path>,
@@ -30,26 +31,31 @@ pub struct ApplicationBuilder<'a, L: Listener> {
 impl<'a, L: Listener + Default> ApplicationBuilder<'a, L> {
     //- Constructors -------------------------------------------------------------------------------
 
-    /// Create an ApplicationBuilder using a filepath to load the config file.
-    pub fn new_with_file(filepath: &Path) -> Self {
+    ///
+    pub fn new(listener: L) -> Self {
         Self {
-            config: ApplicationConfig::new(filepath),
-            ..Default::default()
-        }
-    }
-
-    /// Create an ApplicationBuilder using a [Config].
-    pub fn new_with_config(config: ApplicationConfig) -> Self {
-        Self {
-            config,
+            listener,
             ..Default::default()
         }
     }
 
     //- Setters ------------------------------------------------------------------------------------
 
+    ///
     pub fn with_listener(mut self, listener: L) -> Self {
-        self.listener = Some(listener);
+        self.listener = listener;
+        self
+    }
+
+    ///
+    pub fn with_config_path<P: AsRef<std::path::Path>>(mut self, filepath: P) -> Self {
+        self.config = Some(ApplicationConfig::new(filepath));
+        self
+    }
+
+    ///
+    pub fn with_config(mut self, config: ApplicationConfig) -> Self {
+        self.config = Some(config);
         self
     }
 
@@ -89,8 +95,8 @@ impl<'a, L: Listener + Default> ApplicationBuilder<'a, L> {
     // TODO I have to manage the Nones values for every unwrap
     pub fn build(self) -> Application<'a, L> {
         Application {
-            config: self.config,
-            listener: self.listener.unwrap_or(L::default()),
+            listener: self.listener,
+            config: self.config.unwrap(),
             title: self.title.unwrap_or("Irid Application".to_string()),
             shaders: self.shaders.unwrap(),
             texture_path: self.texture_path.unwrap(),
@@ -105,8 +111,8 @@ impl<'a, L: Listener + Default> ApplicationBuilder<'a, L> {
 /// Object that serves to manage the whole game application.
 #[derive(Debug)]
 pub struct Application<'a, L: Listener> {
-    config: ApplicationConfig,
     listener: L,
+    config: ApplicationConfig,
     title: String,
     shaders: HashMap<String, String>,
     texture_path: &'a Path,
@@ -114,7 +120,7 @@ pub struct Application<'a, L: Listener> {
     indices: &'a [u32]
 }
 
-impl<'a, L: Listener + Default> Application<'a, L> {
+impl<'a, L: Listener> Application<'a, L> {
     /// Starts the
     /// [event loop](https://docs.rs/winit/0.25.0/winit/event_loop/struct.EventLoop.html).
     ///

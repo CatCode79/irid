@@ -96,7 +96,7 @@ impl ApplicationConfig {
     //- Constructors -------------------------------------------------------------------------------
 
     /// Create a Config struct by reading the values from given file path.
-    pub fn new(_filepath: &std::path::Path) -> Self {
+    pub fn new<P: AsRef<std::path::Path>>(#[allow(unused)] filepath: P) -> Self {
         ApplicationConfig::default()
     }
 

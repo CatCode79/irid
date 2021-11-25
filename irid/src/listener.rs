@@ -290,11 +290,3 @@ pub trait Listener {
     //- Device Events ------------------------------------------------------------------------------
     // TODO: I don't know exactely why I have to use those events, but maybe for the joypad...
 }
-
-//= EMPTY LISTENER =================================================================================
-
-/// Empty listener, with no concrete implementation.
-/// Usable for tests or default values.
-pub struct EmptyListener;
-
-impl Listener for EmptyListener { }
