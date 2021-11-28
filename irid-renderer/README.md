@@ -1,2 +1,2 @@
-This is the Irid Framework Renderer crate.<br>
-I have yet to officially decide if it will be pbr or raytracer.
+This is the Irid Framework Renderer crate.<br><br>
+The rendering will be raytracer based.<br>

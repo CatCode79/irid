@@ -1,11 +1,11 @@
 [package]
 name = "irid-config"
 version = "0.1.0"
-authors = ["CatCode79 <andrea.postal@gmail.com>"]
+authors = ["https://github.com/irid-game-framework/irid/graphs/contributors"]
 edition = "2021"
 rust-version = "1.56"
 description = "Irid Game Framework Config"
-repository = "https://github.com/CatCode79/irid-framework"
+repository = "https://github.com/irid-game-framework/irid"
 license = "MIT OR Apache-2.0"
 publish = false
 
