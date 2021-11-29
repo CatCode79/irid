@@ -97,7 +97,7 @@ impl<'a, L: Listener + Default> ApplicationBuilder<'a, L> {
         Application {
             listener: self.listener,
             config: self.config.unwrap(),
-            title: self.title.unwrap_or("Irid Application".to_string()),
+            title: self.title.unwrap_or_else(|| String::from("Irid Application")),
             shaders: self.shaders.unwrap(),
             texture_path: self.texture_path.unwrap(),
             vertices: self.vertices.unwrap(),

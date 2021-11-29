@@ -14,7 +14,6 @@ impl RendererConfigBuilder {
     pub fn new() -> Self {
         Self {
             clear_color: None,
-            ..Default::default()
         }
     }
 
