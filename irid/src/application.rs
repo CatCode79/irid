@@ -109,7 +109,7 @@ impl<'a, L: Listener + Default> ApplicationBuilder<'a, L> {
 //= APPLICATION ====================================================================================
 
 /// Object that serves to manage the whole game application.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Application<'a, L: Listener> {
     listener: L,
     config: ApplicationConfig,
