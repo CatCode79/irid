@@ -41,7 +41,7 @@ pub trait Listener {
     ///
     /// Programs that draw graphics continuously, like most games, can render here
     /// unconditionally for simplicity.
-    fn on_redraw(&self) -> bool { true }
+    fn on_redraw(&self) -> bool;
 
     /// Emitted after `on_redraw_begin` when a window should be redrawn.
     ///
@@ -288,5 +288,5 @@ pub trait Listener {
     }
 
     //- Device Events ------------------------------------------------------------------------------
-    // TODO: I don't know exactely why I have to use those events, but maybe for the joypad...
+    // TODO: I don't know exactly why I have to use those events, but maybe for the joypad...
 }

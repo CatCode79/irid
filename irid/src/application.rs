@@ -17,7 +17,7 @@ use crate::{ApplicationConfig, Listener};
 //= APPLICATION BUILDER ============================================================================
 
 /// Build a new [Application] with wanted values.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct ApplicationBuilder<'a, L: Listener> {
     listener: L,
     config: Option<ApplicationConfig>,
@@ -28,14 +28,19 @@ pub struct ApplicationBuilder<'a, L: Listener> {
     indices: Option<&'a [u32]>,
 }
 
-impl<'a, L: Listener + Default> ApplicationBuilder<'a, L> {
+impl<'a, L: Listener> ApplicationBuilder<'a, L> {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
     pub fn new(listener: L) -> Self {
         Self {
             listener,
-            ..Default::default()
+            config: None,
+            title: None,
+            shaders: None,
+            texture_path: None,
+            vertices: None,
+            indices: None
         }
     }
 
@@ -109,7 +114,7 @@ impl<'a, L: Listener + Default> ApplicationBuilder<'a, L> {
 //= APPLICATION ====================================================================================
 
 /// Object that serves to manage the whole game application.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Application<'a, L: Listener> {
     listener: L,
     config: ApplicationConfig,
@@ -173,7 +178,7 @@ impl<'a, L: Listener> Application<'a, L> {
             }*/
             //let video_mode = primary_monitor.video_modes().nth(0).unwrap();
 
-            //window.set_fullscreen(Some(Fullscreen::Exclusive(video_mode)));  // TODO doesn't work the ALT+TAB on Windows 10
+            //window.set_fullscreen(Some(Fullscreen::Exclusive(video_mode)));  // TODO: doesn't work the ALT+TAB on Windows 10
             window.set_fullscreen(Some(Fullscreen::Borderless(Some(primary_monitor))));
         }
 
@@ -575,11 +580,5 @@ impl<'a, L: Listener> Application<'a, L> {
 
     fn on_window_theme_change(&self, theme: winit::window::Theme) {
         let _use_default_behaviour = self.listener.on_window_theme_change(theme);
-    }
-}
-
-impl<'a, L: Listener + Default> Default for Application<'a, L> {
-    fn default() -> Self {
-        ApplicationBuilder::default().build()
     }
 }
