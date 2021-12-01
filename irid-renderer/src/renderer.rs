@@ -7,8 +7,7 @@ use bytemuck::Pod;
 use irid_assets::{DiffuseImageSize, DiffuseTexture, ImageSize, Texture, Vertex, ModelVertex};
 
 use crate::{
-    Adapter, Camera, CameraController, CameraMetadatas, Device, Instance,
-    RendererConfig, RenderPipeline, Surface,
+    Adapter, Camera, CameraController, CameraMetadatas, Device, Instance, RenderPipeline, Surface,
     texture_metas::{
         TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas
     }
@@ -34,8 +33,8 @@ pub struct RendererBuilder<
     S: ImageSize = DiffuseImageSize,
     T: Texture<S> = DiffuseTexture
 > {
-    config: RendererConfig,
-    window: Option<&'a winit::window::Window>,
+    window: &'a winit::window::Window,
+    clear_color: Option<wgpu::Color>,
     shader_source: Option<String>,
     texture_path: Option<P>,
     vertices: Option<&'a [V]>,  // TODO: Probably better to encapsulate the [V] logic
@@ -48,15 +47,14 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
     P: AsRef<std::path::Path>,
     V: Vertex<'a> + Pod,
     S: ImageSize,
-    T: Texture<S>,
-{
+    T: Texture<S> {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
-    pub fn new(config: RendererConfig) -> Self {
+    pub fn new(window: &'a winit::window::Window) -> Self {
         Self {
-            config,
-            window: None,  // TODO: is optional to prepare shader computation support without GUI
+            window,
+            clear_color: None,
             shader_source: None,
             texture_path: None,
             vertices: None,
@@ -69,14 +67,15 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
     //- Setters ------------------------------------------------------------------------------------
 
     ///
-    pub fn with_config(mut self, config: RendererConfig) -> Self {
-        self.config = config;
+    pub fn with_window(mut self, window: &'a winit::window::Window) -> Self {
+        self.window = window;
         self
     }
 
-    ///
-    pub fn with_window(mut self, window: &'a winit::window::Window) -> Self {
-        self.window = Some(window);
+    /// Color used by a [render pass color attachment](wgpu::RenderPassColorAttachment)
+    /// to perform a [clear operation](wgpu::LoadOp).
+    pub fn with_clear_color(mut self, clear_color: wgpu::Color) -> Self {
+        self.clear_color = Some(clear_color);
         self
     }
 
@@ -111,7 +110,6 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
         //- Value Checks ---------------------------------------------------------------------------
 
         // TODO: modify those raw checks
-        let window = self.window.unwrap();
         let shader_source = self.shader_source.unwrap();
         let texture_path = self.texture_path.unwrap();
         let vertices = self.vertices.unwrap();
@@ -119,10 +117,10 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
 
         //- Surface, Device, Queue -----------------------------------------------------------------
 
-        let window_size = window.inner_size();
+        let window_size = self.window.inner_size();
 
         let backends = wgpu::Backends::VULKAN | wgpu::Backends::DX12;  // TODO: choosable by user
-        let (surface, adapter) = Surface::new(backends, window, window_size)?;
+        let (surface, adapter) = Surface::new(backends, self.window, window_size)?;
 
         let (device, queue) = pollster::block_on(Device::new(&adapter))?;
 
@@ -218,8 +216,8 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
         //- Renderer Creation ----------------------------------------------------------------------
 
         Ok(Renderer {
-            config: self.config,
             window_size,
+            clear_color: self.clear_color.unwrap_or(wgpu::Color::WHITE),
             surface,
             adapter,
             device,
@@ -244,8 +242,8 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
 
 ///
 pub struct Renderer {
-    config: RendererConfig,
     window_size: winit::dpi::PhysicalSize<u32>,
+    clear_color: wgpu::Color,
     surface: Surface,
     #[allow(dead_code)]
     adapter: Adapter,
@@ -346,7 +344,7 @@ impl Renderer {
                         view: &frame_view,
                         resolve_target: None,
                         ops: wgpu::Operations {
-                            load: wgpu::LoadOp::Clear(self.config.clear_color()),
+                            load: wgpu::LoadOp::Clear(self.clear_color()),
                             store: true,
                         },
                     }],
@@ -378,6 +376,12 @@ impl Renderer {
     }
 
     //- Getters ------------------------------------------------------------------------------------
+
+    /// Returns the clear color used in a
+    /// [render pass color attachment](wgpu::RenderPassColorAttachment).
+    pub fn clear_color(&self) -> wgpu::Color {
+        self.clear_color
+    }
 
     ///
     pub fn texture_bind_group_metadatas(&self) -> &TextureBindGroupMetadatas {

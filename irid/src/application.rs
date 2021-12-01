@@ -2,7 +2,6 @@
 
 use std::{
     collections::HashMap,
-    default::Default,
     path::{Path, PathBuf}
 };
 
@@ -10,7 +9,7 @@ use anyhow::anyhow;
 use winit::window::Fullscreen;
 
 use irid_assets::{DiffuseImageSize, DiffuseTexture, ModelVertex};
-use irid_renderer::{Renderer, RendererBuilder, RendererConfigBuilder};
+use irid_renderer::{Renderer, RendererBuilder};
 
 use crate::{ApplicationConfig, Listener};
 
@@ -26,6 +25,9 @@ pub struct ApplicationBuilder<'a, L: Listener> {
     texture_path: Option<&'a Path>,
     vertices: Option<&'a [ModelVertex]>,
     indices: Option<&'a [u32]>,
+
+    // Renderer specific options
+    clear_color: Option<wgpu::Color>,
 }
 
 impl<'a, L: Listener> ApplicationBuilder<'a, L> {
@@ -40,7 +42,8 @@ impl<'a, L: Listener> ApplicationBuilder<'a, L> {
             shaders: None,
             texture_path: None,
             vertices: None,
-            indices: None
+            indices: None,
+            clear_color: None
         }
     }
 
@@ -94,6 +97,13 @@ impl<'a, L: Listener> ApplicationBuilder<'a, L> {
         self
     }
 
+    /// Color used by a [render pass color attachment](wgpu::RenderPassColorAttachment)
+    /// to perform a [clear operation](wgpu::LoadOp).
+    pub fn with_clear_color(mut self, clear_color: wgpu::Color) -> Self {
+        self.clear_color = Some(clear_color);
+        self
+    }
+
     //- Build --------------------------------------------------------------------------------------
 
     /// Build a new [Application] with given values.
@@ -107,13 +117,14 @@ impl<'a, L: Listener> ApplicationBuilder<'a, L> {
             texture_path: self.texture_path.unwrap(),
             vertices: self.vertices.unwrap(),
             indices: self.indices.unwrap(),
+            clear_color: self.clear_color,
         }
     }
 }
 
 //= APPLICATION ====================================================================================
 
-/// Object that serves to manage the whole game application.
+/// Manages the whole game setup and logic.
 #[derive(Debug)]
 pub struct Application<'a, L: Listener> {
     listener: L,
@@ -122,7 +133,10 @@ pub struct Application<'a, L: Listener> {
     shaders: HashMap<String, String>,
     texture_path: &'a Path,
     vertices: &'a [ModelVertex],
-    indices: &'a [u32]
+    indices: &'a [u32],
+
+    // Renderer specific options
+    clear_color: Option<wgpu::Color>,
 }
 
 impl<'a, L: Listener> Application<'a, L> {
@@ -159,10 +173,9 @@ impl<'a, L: Listener> Application<'a, L> {
             //.with_window_icon() // TODO: because yes!
             .build(&event_loop)?;
 
-        let mut renderer = RendererBuilder::
-        <&Path, ModelVertex, DiffuseImageSize, DiffuseTexture>
-        ::new(RendererConfigBuilder::default().build())
-            .with_window(&window)
+        let mut renderer =
+            RendererBuilder::<&Path, ModelVertex, DiffuseImageSize, DiffuseTexture>::new(&window)
+            .with_clear_color(self.clear_color().unwrap())// TODO: no, we have to have the with_clear_color only on RendererBuilder and not also in ApplicationBuilder, so we can ride with this unwrap
             .with_shader_source(self.shaders.get("shader.wgsl").unwrap().clone())  // TODO: we have to remove the clone
             .with_texture_path(self.texture_path)
             .with_vertices(self.vertices)
@@ -171,7 +184,7 @@ impl<'a, L: Listener> Application<'a, L> {
 
         // It is preferable to maximize the windows after the surface and renderer setup,
         // but is not mandatory.
-        // TODO Vulkan issue https://github.com/gfx-rs/wgpu/issues/1958 gives false positives
+        // TODO: Vulkan issue https://github.com/gfx-rs/wgpu/issues/1958 gives false positives
         if self.config.window_starts_maximized() {
             /*for vm in primary_monitor.video_modes() {
                 println!("{:?}", vm);
@@ -184,7 +197,7 @@ impl<'a, L: Listener> Application<'a, L> {
 
         // Now is a good time to make the window visible, lessening the flicker explained above,
         // on WindowsBuilder lines.
-        // TODO check if there's another place inside one event below, maybe resized?
+        // TODO: check if there's another place inside one event below, maybe resized?
         window.set_visible(true);
 
         use winit::platform::run_return::EventLoopExtRunReturn;
@@ -196,7 +209,7 @@ impl<'a, L: Listener> Application<'a, L> {
             winit::event::Event::WindowEvent {
                 event: window_event,
                 window_id,
-            } => if window_id == window.id() {  // TODO multi-monitor support
+            } => if window_id == window.id() {  // TODO: multi-monitor support
                 match window_event {
                     winit::event::WindowEvent::Resized(physical_size) => {
                         self.on_window_resize(&mut renderer, physical_size);
@@ -580,5 +593,11 @@ impl<'a, L: Listener> Application<'a, L> {
 
     fn on_window_theme_change(&self, theme: winit::window::Theme) {
         let _use_default_behaviour = self.listener.on_window_theme_change(theme);
+    }
+
+    //- Getters ------------------------------------------------------------------------------------
+
+    fn clear_color(&self) -> Option<wgpu::Color> {
+        self.clear_color
     }
 }
