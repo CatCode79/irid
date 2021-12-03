@@ -176,7 +176,7 @@ impl<'a, L: Listener> Application<'a, L> {
     pub fn start(self) -> Result<(), ApplicationError> {
         let mut event_loop = winit::event_loop::EventLoop::new();
         let primary_monitor = event_loop.primary_monitor()
-            .ok_or_else(|| ApplicationError::PrimaryMonitorNotFound)?;  // TODO: Wayland return always None, maybe we have to handle it here instead of returning an error
+            .ok_or(ApplicationError::PrimaryMonitorNotFound)?;  // TODO: Wayland return always None, maybe we have to handle it here instead of returning an error
 
         // The window starts with visibility set to false because just before maximizing it,
         // for a moment, a window with the size set in the inner_size values is displayed,

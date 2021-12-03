@@ -137,7 +137,7 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
 
         let backends = wgpu::Backends::VULKAN | wgpu::Backends::DX12;  // TODO: choosable by user
         let (surface, adapter) = Surface::new(backends, self.window, window_size)
-            .or_else(|_| Err(RendererError::SurfaceAdapterRequest))?;  // TODO: probably better pass e as argument to SurfaceAdapterRequest for chaining error description
+            .map_err(|_| RendererError::SurfaceAdapterRequest)?;  // TODO: probably better pass e as argument to SurfaceAdapterRequest for chaining error description
 
         let (device, queue) = pollster::block_on(Device::new(&adapter))?;
 
