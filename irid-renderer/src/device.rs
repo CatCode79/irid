@@ -27,7 +27,7 @@ impl<'a> Device {
     /// Create a new Device and Queue given ad adapter.
     pub async fn new(
         adapter: &Adapter
-    ) -> anyhow::Result<(Self, wgpu::Queue), wgpu::RequestDeviceError> {
+    ) -> Result<(Self, wgpu::Queue), wgpu::RequestDeviceError> {
         let label_text = format!(
             "Device Default Label [creation {:?}]", std::time::SystemTime::now()
         );

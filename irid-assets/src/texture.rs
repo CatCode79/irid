@@ -1,6 +1,20 @@
 //= USES ===========================================================================================
 
+use thiserror::Error;
+
 use crate::{DiffuseImage, DiffuseImageSize, Image, ImageSize};
+
+//= ERRORS =========================================================================================
+
+#[non_exhaustive]
+#[derive(Debug, Error)]
+pub enum TextureError {
+    #[error("can’t identify any monitor as a primary one")]
+    ImageError {
+        #[from]
+        source: image::error::ImageError,
+    },
+}
 
 //= TEXTURE INTERFACE ==============================================================================
 
@@ -13,12 +27,12 @@ pub trait Texture<S: ImageSize> {
     ///
     fn load<P: AsRef<std::path::Path>>(
         filepath: P
-    ) -> anyhow::Result<Self::Output>;
+    ) -> Result<Self::Output, TextureError>;
 
     ///
     fn load_with_guessed_format<P: AsRef<std::path::Path>>(
         filepath: P
-    ) -> anyhow::Result<Self::Output>;
+    ) -> Result<Self::Output, TextureError>;
 
     ///
     fn as_rgba8_bytes(&self) -> Option<&[u8]>;
@@ -46,7 +60,7 @@ impl<S: ImageSize + Copy> Texture<S> for DiffuseTexture<S> {
     ///
     fn load<P: AsRef<std::path::Path>>(
         filepath: P
-    ) -> anyhow::Result<Self> {
+    ) -> Result<Self, TextureError> {
         Ok(Self {
             image: Self::Img::load(filepath)?
         })
@@ -54,7 +68,7 @@ impl<S: ImageSize + Copy> Texture<S> for DiffuseTexture<S> {
 
     fn load_with_guessed_format<P: AsRef<std::path::Path>>(
         filepath: P
-    ) -> anyhow::Result<Self> {
+    ) -> Result<Self, TextureError> {
         Ok(Self {
             image: Self::Img::load_with_guessed_format(filepath)?
         })

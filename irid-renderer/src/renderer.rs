@@ -3,6 +3,7 @@
 use std::marker::PhantomData;
 
 use bytemuck::Pod;
+use thiserror::Error;
 
 use irid_assets::{DiffuseImageSize, DiffuseTexture, ImageSize, Texture, Vertex, ModelVertex};
 
@@ -12,6 +13,21 @@ use crate::{
         TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas
     }
 };
+
+//= ERRORS =========================================================================================
+
+///
+#[non_exhaustive]
+#[derive(Debug, Error)]
+pub enum RendererError {
+    #[error("unable to get a Surface or Adapter")]
+    SurfaceAdapterRequest,
+    #[error("unable to get a Device")]
+    DeviceRequest {
+        #[from]
+        source: wgpu::RequestDeviceError,
+    },
+}
 
 //= CONSTS =========================================================================================
 
@@ -106,7 +122,7 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
     //- Build --------------------------------------------------------------------------------------
 
     ///
-    pub fn build(self) -> anyhow::Result<Renderer> {
+    pub fn build(self) -> Result<Renderer, RendererError> {
         //- Value Checks ---------------------------------------------------------------------------
 
         // TODO: modify those raw checks
@@ -120,7 +136,8 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
         let window_size = self.window.inner_size();
 
         let backends = wgpu::Backends::VULKAN | wgpu::Backends::DX12;  // TODO: choosable by user
-        let (surface, adapter) = Surface::new(backends, self.window, window_size)?;
+        let (surface, adapter) = Surface::new(backends, self.window, window_size)
+            .or_else(|_| Err(RendererError::SurfaceAdapterRequest))?;  // TODO: probably better pass e as argument to SurfaceAdapterRequest for chaining error description
 
         let (device, queue) = pollster::block_on(Device::new(&adapter))?;
 
@@ -134,7 +151,7 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
 
         //- Texture --------------------------------------------------------------------------------
 
-        let texture = T::load(texture_path)?;
+        let texture = T::load(texture_path).unwrap();  // TODO: here we use unwrap because texture loading will probably not be done at this point and therefore it is useless to add a new type of error
         let texture_image_metadatas = TextureImageMetadatas::new(
             &surface,
             &device,

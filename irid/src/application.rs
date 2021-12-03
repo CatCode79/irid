@@ -5,13 +5,32 @@ use std::{
     path::{Path, PathBuf}
 };
 
-use anyhow::anyhow;
+use thiserror::Error;
 use winit::window::Fullscreen;
 
 use irid_assets::{DiffuseImageSize, DiffuseTexture, ModelVertex};
-use irid_renderer::{Renderer, RendererBuilder};
+use irid_renderer::{Renderer, RendererBuilder, RendererError};
 
 use crate::{ApplicationConfig, Listener};
+
+//= ERRORS =========================================================================================
+
+#[non_exhaustive]
+#[derive(Debug, Error)]
+pub enum ApplicationError {
+    #[error("can’t identify any monitor as a primary one")]
+    PrimaryMonitorNotFound,
+    #[error("the OS cannot perform the requested operation")]
+    WindowOsError {
+        #[from]
+        source: winit::error::OsError,
+    },
+    #[error("the Renderer cannot be built")]
+    RendererError {
+        #[from]
+        source: RendererError,
+    },
+}
 
 //= APPLICATION BUILDER ============================================================================
 
@@ -154,12 +173,10 @@ impl<'a, L: Listener> Application<'a, L> {
     /// method instead but all those static variables are a bore to handle.
     ///
     /// To remember that the resize is not managed perfectly with run_return.
-    pub fn start(self) -> anyhow::Result<()> {
+    pub fn start(self) -> Result<(), ApplicationError> {
         let mut event_loop = winit::event_loop::EventLoop::new();
-        let primary_monitor = match event_loop.primary_monitor() {
-            None => Err(anyhow!("Can’t identify any monitor as a primary one")),
-            Some(primary_monitor) => Ok(primary_monitor),
-        }?;
+        let primary_monitor = event_loop.primary_monitor()
+            .ok_or_else(|| ApplicationError::PrimaryMonitorNotFound)?;  // TODO: Wayland return always None, maybe we have to handle it here instead of returning an error
 
         // The window starts with visibility set to false because just before maximizing it,
         // for a moment, a window with the size set in the inner_size values is displayed,

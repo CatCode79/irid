@@ -1,6 +1,15 @@
 //= USES ===========================================================================================
 
-use anyhow::anyhow;
+use thiserror::Error;
+
+//= ERRORS =========================================================================================
+
+#[non_exhaustive]
+#[derive(Debug, Error)]
+pub enum AdapterError {
+    #[error("An adapter compatible with the given surface could not be obtained")]
+    NotObtained,
+}
 
 //= ADAPTER WRAPPER ================================================================================
 
@@ -21,12 +30,12 @@ impl Adapter {
     pub(crate) async fn new(
         wgpu_instance: &wgpu::Instance,
         wgpu_surface: &wgpu::Surface
-    ) -> anyhow::Result<Self> {
+    ) -> Result<Self, AdapterError> {
         let wgpu_adapter = {
             // About force_fallback_adapter: https://github.com/gfx-rs/wgpu/issues/2063
             wgpu_instance.request_adapter(
                 &wgpu::RequestAdapterOptions {
-                    power_preference: wgpu::PowerPreference::HighPerformance,  // TODO maybe better to give power of choice, probably creating a Builder for Adapter
+                    power_preference: wgpu::PowerPreference::HighPerformance,  // TODO: maybe better to give power of choice to the user, probably creating an AdapterBuilder
                     force_fallback_adapter: false,
                     compatible_surface: Some(wgpu_surface),
                 }
@@ -38,7 +47,7 @@ impl Adapter {
                 wgpu_adapter: wgpu_adapter.unwrap(),
             })
         } else {
-            Err(anyhow!("An adapter compatible with the given surface could not be obtained"))
+            Err(AdapterError::NotObtained)
         }
     }
 
@@ -65,7 +74,7 @@ impl Adapter {
         desc: &wgpu::DeviceDescriptor,
         trace_path: Option<&std::path::Path>
     ) -> impl std::future::Future<Output =
-    anyhow::Result<(wgpu::Device, wgpu::Queue), wgpu::RequestDeviceError>> + Send {
+    Result<(wgpu::Device, wgpu::Queue), wgpu::RequestDeviceError>> + Send {
         self.wgpu_adapter.request_device(desc, trace_path)
     }
 

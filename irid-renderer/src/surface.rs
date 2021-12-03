@@ -1,11 +1,22 @@
 //= USES ===========================================================================================
 
-use anyhow::anyhow;
+use thiserror::Error;
 
-use crate::{
-    adapter::Adapter,
-    device::Device,
-};
+use crate::{adapter::Adapter, AdapterError, device::Device};
+
+//= ERRORS =========================================================================================
+
+#[non_exhaustive]
+#[derive(Debug, Error)]
+pub enum SurfaceError {
+    #[error("no preferred format was found: Surface incompatible with adapter {:?}", .0)]
+    NoPreferredFormat(wgpu::AdapterInfo),
+    #[error("An adapter compatible with the given surface could not be obtained")]
+    AdapterNotObtained {
+        #[from]
+        source: AdapterError,
+    },
+}
 
 //= SURFACE WRAPPER ================================================================================
 
@@ -26,7 +37,7 @@ impl Surface {
         backends: wgpu::Backends,
         window: &winit::window::Window,
         size: winit::dpi::PhysicalSize<u32>
-    ) -> anyhow::Result<(Self, Adapter)> {
+    ) -> Result<(Self, Adapter), SurfaceError> {
         // Context for all other wgpu objects
         let wgpu_instance = wgpu::Instance::new(backends);
 
@@ -37,21 +48,17 @@ impl Surface {
         #[cfg(debug_assertions)]
         enumerate_all_adapters(backends, &wgpu_instance);
 
-        let adapter = pollster::block_on(Adapter::new(&wgpu_instance, &wgpu_surface))?;
+        let adapter = pollster::block_on(Adapter::new(&wgpu_instance, &wgpu_surface))
+            /*.or_else(|e| Err(SurfaceError::AdapterNotObtained))*/?;
 
         #[cfg(debug_assertions)]
         println!("Picked Adapter: {:?}", adapter.get_info());
 
         // Most images are stored using sRGB so we need to reflect that here.
-        //let preferred_format = wgpu::TextureFormat::Rgba8UnormSrgb;  // TODO user choosable
-        let preferred_format = wgpu_surface.get_preferred_format(
+        //let preferred_format = wgpu::TextureFormat::Rgba8UnormSrgb;  // TODO: to be made also user-choosable
+        let preferred_format= wgpu_surface.get_preferred_format(
             adapter.expose_wrapped_adapter()
-        );
-        if preferred_format.is_none() {
-            return Err(anyhow!("Surface incompatible with adapter {:?}: no preferred format was found",
-                adapter.get_info()));
-        }
-        let preferred_format = preferred_format.unwrap();
+        ).ok_or_else(|| SurfaceError::NoPreferredFormat(adapter.get_info()))?;
 
         let configuration = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
