@@ -130,12 +130,12 @@ impl<'a, L: Listener> ApplicationBuilder<'a, L> {
     pub fn build(self) -> Application<'a, L> {
         Application {
             listener: self.listener,
-            config: self.config.unwrap(),
-            title: self.title.unwrap_or_else(|| String::from("Irid Application")),
-            shaders: self.shaders.unwrap(),
-            texture_path: self.texture_path.unwrap(),
-            vertices: self.vertices.unwrap(),
-            indices: self.indices.unwrap(),
+            config: self.config.unwrap_or_default(),
+            title: self.title.unwrap_or_else(||String::from("Irid Application")),
+            shaders: self.shaders,
+            texture_path: self.texture_path,
+            vertices: self.vertices,
+            indices: self.indices,
             clear_color: self.clear_color,
         }
     }
@@ -149,10 +149,12 @@ pub struct Application<'a, L: Listener> {
     listener: L,
     config: ApplicationConfig,
     title: String,
-    shaders: HashMap<String, String>,
-    texture_path: &'a Path,
-    vertices: &'a [ModelVertex],
-    indices: &'a [u32],
+
+    // Optional fields
+    shaders: Option<HashMap<String, String>>,
+    texture_path: Option<&'a Path>,
+    vertices: Option<&'a [ModelVertex]>,
+    indices: Option<&'a [u32]>,
 
     // Renderer specific options
     clear_color: Option<wgpu::Color>,
@@ -190,14 +192,26 @@ impl<'a, L: Listener> Application<'a, L> {
             //.with_window_icon() // TODO: because yes!
             .build(&event_loop)?;
 
-        let mut renderer =
-            RendererBuilder::<&Path, ModelVertex, DiffuseImageSize, DiffuseTexture>::new(&window)
-            .with_clear_color(self.clear_color().unwrap())// TODO: no, we have to have the with_clear_color only on RendererBuilder and not also in ApplicationBuilder, so we can ride with this unwrap
-            .with_shader_source(self.shaders.get("shader.wgsl").unwrap().clone())  // TODO: we have to remove the clone
-            .with_texture_path(self.texture_path)
-            .with_vertices(self.vertices)
-            .with_indices(self.indices)
-            .build()?;
+        let mut renderer_builder =
+            RendererBuilder::<&Path, ModelVertex, DiffuseImageSize, DiffuseTexture>::new(&window);
+        if self.clear_color().is_some() {
+            renderer_builder = renderer_builder.with_clear_color(self.clear_color().unwrap());  // TODO: no, we have to have the with_clear_color only on RendererBuilder and not also in ApplicationBuilder, so we can ride with this unwrap
+        }
+        if self.shaders.is_some() {
+            renderer_builder = renderer_builder.with_shader_source(
+                self.shaders.as_ref().unwrap().get("shader.wgsl").unwrap().clone()
+            )  // TODO: we have to remove the clone
+        }
+        if self.texture_path.is_some() {
+            renderer_builder = renderer_builder.with_texture_path(self.texture_path.unwrap())
+        }
+        if self.vertices.is_some() {
+            renderer_builder = renderer_builder.with_vertices(self.vertices.unwrap())
+        }
+        if self.indices.is_some() {
+            renderer_builder = renderer_builder.with_indices(self.indices.unwrap())
+        }
+        let mut renderer = renderer_builder.build()?;
 
         // It is preferable to maximize the windows after the surface and renderer setup,
         // but is not mandatory.

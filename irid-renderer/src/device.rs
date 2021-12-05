@@ -4,9 +4,9 @@ use bytemuck::Pod;
 
 use irid_assets::Vertex;
 
-use crate::Adapter;
+use crate::{Adapter, Queue};
 
-//= DEVICE WRAPPER =================================================================================
+//= DEVICE =========================================================================================
 
 /// Open connection to a graphics and/or compute device.
 ///
@@ -16,7 +16,7 @@ use crate::Adapter;
 /// A device may be requested from an adapter with
 /// [`Adapter::request_device`](Adapter::request_device).
 #[derive(Debug)]
-pub struct Device {  // TODO: here we can convert generics to funzions and associated types
+pub struct Device {
     label_text: String,
     wgpu_device: wgpu::Device,
 }
@@ -27,12 +27,12 @@ impl<'a> Device {
     /// Create a new Device and Queue given ad adapter.
     pub async fn new(
         adapter: &Adapter
-    ) -> Result<(Self, wgpu::Queue), wgpu::RequestDeviceError> {
+    ) -> Result<(Self, Queue), wgpu::RequestDeviceError> {
         let label_text = format!(
             "Device Default Label [creation {:?}]", std::time::SystemTime::now()
         );
 
-        let (wgpu_device, queue) = {
+        let (wgpu_device, wgpu_queue) = {
             adapter.request_device(
                 &wgpu::DeviceDescriptor {
                     label: Some(label_text.as_str()),
@@ -47,6 +47,8 @@ impl<'a> Device {
             label_text,
             wgpu_device,
         };
+
+        let queue = Queue::new(wgpu_queue);
 
         Ok((device, queue))
     }

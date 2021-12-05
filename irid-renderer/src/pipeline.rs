@@ -4,7 +4,7 @@ use irid_assets::Vertex;
 
 use crate::{
     Device, FragmentStateBuilder, InstanceRaw, ShaderModuleBuilder, VertexStateBuilder,
-    texture_metas::TextureDepthMetadatas
+    texture_metadatas::TextureDepthMetadatas
 };
 
 //= RENDERER PIPELINE BUILDER ======================================================================

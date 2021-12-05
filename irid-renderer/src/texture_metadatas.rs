@@ -1,6 +1,6 @@
 //= USES ===========================================================================================
 
-use crate::{Device, Surface};
+use crate::Device;
 
 //= TEXTURE IMAGE METADATAS ========================================================================
 
@@ -16,7 +16,7 @@ impl TextureImageMetadatas {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
-    pub fn new(surface: &Surface, device: &Device, width: u32, height: u32) -> Self {
+    pub fn new(device: &Device, format: wgpu::TextureFormat, width: u32, height: u32) -> Self {
         let image_size = wgpu::Extent3d {
             width,
             height,
@@ -30,7 +30,7 @@ impl TextureImageMetadatas {
                 mip_level_count: 1,
                 sample_count: 1,
                 dimension: wgpu::TextureDimension::D2,
-                format: surface.preferred_format(),
+                format,
                 // TEXTURE_BINDING tells wgpu that we want to use this texture in shaders
                 // COPY_DST means that we want to copy data to this texture
                 usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
@@ -201,7 +201,7 @@ impl TextureBindGroupMetadatas {
     }
 }
 
-//= TEXTURE DEPTH ==================================================================================
+//= TEXTURE DEPTH METADATAS ========================================================================
 
 ///
 #[derive(Debug)]

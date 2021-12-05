@@ -14,6 +14,7 @@ bytemuck = { version = "1.7", features = ["derive"] }
 cgmath = "0.18"
 image = "0.23"
 irid-assets = { path = "../irid-assets" }
+irid-utils = { path = "../irid-utils" }
 log = "0.4"
 pollster = "0.2"
 thiserror = "1.0"

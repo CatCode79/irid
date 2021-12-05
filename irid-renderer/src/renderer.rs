@@ -6,13 +6,12 @@ use bytemuck::Pod;
 use thiserror::Error;
 
 use irid_assets::{DiffuseImageSize, DiffuseTexture, ImageSize, Texture, Vertex, ModelVertex};
+use irid_utils::log2;
 
-use crate::{
-    Adapter, Camera, CameraController, CameraMetadatas, Device, Instance, RenderPipeline, Surface,
-    texture_metas::{
-        TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas
-    }
-};
+use crate::{Adapter, Camera, CameraController, CameraMetadatas, Device, Instance, Queue, RenderPipeline, Surface, texture_metadatas::{
+    TextureBindGroupMetadatas, TextureDepthMetadatas
+}};
+use crate::texture_metadatas::TextureImageMetadatas;
 
 //= ERRORS =========================================================================================
 
@@ -50,11 +49,13 @@ pub struct RendererBuilder<
     T: Texture<S> = DiffuseTexture
 > {
     window: &'a winit::window::Window,
+
     clear_color: Option<wgpu::Color>,
     shader_source: Option<String>,
     texture_path: Option<P>,
     vertices: Option<&'a [V]>,  // TODO: Probably better to encapsulate the [V] logic
     indices: Option<&'a [u32]>,
+
     generic_size: PhantomData<S>,
     generic_texture: PhantomData<T>,
 }
@@ -123,14 +124,6 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
 
     ///
     pub fn build(self) -> Result<Renderer, RendererError> {
-        //- Value Checks ---------------------------------------------------------------------------
-
-        // TODO: modify those raw checks
-        let shader_source = self.shader_source.unwrap();
-        let texture_path = self.texture_path.unwrap();
-        let vertices = self.vertices.unwrap();
-        let indices = self.indices.unwrap();
-
         //- Surface, Device, Queue -----------------------------------------------------------------
 
         let window_size = self.window.inner_size();
@@ -149,19 +142,16 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
         let camera_metadatas = camera.create_metadatas(&device);
         let camera_controller = CameraController::new(0.2);
 
-        //- Texture --------------------------------------------------------------------------------
+        //- Texture Metadatas ----------------------------------------------------------------------
 
-        let texture = T::load(texture_path).unwrap();  // TODO: here we use unwrap because texture loading will probably not be done at this point and therefore it is useless to add a new type of error
-        let texture_image_metadatas = TextureImageMetadatas::new(
-            &surface,
+        let texture_image_metadatas = self.cache_texture_image_metadatas(
             &device,
-            texture.size().width(),
-            texture.size().height()
+            surface.preferred_format()
         );
 
-        let texture_bind_group_metadatas= TextureBindGroupMetadatas::new(
+        let texture_bind_group_metadatas = self.create_texture_bind_group_metadatas(
             &device,
-            texture_image_metadatas.texture()
+            &texture_image_metadatas,
         );
 
         let texture_depth_metadatas = TextureDepthMetadatas::new(&device, window_size);
@@ -178,13 +168,8 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
 
         //- Queue Schedule -------------------------------------------------------------------------
 
-        // TODO we have to create a IridQueue object to remove those args (also we have to think about clones)
-        queue.write_texture(
-            texture_image_metadatas.create_image_copy(),
-            texture.as_rgba8_bytes().unwrap(),  // TODO: remove the unwrap (the second)
-            *texture_image_metadatas.image_data_layout(),
-            *texture_image_metadatas.image_size()
-        );
+        // TODO: here we use unwrap because texture loading will probably not be done at this point and therefore it is useless to add a new type of error
+        queue.write_texture(&texture_image_metadatas, T::load(texture_path).unwrap());
 
         //- Vertex and Index Buffers ---------------------------------------------------------------
 
@@ -253,6 +238,54 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
             instance_buffer
         })
     }
+
+    ///
+    ///
+    /// It can't cache zero sized textures.
+    pub fn cache_texture_image_metadatas(
+        mut self,
+        device: &Device,
+        preferred_format: wgpu::TextureFormat
+    ) -> Vec::<Vec<TextureImageMetadatas>> {
+        // Better to check not the current limits but the default ones
+        // so as to obtain consistent behavior on all devices.
+        let qty = log2(wgpu::Limits::default().max_texture_dimension_2d as i32) as usize;
+        let mut vec_w = Vec::<Vec<TextureImageMetadatas>>::with_capacity(qty);
+        for width in 0..=qty {
+            let mut vec_h = Vec::<TextureImageMetadatas>::with_capacity(qty);
+            for height in 0..=qty {
+                vec_h[height] = TextureImageMetadatas::new(
+                    &device,
+                    preferred_format,
+                    2_u32.pow(width as u32),
+                    2_u32.pow(height as u32),
+                );
+            }
+            vec_w[width] = vec_h;
+        }
+        vec_w
+    }
+
+    ///
+    pub fn create_texture_bind_group_metadatas(
+        &self,
+        device: &Device,
+        texture_image_metadatas: &Vec<Vec<TextureImageMetadatas>>,
+    ) -> Vec<Vec<TextureBindGroupMetadatas>> {
+        let qty= texture_image_metadatas.len();
+        let mut vec_w = Vec::<Vec<TextureBindGroupMetadatas>>::with_capacity(qty);
+        for width in 0..=qty {
+            let mut vec_h = Vec::<TextureBindGroupMetadatas>::with_capacity(qty);
+            for height in 0..=qty {
+                vec_h[height] = TextureBindGroupMetadatas::new(
+                    &device,
+                    &texture_image_metadatas[width][height].texture()
+                );
+            }
+            vec_w[width] = vec_h;
+        }
+        vec_w
+    }
 }
 
 //= RENDERER OBJECT ================================================================================
@@ -265,13 +298,12 @@ pub struct Renderer {
     #[allow(dead_code)]
     adapter: Adapter,
     device: Device,
-    queue: wgpu::Queue,
+    queue: Queue,
     camera: Camera,
     camera_metadatas: CameraMetadatas,
     camera_controller: CameraController,
-    #[allow(dead_code)]
-    texture_image_metadatas: TextureImageMetadatas,
-    texture_bind_group_metadatas: TextureBindGroupMetadatas,
+    texture_image_metadatas: Vec<Vec<TextureImageMetadatas>>,
+    texture_bind_group_metadatas: Vec<Vec<TextureBindGroupMetadatas>>,
     texture_depth_metadatas: TextureDepthMetadatas,
     pipeline: RenderPipeline,
     vertex_buffer: wgpu::Buffer,  // TODO: maybe this is better to move this buffer, and the index buffer, inside the render_pass or pipeline object
@@ -297,8 +329,7 @@ impl Renderer {
     /// Resize the renderer window.
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
         self.window_size = new_size;
-        self.texture_depth_metadatas =
-            TextureDepthMetadatas::new(&self.device, self.window_size);
+        self.texture_depth_metadatas = TextureDepthMetadatas::new(&self.device, self.window_size);
         self.refresh_current_size();
     }
 
@@ -330,13 +361,7 @@ impl Renderer {
     ///
     pub fn redraw(&mut self) -> Result<(), wgpu::SurfaceError> {
         self.camera_controller.update_camera(&mut self.camera);
-        let mut camera_uniform = *self.camera_metadatas.uniform();
-        camera_uniform.update_view_proj(&self.camera);
-        self.queue.write_buffer(
-            self.camera_metadatas.buffer(),
-            0,
-            bytemuck::cast_slice(&[camera_uniform])
-        );
+        self.queue.write_camera_buffer(&self.camera, &self.camera_metadatas);
 
         let frame = self.surface.get_current_texture()?;
         let texture = &frame.texture;
@@ -361,7 +386,7 @@ impl Renderer {
                         view: &frame_view,
                         resolve_target: None,
                         ops: wgpu::Operations {
-                            load: wgpu::LoadOp::Clear(self.clear_color()),
+                            load: wgpu::LoadOp::Clear(self.clear_color),
                             store: true,
                         },
                     }],
@@ -390,18 +415,5 @@ impl Renderer {
         frame.present();
 
         Ok(())
-    }
-
-    //- Getters ------------------------------------------------------------------------------------
-
-    /// Returns the clear color used in a
-    /// [render pass color attachment](wgpu::RenderPassColorAttachment).
-    pub fn clear_color(&self) -> wgpu::Color {
-        self.clear_color
-    }
-
-    ///
-    pub fn texture_bind_group_metadatas(&self) -> &TextureBindGroupMetadatas {
-        &self.texture_bind_group_metadatas
     }
 }
