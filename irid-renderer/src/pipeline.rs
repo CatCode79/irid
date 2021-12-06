@@ -11,7 +11,13 @@ use crate::{
 
 ///
 pub struct RenderPipelineBuilder<'a> {
-    render_pipeline_desc: wgpu::RenderPipelineDescriptor<'a>
+    label: wgpu::Label<'a>,
+    layout: Option<&'a wgpu::PipelineLayout>,
+    vertex: wgpu::VertexState<'a>,
+    primitive: Option<wgpu::PrimitiveState>,
+    depth_stencil: Option<wgpu::DepthStencilState>,
+    multisample: Option<wgpu::MultisampleState>,
+    fragment: Option<wgpu::FragmentState<'a>>,
 }
 
 // TODO: here we have to create directly an irid pipeline and not a wgpu pipeline
@@ -21,15 +27,13 @@ impl<'a> RenderPipelineBuilder<'a> {
     ///
     pub fn new(vertex: wgpu::VertexState<'a>) -> Self {
         Self {
-            render_pipeline_desc: wgpu::RenderPipelineDescriptor {
-                label: Some("Render Pipeline Default Label"),
-                layout: None,
-                vertex,
-                primitive: wgpu::PrimitiveState::default(),
-                depth_stencil: Some(RenderPipelineBuilder::create_default_depth_stencil()),
-                multisample: wgpu::MultisampleState::default(),
-                fragment: None
-            },
+            label: None,  // TODO: add the default_labels feature
+            layout: None,
+            vertex,
+            primitive: None,
+            depth_stencil: None,
+            multisample: None,
+            fragment: None
         }
     }
 
@@ -45,9 +49,10 @@ impl<'a> RenderPipelineBuilder<'a> {
 
     //- Setters ------------------------------------------------------------------------------------
 
-    ///
+    /// Set the debug label of the pipeline.
+    /// This will show up in graphics debuggers for easy identification.
     pub fn with_label(&mut self, label_text: &'a str) -> &mut Self {
-        self.render_pipeline_desc.label = if label_text.is_empty() {
+        self.label = if label_text.is_empty() {
             wgpu::Label::default()
         } else {
             Some(label_text)
@@ -57,48 +62,60 @@ impl<'a> RenderPipelineBuilder<'a> {
 
     ///
     pub fn with_layout(&mut self, layout: &'a wgpu::PipelineLayout) -> &mut Self {
-        self.render_pipeline_desc.layout = Some(layout);
+        self.layout = Some(layout);
         self
     }
 
     ///
     pub fn with_vertex(&mut self, vertex: wgpu::VertexState<'a>) -> &mut Self {
-        self.render_pipeline_desc.vertex = vertex;
+        self.vertex = vertex;
         self
     }
 
     ///
     pub fn with_primitive(&mut self, primitive: wgpu::PrimitiveState) -> &mut Self {
-        self.render_pipeline_desc.primitive = primitive;
+        self.primitive = Some(primitive);
         self
     }
 
     ///
     pub fn with_depth_stencil(&mut self, depth_stencil: wgpu::DepthStencilState) -> &mut Self {
-        self.render_pipeline_desc.depth_stencil = Some(depth_stencil);
+        self.depth_stencil = Some(depth_stencil);
         self
     }
 
     ///
     pub fn with_multisample(&mut self, multisample: wgpu::MultisampleState) -> &mut Self {
-        self.render_pipeline_desc.multisample = multisample;
+        self.multisample = Some(multisample);
         self
     }
 
     ///
     pub fn with_fragment(&mut self, fragment: wgpu::FragmentState<'a>) -> &mut Self {
-        self.render_pipeline_desc.fragment = Some(fragment);
+        self.fragment = Some(fragment);
         self
     }
 
     //- Build --------------------------------------------------------------------------------------
 
     ///
-    pub fn build(
-        &mut self,
-        device: &Device
-    ) -> wgpu::RenderPipeline {
-        device.create_render_pipeline(&self.render_pipeline_desc)
+    pub fn build(self, device: &Device) -> RenderPipeline {
+        let depth_stencil = Some(self.depth_stencil.unwrap_or(
+            RenderPipelineBuilder::create_default_depth_stencil()
+        ));
+        let wgpu_render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: self.label,
+            layout: self.layout,
+            vertex: self.vertex,
+            primitive: self.primitive.unwrap_or_default(),
+            depth_stencil,
+            multisample: self.multisample.unwrap_or_default(),
+            fragment: self.fragment,
+        });
+
+        RenderPipeline {
+            wgpu_render_pipeline,
+        }
     }
 }
 
@@ -159,16 +176,12 @@ impl RenderPipeline {
             alpha_to_coverage_enabled: false,
         };
 
-        let wgpu_render_pipeline = RenderPipelineBuilder::new(vertex_state)
+        RenderPipelineBuilder::new(vertex_state)
             .with_layout(&pipeline_layout)
             .with_fragment(fragment_state)
             .with_primitive(primitive_state)
             .with_multisample(multisample)
-            .build(device);
-
-        Self {
-            wgpu_render_pipeline,
-        }
+            .build(device)
     }
 
     //- Crate-Public Methods -----------------------------------------------------------------------
