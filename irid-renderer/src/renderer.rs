@@ -8,7 +8,7 @@ use thiserror::Error;
 use irid_assets::{DiffuseImageSize, DiffuseTexture, ImageSize, Texture, Vertex, ModelVertex};
 use irid_utils::log2;
 
-use crate::{Adapter, Camera, CameraController, CameraMetadatas, Device, Instance, Queue, RenderPipeline, Surface, texture_metadatas::{
+use crate::{Adapter, Camera, CameraController, CameraMetadatas, Device, Instance, PipelineLayoutBuilder, Queue, RenderPipeline, RenderPipelineBuilder, Surface, texture_metadatas::{
     TextureBindGroupMetadatas, TextureDepthMetadatas
 }};
 use crate::texture_metadatas::TextureImageMetadatas;
@@ -158,13 +158,16 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
 
         //- Pipeline -------------------------------------------------------------------------------
 
-        let pipeline = RenderPipeline::new::<ModelVertex>(
-            &device,
-            texture_bind_group_metadatas.bind_group_layout(),
-            camera_metadatas.bind_group_layout(),
-            shader_source,
-            surface.preferred_format()
-        );
+        let texture_bgl = texture_bind_group_metadatas[8][8].bind_group_layout();  // TODO: 256x256 texture, hardcoded for now :(
+        let camera_bgl = camera_metadatas.bind_group_layout();
+        let pipeline_layout = PipelineLayoutBuilder::new()
+            .with_bind_group_layouts(&[texture_bgl, camera_bgl])
+            .build(&device);
+
+        let renderer_pipeline = RenderPipelineBuilder::new(self.shader_source.unwrap())
+            .with_preferred_format(surface.preferred_format())
+            .with_layout(pipeline_layout)
+            .build(&device);
 
         //- Queue Schedule -------------------------------------------------------------------------
 
@@ -230,7 +233,7 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
             texture_image_metadatas,
             texture_bind_group_metadatas,
             texture_depth_metadatas,
-            pipeline,
+            renderer_pipeline,
             vertex_buffer,
             index_buffer,
             num_indices,
@@ -305,7 +308,7 @@ pub struct Renderer {
     texture_image_metadatas: Vec<Vec<TextureImageMetadatas>>,
     texture_bind_group_metadatas: Vec<Vec<TextureBindGroupMetadatas>>,
     texture_depth_metadatas: TextureDepthMetadatas,
-    pipeline: RenderPipeline,
+    renderer_pipeline: Option<RenderPipeline>,
     vertex_buffer: wgpu::Buffer,  // TODO: maybe this is better to move this buffer, and the index buffer, inside the render_pass or pipeline object
     index_buffer: wgpu::Buffer,
     num_indices: u32,
@@ -401,7 +404,7 @@ impl Renderer {
                 }
             );
 
-            render_pass.set_pipeline(self.pipeline.expose_wrapped_render_pipeline());  // TODO we can remove this expose call creating an RenderPass wrapper
+            render_pass.set_pipeline(self.renderer_pipeline.expose_wrapped_render_pipeline());  // TODO: to remove this expose call creating an RenderPass wrapper
             render_pass.set_bind_group(0, self.texture_bind_group_metadatas.bind_group(), &[]);
             render_pass.set_bind_group(1, self.camera_metadatas.bind_group(), &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));

@@ -2,18 +2,18 @@
 
 use irid_assets::Vertex;
 
-use crate::{
-    Device, FragmentStateBuilder, InstanceRaw, ShaderModuleBuilder, VertexStateBuilder,
-    texture_metadatas::TextureDepthMetadatas
-};
+use crate::{Device, FragmentStateBuilder, InstanceRaw, ShaderModuleBuilder, VertexStateBuilder};
+use crate::texture_metadatas::TextureDepthMetadatas;
 
 //= RENDERER PIPELINE BUILDER ======================================================================
 
 ///
 pub struct RenderPipelineBuilder<'a> {
+    shader_source: wgpu::ShaderSource<'a>,
+    preferred_format: Option<wgpu::TextureFormat>,
     label: wgpu::Label<'a>,
     layout: Option<&'a wgpu::PipelineLayout>,
-    vertex: wgpu::VertexState<'a>,
+    vertex: Option<wgpu::VertexState<'a>>,
     primitive: Option<wgpu::PrimitiveState>,
     depth_stencil: Option<wgpu::DepthStencilState>,
     multisample: Option<wgpu::MultisampleState>,
@@ -25,11 +25,27 @@ impl<'a> RenderPipelineBuilder<'a> {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
-    pub fn new(vertex: wgpu::VertexState<'a>) -> Self {
+    pub fn new_with_wgsl(shader_source: String) -> Self {  // TODO: change the arg name
+        Self::new_shader_source_handler(
+            wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(shader_source))
+        )
+    }
+
+    ///
+    #[cfg(feature = "glsl")]
+    pub fn new_with_glsl(shader_source: String) -> Self {  // TODO: change the arg name
+        Self::new_shader_source_handler(
+            wgpu::ShaderSource::Glsl(std::borrow::Cow::Owned(shader_source))
+        )
+    }
+
+    fn new_shader_source_handler(shader_source: wgpu::ShaderSource) -> Self {
         Self {
+            shader_source,
+            preferred_format: None,
             label: None,  // TODO: add the default_labels feature
             layout: None,
-            vertex,
+            vertex: None,
             primitive: None,
             depth_stencil: None,
             multisample: None,
@@ -37,21 +53,30 @@ impl<'a> RenderPipelineBuilder<'a> {
         }
     }
 
-    fn create_default_depth_stencil() -> wgpu::DepthStencilState {
-        wgpu::DepthStencilState {
-            format: TextureDepthMetadatas::DEPTH_FORMAT,
-            depth_write_enabled: true,
-            depth_compare: wgpu::CompareFunction::Less,
-            stencil: wgpu::StencilState::default(),
-            bias: wgpu::DepthBiasState::default(),
-        }
+    //- Setters ------------------------------------------------------------------------------------
+
+    ///
+    pub fn with_wgsl_shader_source(mut self, shader_source: String) -> Self {
+        self.shader_source = wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(shader_source));
+        self
     }
 
-    //- Setters ------------------------------------------------------------------------------------
+    ///
+    #[cfg(feature = "glsl")]
+    pub fn with_glsl_shader_source(mut self, shader_source: String) -> Self {
+        self.shader_source = wgpu::ShaderSource::Glsl(std::borrow::Cow::Owned(shader_source));
+        self
+    }
+
+    ///
+    pub fn with_preferred_format(mut self, preferred_format: wgpu::TextureFormat) -> Self {
+        self.preferred_format = Some(preferred_format);
+        self
+    }
 
     /// Set the debug label of the pipeline.
     /// This will show up in graphics debuggers for easy identification.
-    pub fn with_label(&mut self, label_text: &'a str) -> &mut Self {
+    pub fn with_label(mut self, label_text: &'a str) -> Self {
         self.label = if label_text.is_empty() {
             wgpu::Label::default()
         } else {
@@ -61,19 +86,19 @@ impl<'a> RenderPipelineBuilder<'a> {
     }
 
     ///
-    pub fn with_layout(&mut self, layout: &'a wgpu::PipelineLayout) -> &mut Self {
+    pub fn with_layout(mut self, layout: &'a wgpu::PipelineLayout) -> Self {
         self.layout = Some(layout);
         self
     }
 
     ///
-    pub fn with_vertex(&mut self, vertex: wgpu::VertexState<'a>) -> &mut Self {
-        self.vertex = vertex;
+    pub fn with_vertex(mut self, vertex: wgpu::VertexState<'a>) -> Self {
+        self.vertex = Some(vertex);
         self
     }
 
     ///
-    pub fn with_primitive(&mut self, primitive: wgpu::PrimitiveState) -> &mut Self {
+    pub fn with_primitive(mut self, primitive: wgpu::PrimitiveState) -> Self {
         self.primitive = Some(primitive);
         self
     }
@@ -98,19 +123,66 @@ impl<'a> RenderPipelineBuilder<'a> {
 
     //- Build --------------------------------------------------------------------------------------
 
+    fn create_default_depth_stencil() -> Option<wgpu::DepthStencilState> {
+        Some(wgpu::DepthStencilState {
+            format: TextureDepthMetadatas::DEPTH_FORMAT,
+            depth_write_enabled: true,
+            depth_compare: wgpu::CompareFunction::Less,
+            stencil: wgpu::StencilState::default(),
+            bias: wgpu::DepthBiasState::default(),
+        })
+    }
+
+    fn create_vertex<V: Vertex>(shader_module: &wgpu::ShaderModule) -> Option<wgpu::VertexState<'a>> {
+        let buffers = [V::desc(), InstanceRaw::desc()];  // TODO: the instances must be optional
+        Some(VertexStateBuilder::new(&shader_module.unwrap())
+            .with_buffers(&buffers)
+            .build())
+    }
+
+    fn create_fragment(self, shader_module: &wgpu::ShaderModule) -> Option<wgpu::FragmentState<'a>> {
+        let targets = [wgpu::ColorTargetState {
+            format: self.preferred_format.unwrap_or(wgpu::TextureFormat::Rgba16Float),
+            blend: Some(wgpu::BlendState {
+                color: wgpu::BlendComponent::REPLACE,
+                alpha: wgpu::BlendComponent::REPLACE,
+            }),
+            write_mask: wgpu::ColorWrites::ALL,
+        }];
+
+        Some(FragmentStateBuilder::new(shader_module)
+            .with_targets(&targets)
+            .build())
+    }
+
     ///
-    pub fn build(self, device: &Device) -> RenderPipeline {
-        let depth_stencil = Some(self.depth_stencil.unwrap_or(
+    pub fn build<V: Vertex>(self, device: &Device) -> RenderPipeline {
+        let shader_module = if self.vertex.is_none() || self.fragment.is_none() {
+            Some(ShaderModuleBuilder::new(self.shader_source).build(device))
+        } else {
+            None
+        };
+
+        let vertex = self.vertex.or_else(
+            RenderPipelineBuilder::create_vertex(&shader_module.unwrap())
+        ).unwrap();
+
+        let depth_stencil = self.depth_stencil.or_else(
             RenderPipelineBuilder::create_default_depth_stencil()
-        ));
+        );
+
+        let fragment = self.fragment.or_else(
+            RenderPipelineBuilder::create_fragment(&shader_module.unwrap())
+        );
+
         let wgpu_render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: self.label,
             layout: self.layout,
-            vertex: self.vertex,
+            vertex,
             primitive: self.primitive.unwrap_or_default(),
             depth_stencil,
             multisample: self.multisample.unwrap_or_default(),
-            fragment: self.fragment,
+            fragment,
         });
 
         RenderPipeline {
@@ -129,61 +201,6 @@ pub struct RenderPipeline {
 }
 
 impl RenderPipeline {
-    //- Constructors -------------------------------------------------------------------------------
-
-    ///
-    pub fn new<'a, V: Vertex<'a>>(
-        device: &Device,
-        texture_bind_group_layout: &wgpu::BindGroupLayout,
-        camera_bind_group_layout: &wgpu::BindGroupLayout,
-        shader_source: String,
-        preferred_format: wgpu::TextureFormat,
-    ) -> Self {
-        let pipeline_layout = PipelineLayoutBuilder::new()
-            .with_bind_group_layouts(&[texture_bind_group_layout, camera_bind_group_layout])
-            .build(device);
-
-        let shader_module = ShaderModuleBuilder::new(
-            wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(shader_source))
-        ).build(device);
-
-        let buffers = [V::desc(),InstanceRaw::desc()];
-        let vertex_state = {
-            VertexStateBuilder::new(&shader_module)
-                .with_buffers(&buffers)
-                .build()
-        };
-
-        let targets = [wgpu::ColorTargetState {
-            format: preferred_format,
-            blend: Some(wgpu::BlendState {
-                color: wgpu::BlendComponent::REPLACE,
-                alpha: wgpu::BlendComponent::REPLACE,
-            }),
-            write_mask: wgpu::ColorWrites::ALL,
-        }];
-        let fragment_state = {
-            FragmentStateBuilder::new(&shader_module)
-                .with_targets(&targets)
-                .build()
-        };
-
-        let primitive_state = PrimitiveStateBuilder::new().build();
-
-        let multisample = wgpu::MultisampleState {
-            count: 1,
-            mask: !0,
-            alpha_to_coverage_enabled: false,
-        };
-
-        RenderPipelineBuilder::new(vertex_state)
-            .with_layout(&pipeline_layout)
-            .with_fragment(fragment_state)
-            .with_primitive(primitive_state)
-            .with_multisample(multisample)
-            .build(device)
-    }
-
     //- Crate-Public Methods -----------------------------------------------------------------------
 
     // This method MUST remains public at the crate level.
@@ -284,43 +301,43 @@ impl PrimitiveStateBuilder {
     //- Setters ------------------------------------------------------------------------------------
 
     ///
-    pub fn with_topology(&mut self, topology: wgpu::PrimitiveTopology) -> &mut Self {
+    pub fn with_topology(mut self, topology: wgpu::PrimitiveTopology) -> Self {
         self.primitive_state.topology = topology;
         self
     }
 
     ///
-    pub fn with_strip_index_format(&mut self, strip_index_format: wgpu::IndexFormat) -> &mut Self {
+    pub fn with_strip_index_format(mut self, strip_index_format: wgpu::IndexFormat) -> Self {
         self.primitive_state.strip_index_format = Some(strip_index_format);
         self
     }
 
     ///
-    pub fn with_front_face(&mut self, front_face: wgpu::FrontFace) -> &mut Self {
+    pub fn with_front_face(mut self, front_face: wgpu::FrontFace) -> Self {
         self.primitive_state.front_face = front_face;
         self
     }
 
     ///
-    pub fn with_cull_mode(&mut self, cull_mode: wgpu::Face) -> &mut Self {
+    pub fn with_cull_mode(mut self, cull_mode: wgpu::Face) -> Self {
         self.primitive_state.cull_mode = Some(cull_mode);
         self
     }
 
     ///
-    pub fn with_polygon_mode(&mut self, polygon_mode: wgpu::PolygonMode) -> &mut Self {
+    pub fn with_polygon_mode(mut self, polygon_mode: wgpu::PolygonMode) -> Self {
         self.primitive_state.polygon_mode = polygon_mode;
         self
     }
 
     ///
-    pub fn with_clamp_depth(&mut self, clamp_depth: bool) -> &mut Self {
+    pub fn with_clamp_depth(mut self, clamp_depth: bool) -> Self {
         self.primitive_state.clamp_depth = clamp_depth;
         self
     }
 
     ///
-    pub fn with_conservative(&mut self, conservative: bool) -> &mut Self {
+    pub fn with_conservative(mut self, conservative: bool) -> Self {
         self.primitive_state.conservative = conservative;
         self
     }
