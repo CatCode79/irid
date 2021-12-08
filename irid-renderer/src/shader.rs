@@ -2,19 +2,19 @@
 
 use crate::{device::Device};
 
-//= SHADER MODULE ==================================================================================
+//= SHADER MODULE BUILDER ==========================================================================
 
 /// [ShaderModule](wgpu::ShaderModule)'s Builder.
 pub struct ShaderModuleBuilder<'a> {
     label: Option<&'a str>,
-    source: wgpu::ShaderSource<'static>,  // TODO: avoid this static lifetime
+    source: wgpu::ShaderSource<'a>,
 }
 
 impl<'a> ShaderModuleBuilder<'a> {
     //- Constructors -------------------------------------------------------------------------------
 
     /// Create a new ShaderModuleBuilder.
-    pub fn new(source: wgpu::ShaderSource<'static>) -> Self {
+    pub fn new(source: wgpu::ShaderSource<'a>) -> Self {
         Self {
             label: Some("Render Pipeline Descriptor Default Label"),
             source,
@@ -35,7 +35,7 @@ impl<'a> ShaderModuleBuilder<'a> {
     }
 
     /// Source code for the shader.
-    pub fn with_source(&mut self, source: wgpu::ShaderSource<'static>) -> &mut Self {
+    pub fn with_source(&mut self, source: wgpu::ShaderSource<'a>) -> &mut Self {
         self.source = source;
         self
     }
@@ -45,7 +45,7 @@ impl<'a> ShaderModuleBuilder<'a> {
     /// Build the shader module.
     pub fn build(self, device: &Device) -> wgpu::ShaderModule {
         device.create_shader_module(&wgpu::ShaderModuleDescriptor {
-            label: Some(self.label.unwrap()),  // TODO mancano dei check
+            label: Some(self.label.unwrap()),  // TODO: to check the None
             source: self.source,
         })
     }

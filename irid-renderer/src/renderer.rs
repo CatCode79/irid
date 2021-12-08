@@ -5,12 +5,12 @@ use std::marker::PhantomData;
 use bytemuck::Pod;
 use thiserror::Error;
 
-use irid_assets::{DiffuseImageSize, DiffuseTexture, ImageSize, Texture, Vertex, ModelVertex};
+use irid_assets::{DiffuseImageSize, DiffuseTexture, ImageSize, Texture, Vertex};
 use irid_utils::log2;
 
-use crate::{Adapter, Camera, CameraController, CameraMetadatas, Device, Instance, PipelineLayoutBuilder, Queue, RenderPipeline, RenderPipelineBuilder, Surface, texture_metadatas::{
+use crate::{Adapter, Camera, CameraController, CameraMetadatas, Device, FragmentStateBuilder, Instance, InstanceRaw, PipelineLayoutBuilder, Queue, RenderPipeline, RenderPipelineBuilder, ShaderModuleBuilder, Surface, texture_metadatas::{
     TextureBindGroupMetadatas, TextureDepthMetadatas
-}};
+}, VertexStateBuilder};
 use crate::texture_metadatas::TextureImageMetadatas;
 
 //= ERRORS =========================================================================================
@@ -122,6 +122,46 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
 
     //- Build --------------------------------------------------------------------------------------
 
+    fn create_instances() -> Vec<Instance> {
+        (0..NUM_INSTANCES_PER_ROW).flat_map(|z| {
+            use cgmath::{Zero, Rotation3, InnerSpace};
+
+            (0..NUM_INSTANCES_PER_ROW).map(move |x| {
+                let position =
+                    cgmath::Vector3 { x: x as f32, y: 0.0, z: z as f32 } - INSTANCE_DISPLACEMENT;
+
+                let rotation = if position.is_zero() {
+                    // this is needed so an object at (0, 0, 0) won't get scaled to zero
+                    // as Quaternions can effect scale if they're not created correctly
+                    cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(),
+                                                        cgmath::Rad(0.0f32))
+                } else {
+                    cgmath::Quaternion::from_axis_angle(position.normalize(),
+                                                        cgmath::Rad(std::f32::consts::PI / 4.0f32))
+                };
+
+                Instance {
+                    position,
+                    rotation,
+                }
+            })
+        }).collect::<Vec<_>>()
+    }
+
+    fn create_instances_buffer(device: &Device, instances: &Vec<Instance>) -> wgpu::Buffer {
+        let instance_data = instances.iter().map(Instance::to_raw)
+            .collect::<Vec<_>>();
+
+        // TODO: when we will create the generics about Vertices we will use the Device.create_vertex_buffer_init instead
+        device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Instance Buffer"),
+                contents: bytemuck::cast_slice(&instance_data),
+                usage: wgpu::BufferUsages::VERTEX,
+            }
+        )
+    }
+
     ///
     pub fn build(self) -> Result<Renderer, RendererError> {
         //- Surface, Device, Queue -----------------------------------------------------------------
@@ -149,7 +189,7 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
             surface.preferred_format()
         );
 
-        let texture_bind_group_metadatas = self.create_texture_bind_group_metadatas(
+        let texture_bind_group_metadatas = self.cache_texture_bind_group_metadatas(
             &device,
             &texture_image_metadatas,
         );
@@ -158,64 +198,72 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
 
         //- Pipeline -------------------------------------------------------------------------------
 
+        let ss = wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(self.shader_source.unwrap()));
+        #[cfg(feature = "glsl")]
+        let ss = wgpu::ShaderSource::Glsl(std::borrow::Cow::Owned(self.shader_source.unwrap()));  // TODO: to manages the
+        let shader_module = ShaderModuleBuilder::new(ss).build(&device);
+
+        let buffers = [V::desc(), InstanceRaw::desc()];
+        let vertex = VertexStateBuilder::new(&shader_module)
+            .with_buffers(&buffers)  // TODO: the instances must be optional
+            .build();
+
         let texture_bgl = texture_bind_group_metadatas[8][8].bind_group_layout();  // TODO: 256x256 texture, hardcoded for now :(
         let camera_bgl = camera_metadatas.bind_group_layout();
         let pipeline_layout = PipelineLayoutBuilder::new()
             .with_bind_group_layouts(&[texture_bgl, camera_bgl])
             .build(&device);
 
-        let renderer_pipeline = RenderPipelineBuilder::new(self.shader_source.unwrap())
-            .with_preferred_format(surface.preferred_format())
+        let targets = [wgpu::ColorTargetState {
+            format: surface.preferred_format(),  //.unwrap_or(wgpu::TextureFormat::Rgba16Float),
+            blend: Some(wgpu::BlendState {
+                color: wgpu::BlendComponent::REPLACE,
+                alpha: wgpu::BlendComponent::REPLACE,
+            }),
+            write_mask: wgpu::ColorWrites::ALL,
+        }];
+
+        let fragment = FragmentStateBuilder::new(&shader_module)
+            .with_targets(&targets)
+            .build();
+
+        let renderer_pipeline = RenderPipelineBuilder::new(vertex)
             .with_layout(pipeline_layout)
-            .build(&device);
+            .with_fragment(fragment)
+            .build::<V>(&device);
 
         //- Queue Schedule -------------------------------------------------------------------------
 
-        // TODO: here we use unwrap because texture loading will probably not be done at this point and therefore it is useless to add a new type of error
-        queue.write_texture(&texture_image_metadatas, T::load(texture_path).unwrap());
+        if self.texture_path.is_some() {
+            // TODO: here we use unwrap because texture loading will probably not be done at this point and therefore it is useless to add a new type of error
+            queue.write_texture(&texture_image_metadatas, T::load(self.texture_path.unwrap()).unwrap());
+        }
 
         //- Vertex and Index Buffers ---------------------------------------------------------------
 
-        let vertex_buffer = device.create_vertex_buffer_init("Vertex Buffer", vertices);
-        let index_buffer = device.create_indices_buffer_init("Index Buffer", indices);
+        let vertex_buffer = self.vertices.map(
+            |v| device.create_vertex_buffer_init("Vertex Buffer", v)
+        );
 
-        let num_indices = indices.len() as u32;
+        let index_buffer = self.indices.map(
+            |i| device.create_indices_buffer_init("Index Buffer", i)
+        );
+        let num_indices = if self.indices.is_some() {
+            self.indices.unwrap().len() as u32
+        } else {
+            0_u32
+        };
 
         //- Instances ------------------------------------------------------------------------------
 
-        let instances = (0..NUM_INSTANCES_PER_ROW).flat_map(|z| {
-            use cgmath::{Zero, Rotation3, InnerSpace};
-
-            (0..NUM_INSTANCES_PER_ROW).map(move |x| {
-                let position =
-                    cgmath::Vector3 { x: x as f32, y: 0.0, z: z as f32 } - INSTANCE_DISPLACEMENT;
-
-                let rotation = if position.is_zero() {
-                    // this is needed so an object at (0, 0, 0) won't get scaled to zero
-                    // as Quaternions can effect scale if they're not created correctly
-                    cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(),
-                                                        cgmath::Rad(0.0f32))
-                } else {
-                    cgmath::Quaternion::from_axis_angle(position.normalize(),
-                                                        cgmath::Rad(std::f32::consts::PI / 4.0f32))
-                };
-
-                Instance {
-                    position,
-                    rotation,
-                }
-            })
-        }).collect::<Vec<_>>();
-
-        let instance_data = instances.iter().map(Instance::to_raw)
-            .collect::<Vec<_>>();
-        // TODO when we will create the generics avout Vertices we will use the Device.create_vertex_buffer_init instead
-        let instance_buffer = device.create_buffer_init(
-              &wgpu::util::BufferInitDescriptor {
-                  label: Some("Instance Buffer"),
-                  contents: bytemuck::cast_slice(&instance_data),
-                  usage: wgpu::BufferUsages::VERTEX,
-              }
+        let instances = self.vertices.map(
+            |_| RendererBuilder::<P, V, S, T>::create_instances()
+        );
+        let instance_buffer = self.vertices.map(
+            |_| RendererBuilder::<P, V, S, T>::create_instances_buffer(
+                &device,
+                &instances.unwrap()
+            )
         );
 
         //- Renderer Creation ----------------------------------------------------------------------
@@ -227,12 +275,16 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
             adapter,
             device,
             queue,
+
             camera,
             camera_metadatas,
             camera_controller,
+
             texture_image_metadatas,
             texture_bind_group_metadatas,
             texture_depth_metadatas,
+
+            shader_module,
             renderer_pipeline,
             vertex_buffer,
             index_buffer,
@@ -246,10 +298,10 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
     ///
     /// It can't cache zero sized textures.
     pub fn cache_texture_image_metadatas(
-        mut self,
+        &self,
         device: &Device,
         preferred_format: wgpu::TextureFormat
-    ) -> Vec::<Vec<TextureImageMetadatas>> {
+    ) -> Vec<Vec<TextureImageMetadatas>> {
         // Better to check not the current limits but the default ones
         // so as to obtain consistent behavior on all devices.
         let qty = log2(wgpu::Limits::default().max_texture_dimension_2d as i32) as usize;
@@ -270,7 +322,7 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
     }
 
     ///
-    pub fn create_texture_bind_group_metadatas(
+    pub fn cache_texture_bind_group_metadatas(
         &self,
         device: &Device,
         texture_image_metadatas: &Vec<Vec<TextureImageMetadatas>>,
@@ -302,18 +354,22 @@ pub struct Renderer {
     adapter: Adapter,
     device: Device,
     queue: Queue,
+
     camera: Camera,
     camera_metadatas: CameraMetadatas,
     camera_controller: CameraController,
+
     texture_image_metadatas: Vec<Vec<TextureImageMetadatas>>,
     texture_bind_group_metadatas: Vec<Vec<TextureBindGroupMetadatas>>,
     texture_depth_metadatas: TextureDepthMetadatas,
-    renderer_pipeline: Option<RenderPipeline>,
-    vertex_buffer: wgpu::Buffer,  // TODO: maybe this is better to move this buffer, and the index buffer, inside the render_pass or pipeline object
-    index_buffer: wgpu::Buffer,
+
+    shader_module: wgpu::ShaderModule,
+    renderer_pipeline: RenderPipeline,
+    vertex_buffer: Option<wgpu::Buffer>,  // TODO: maybe this is better to move, this buffer, and the index buffer, inside the render_pass or pipeline object
+    index_buffer: Option<wgpu::Buffer>,
     num_indices: u32,
-    instances: Vec<Instance>,
-    instance_buffer: wgpu::Buffer,
+    instances: Option<Vec<Instance>>,
+    instance_buffer: Option<wgpu::Buffer>,
 }
 
 impl Renderer {
@@ -405,13 +461,25 @@ impl Renderer {
             );
 
             render_pass.set_pipeline(self.renderer_pipeline.expose_wrapped_render_pipeline());  // TODO: to remove this expose call creating an RenderPass wrapper
-            render_pass.set_bind_group(0, self.texture_bind_group_metadatas.bind_group(), &[]);
+            render_pass.set_bind_group(0, self.texture_bind_group_metadatas[8][8].bind_group(), &[]);  // TODO: hardcoded :(
             render_pass.set_bind_group(1, self.camera_metadatas.bind_group(), &[]);
-            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
-            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-
-            render_pass.draw_indexed(0..self.num_indices, 0, 0..self.instances.len() as _);
+            if self.vertex_buffer.is_some() {
+                render_pass.set_vertex_buffer(0, self.vertex_buffer.unwrap().slice(..));
+            }
+            if self.instance_buffer.is_some() {
+                render_pass.set_vertex_buffer(1, self.instance_buffer.unwrap().slice(..));
+            }
+            if self.index_buffer.is_some() {
+                render_pass.set_index_buffer(
+                    self.index_buffer.unwrap().slice(..),
+                    wgpu::IndexFormat::Uint16,
+                );
+                render_pass.draw_indexed(
+                    0..self.num_indices,
+                    0,
+                    0..self.instances.unwrap().len() as _,
+                );
+            }
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));

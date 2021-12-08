@@ -2,18 +2,17 @@
 
 use irid_assets::Vertex;
 
-use crate::{Device, FragmentStateBuilder, InstanceRaw, ShaderModuleBuilder, VertexStateBuilder};
+use crate::Device;
 use crate::texture_metadatas::TextureDepthMetadatas;
 
 //= RENDERER PIPELINE BUILDER ======================================================================
 
 ///
 pub struct RenderPipelineBuilder<'a> {
-    shader_source: wgpu::ShaderSource<'a>,
-    preferred_format: Option<wgpu::TextureFormat>,
+    // Descriptor fields
     label: wgpu::Label<'a>,
-    layout: Option<&'a wgpu::PipelineLayout>,
-    vertex: Option<wgpu::VertexState<'a>>,
+    layout: Option<wgpu::PipelineLayout>,
+    vertex: wgpu::VertexState<'a>,
     primitive: Option<wgpu::PrimitiveState>,
     depth_stencil: Option<wgpu::DepthStencilState>,
     multisample: Option<wgpu::MultisampleState>,
@@ -24,28 +23,11 @@ pub struct RenderPipelineBuilder<'a> {
 impl<'a> RenderPipelineBuilder<'a> {
     //- Constructors -------------------------------------------------------------------------------
 
-    ///
-    pub fn new_with_wgsl(shader_source: String) -> Self {  // TODO: change the arg name
-        Self::new_shader_source_handler(
-            wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(shader_source))
-        )
-    }
-
-    ///
-    #[cfg(feature = "glsl")]
-    pub fn new_with_glsl(shader_source: String) -> Self {  // TODO: change the arg name
-        Self::new_shader_source_handler(
-            wgpu::ShaderSource::Glsl(std::borrow::Cow::Owned(shader_source))
-        )
-    }
-
-    fn new_shader_source_handler(shader_source: wgpu::ShaderSource) -> Self {
+    pub(crate) fn new(vertex: wgpu::VertexState<'a>) -> Self {
         Self {
-            shader_source,
-            preferred_format: None,
             label: None,  // TODO: add the default_labels feature
             layout: None,
-            vertex: None,
+            vertex,
             primitive: None,
             depth_stencil: None,
             multisample: None,
@@ -54,25 +36,6 @@ impl<'a> RenderPipelineBuilder<'a> {
     }
 
     //- Setters ------------------------------------------------------------------------------------
-
-    ///
-    pub fn with_wgsl_shader_source(mut self, shader_source: String) -> Self {
-        self.shader_source = wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(shader_source));
-        self
-    }
-
-    ///
-    #[cfg(feature = "glsl")]
-    pub fn with_glsl_shader_source(mut self, shader_source: String) -> Self {
-        self.shader_source = wgpu::ShaderSource::Glsl(std::borrow::Cow::Owned(shader_source));
-        self
-    }
-
-    ///
-    pub fn with_preferred_format(mut self, preferred_format: wgpu::TextureFormat) -> Self {
-        self.preferred_format = Some(preferred_format);
-        self
-    }
 
     /// Set the debug label of the pipeline.
     /// This will show up in graphics debuggers for easy identification.
@@ -86,14 +49,14 @@ impl<'a> RenderPipelineBuilder<'a> {
     }
 
     ///
-    pub fn with_layout(mut self, layout: &'a wgpu::PipelineLayout) -> Self {
+    pub fn with_layout(mut self, layout: wgpu::PipelineLayout) -> Self {
         self.layout = Some(layout);
         self
     }
 
     ///
     pub fn with_vertex(mut self, vertex: wgpu::VertexState<'a>) -> Self {
-        self.vertex = Some(vertex);
+        self.vertex = vertex;
         self
     }
 
@@ -123,7 +86,7 @@ impl<'a> RenderPipelineBuilder<'a> {
 
     //- Build --------------------------------------------------------------------------------------
 
-    fn create_default_depth_stencil() -> Option<wgpu::DepthStencilState> {
+    fn create_default_depth_stencil(&self) -> Option<wgpu::DepthStencilState> {
         Some(wgpu::DepthStencilState {
             format: TextureDepthMetadatas::DEPTH_FORMAT,
             depth_write_enabled: true,
@@ -133,56 +96,20 @@ impl<'a> RenderPipelineBuilder<'a> {
         })
     }
 
-    fn create_vertex<V: Vertex>(shader_module: &wgpu::ShaderModule) -> Option<wgpu::VertexState<'a>> {
-        let buffers = [V::desc(), InstanceRaw::desc()];  // TODO: the instances must be optional
-        Some(VertexStateBuilder::new(&shader_module.unwrap())
-            .with_buffers(&buffers)
-            .build())
-    }
-
-    fn create_fragment(self, shader_module: &wgpu::ShaderModule) -> Option<wgpu::FragmentState<'a>> {
-        let targets = [wgpu::ColorTargetState {
-            format: self.preferred_format.unwrap_or(wgpu::TextureFormat::Rgba16Float),
-            blend: Some(wgpu::BlendState {
-                color: wgpu::BlendComponent::REPLACE,
-                alpha: wgpu::BlendComponent::REPLACE,
-            }),
-            write_mask: wgpu::ColorWrites::ALL,
-        }];
-
-        Some(FragmentStateBuilder::new(shader_module)
-            .with_targets(&targets)
-            .build())
-    }
-
     ///
-    pub fn build<V: Vertex>(self, device: &Device) -> RenderPipeline {
-        let shader_module = if self.vertex.is_none() || self.fragment.is_none() {
-            Some(ShaderModuleBuilder::new(self.shader_source).build(device))
-        } else {
-            None
-        };
-
-        let vertex = self.vertex.or_else(
-            RenderPipelineBuilder::create_vertex(&shader_module.unwrap())
-        ).unwrap();
-
-        let depth_stencil = self.depth_stencil.or_else(
-            RenderPipelineBuilder::create_default_depth_stencil()
-        );
-
-        let fragment = self.fragment.or_else(
-            RenderPipelineBuilder::create_fragment(&shader_module.unwrap())
+    pub fn build<V: Vertex<'a>>(self, device: &Device) -> RenderPipeline {
+        let depth_stencil = self.depth_stencil.or(
+            self.create_default_depth_stencil()
         );
 
         let wgpu_render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: self.label,
-            layout: self.layout,
-            vertex,
+            layout: self.layout.map(|l| &l),
+            vertex: self.vertex,
             primitive: self.primitive.unwrap_or_default(),
             depth_stencil,
             multisample: self.multisample.unwrap_or_default(),
-            fragment,
+            fragment: self.fragment,
         });
 
         RenderPipeline {
