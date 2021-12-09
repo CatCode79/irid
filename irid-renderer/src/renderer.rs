@@ -8,10 +8,10 @@ use thiserror::Error;
 use irid_assets::{DiffuseImageSize, DiffuseTexture, ImageSize, Texture, Vertex};
 use irid_utils::log2;
 
-use crate::{Adapter, Camera, CameraController, CameraMetadatas, Device, FragmentStateBuilder, Instance, InstanceRaw, PipelineLayoutBuilder, Queue, RenderPipeline, RenderPipelineBuilder, ShaderModuleBuilder, Surface, texture_metadatas::{
-    TextureBindGroupMetadatas, TextureDepthMetadatas
-}, VertexStateBuilder};
-use crate::texture_metadatas::TextureImageMetadatas;
+use crate::{Adapter, Camera, CameraController, CameraMetadatas, Device, FragmentStateBuilder,
+            Instance, InstanceRaw, PipelineLayoutBuilder, Queue, RenderPipeline,
+            RenderPipelineBuilder, Surface, VertexStateBuilder};
+use crate::texture_metadatas::{TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas};
 
 //= ERRORS =========================================================================================
 
@@ -51,7 +51,7 @@ pub struct RendererBuilder<
     window: &'a winit::window::Window,
 
     clear_color: Option<wgpu::Color>,
-    shader_source: Option<String>,
+    shader_module: Option<&'a wgpu::ShaderModule>,
     texture_path: Option<P>,
     vertices: Option<&'a [V]>,  // TODO: Probably better to encapsulate the [V] logic
     indices: Option<&'a [u32]>,
@@ -72,7 +72,7 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
         Self {
             window,
             clear_color: None,
-            shader_source: None,
+            shader_module: None,
             texture_path: None,
             vertices: None,
             indices: None,
@@ -97,8 +97,8 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
     }
 
     ///
-    pub fn with_shader_source(mut self, shader_source: String) -> Self {
-        self.shader_source = Some(shader_source);
+    pub fn with_shader_module(mut self, shader_module: &'a wgpu::ShaderModule) -> Self {
+        self.shader_module = Some(shader_module);
         self
     }
 
@@ -122,48 +122,8 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
 
     //- Build --------------------------------------------------------------------------------------
 
-    fn create_instances() -> Vec<Instance> {
-        (0..NUM_INSTANCES_PER_ROW).flat_map(|z| {
-            use cgmath::{Zero, Rotation3, InnerSpace};
-
-            (0..NUM_INSTANCES_PER_ROW).map(move |x| {
-                let position =
-                    cgmath::Vector3 { x: x as f32, y: 0.0, z: z as f32 } - INSTANCE_DISPLACEMENT;
-
-                let rotation = if position.is_zero() {
-                    // this is needed so an object at (0, 0, 0) won't get scaled to zero
-                    // as Quaternions can effect scale if they're not created correctly
-                    cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(),
-                                                        cgmath::Rad(0.0f32))
-                } else {
-                    cgmath::Quaternion::from_axis_angle(position.normalize(),
-                                                        cgmath::Rad(std::f32::consts::PI / 4.0f32))
-                };
-
-                Instance {
-                    position,
-                    rotation,
-                }
-            })
-        }).collect::<Vec<_>>()
-    }
-
-    fn create_instances_buffer(device: &Device, instances: &Vec<Instance>) -> wgpu::Buffer {
-        let instance_data = instances.iter().map(Instance::to_raw)
-            .collect::<Vec<_>>();
-
-        // TODO: when we will create the generics about Vertices we will use the Device.create_vertex_buffer_init instead
-        device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Instance Buffer"),
-                contents: bytemuck::cast_slice(&instance_data),
-                usage: wgpu::BufferUsages::VERTEX,
-            }
-        )
-    }
-
     ///
-    pub fn build(self) -> Result<Renderer, RendererError> {
+    pub fn build(self) -> Result<Renderer<'a>, RendererError> {
         //- Surface, Device, Queue -----------------------------------------------------------------
 
         let window_size = self.window.inner_size();
@@ -184,12 +144,12 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
 
         //- Texture Metadatas ----------------------------------------------------------------------
 
-        let texture_image_metadatas = self.cache_texture_image_metadatas(
+        let texture_image_metadatas = self.create_texture_image_metadatas(
             &device,
             surface.preferred_format()
         );
 
-        let texture_bind_group_metadatas = self.cache_texture_bind_group_metadatas(
+        let texture_bind_group_metadatas = self.create_texture_bind_group_metadatas(
             &device,
             &texture_image_metadatas,
         );
@@ -198,15 +158,9 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
 
         //- Pipeline -------------------------------------------------------------------------------
 
-        let ss = wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(self.shader_source.unwrap()));
-        #[cfg(feature = "glsl")]
-        let ss = wgpu::ShaderSource::Glsl(std::borrow::Cow::Owned(self.shader_source.unwrap()));  // TODO: to manages the
-        let shader_module = ShaderModuleBuilder::new(ss).build(&device);
-
-        let buffers = [V::desc(), InstanceRaw::desc()];
-        let vertex = VertexStateBuilder::new(&shader_module)
-            .with_buffers(&buffers)  // TODO: the instances must be optional
-            .build();
+        let vertex = self.shader_module.map(
+            |sm| self.create_vertex_state(sm)
+        );
 
         let texture_bgl = texture_bind_group_metadatas[8][8].bind_group_layout();  // TODO: 256x256 texture, hardcoded for now :(
         let camera_bgl = camera_metadatas.bind_group_layout();
@@ -214,23 +168,16 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
             .with_bind_group_layouts(&[texture_bgl, camera_bgl])
             .build(&device);
 
-        let targets = [wgpu::ColorTargetState {
-            format: surface.preferred_format(),  //.unwrap_or(wgpu::TextureFormat::Rgba16Float),
-            blend: Some(wgpu::BlendState {
-                color: wgpu::BlendComponent::REPLACE,
-                alpha: wgpu::BlendComponent::REPLACE,
-            }),
-            write_mask: wgpu::ColorWrites::ALL,
-        }];
+        let fragment = self.shader_module.map(
+            |sm| self.create_fragment_state(sm, surface.preferred_format())
+        );
 
-        let fragment = FragmentStateBuilder::new(&shader_module)
-            .with_targets(&targets)
-            .build();
-
-        let renderer_pipeline = RenderPipelineBuilder::new(vertex)
-            .with_layout(pipeline_layout)
-            .with_fragment(fragment)
-            .build::<V>(&device);
+        let mut renderer_pipeline_builder = RenderPipelineBuilder::new(vertex.unwrap())  // TODO: uhm... unwrap...
+            .with_layout(&pipeline_layout);
+        if fragment.is_some() {
+            renderer_pipeline_builder = renderer_pipeline_builder.with_fragment(fragment.unwrap());
+        }
+        let renderer_pipeline = renderer_pipeline_builder.build::<V>(&device);
 
         //- Queue Schedule -------------------------------------------------------------------------
 
@@ -257,13 +204,10 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
         //- Instances ------------------------------------------------------------------------------
 
         let instances = self.vertices.map(
-            |_| RendererBuilder::<P, V, S, T>::create_instances()
+            |_| self.create_instances()
         );
         let instance_buffer = self.vertices.map(
-            |_| RendererBuilder::<P, V, S, T>::create_instances_buffer(
-                &device,
-                &instances.unwrap()
-            )
+            |_| self.create_instances_buffer(&device,&instances.unwrap())
         );
 
         //- Renderer Creation ----------------------------------------------------------------------
@@ -284,7 +228,8 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
             texture_bind_group_metadatas,
             texture_depth_metadatas,
 
-            shader_module,
+            shader_module: self.shader_module,
+            pipeline_layout,
             renderer_pipeline,
             vertex_buffer,
             index_buffer,
@@ -297,7 +242,7 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
     ///
     ///
     /// It can't cache zero sized textures.
-    pub fn cache_texture_image_metadatas(
+    pub fn create_texture_image_metadatas(
         &self,
         device: &Device,
         preferred_format: wgpu::TextureFormat
@@ -322,7 +267,7 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
     }
 
     ///
-    pub fn cache_texture_bind_group_metadatas(
+    pub fn create_texture_bind_group_metadatas(
         &self,
         device: &Device,
         texture_image_metadatas: &Vec<Vec<TextureImageMetadatas>>,
@@ -341,12 +286,77 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
         }
         vec_w
     }
+
+    fn create_instances(&self) -> Vec<Instance> {
+        (0..NUM_INSTANCES_PER_ROW).flat_map(|z| {
+            use cgmath::{Zero, Rotation3, InnerSpace};
+
+            (0..NUM_INSTANCES_PER_ROW).map(move |x| {
+                let position =
+                    cgmath::Vector3 { x: x as f32, y: 0.0, z: z as f32 } - INSTANCE_DISPLACEMENT;
+
+                let rotation = if position.is_zero() {
+                    // this is needed so an object at (0, 0, 0) won't get scaled to zero
+                    // as Quaternions can effect scale if they're not created correctly
+                    cgmath::Quaternion::from_axis_angle(cgmath::Vector3::unit_z(),
+                                                        cgmath::Rad(0.0f32))
+                } else {
+                    cgmath::Quaternion::from_axis_angle(position.normalize(),
+                                                        cgmath::Rad(std::f32::consts::PI / 4.0f32))
+                };
+
+                Instance {
+                    position,
+                    rotation,
+                }
+            })
+        }).collect::<Vec<_>>()
+    }
+
+    fn create_instances_buffer(&self, device: &Device, instances: &Vec<Instance>) -> wgpu::Buffer {
+        let instance_data = instances.iter().map(Instance::to_raw)
+            .collect::<Vec<_>>();
+
+        // TODO: when we will create the generics about Vertices we will use the Device.create_vertex_buffer_init instead
+        device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Instance Buffer"),
+                contents: bytemuck::cast_slice(&instance_data),
+                usage: wgpu::BufferUsages::VERTEX,
+            }
+        )
+    }
+
+    fn create_vertex_state(&self, shader_module: &'a wgpu::ShaderModule) -> wgpu::VertexState<'a> {
+        let buffers = [V::desc(), InstanceRaw::desc()];  // TODO: the instances must be optional
+        VertexStateBuilder::new(shader_module)
+            .with_buffers(&buffers)
+            .build()
+    }
+
+    fn create_fragment_state(
+        &self,
+        shader_module: &'a wgpu::ShaderModule,
+        preferred_format: wgpu::TextureFormat,
+    ) -> wgpu::FragmentState<'a> {
+        let targets = [wgpu::ColorTargetState {
+            format: preferred_format,  //.unwrap_or(wgpu::TextureFormat::Rgba16Float),
+            blend: Some(wgpu::BlendState {
+                color: wgpu::BlendComponent::REPLACE,
+                alpha: wgpu::BlendComponent::REPLACE,
+            }),
+            write_mask: wgpu::ColorWrites::ALL,
+        }];
+        FragmentStateBuilder::new(shader_module)
+            .with_targets(&targets)
+            .build()
+    }
 }
 
 //= RENDERER OBJECT ================================================================================
 
 ///
-pub struct Renderer {
+pub struct Renderer<'a> {
     window_size: winit::dpi::PhysicalSize<u32>,
     clear_color: wgpu::Color,
     surface: Surface,
@@ -363,8 +373,9 @@ pub struct Renderer {
     texture_bind_group_metadatas: Vec<Vec<TextureBindGroupMetadatas>>,
     texture_depth_metadatas: TextureDepthMetadatas,
 
-    shader_module: wgpu::ShaderModule,
-    renderer_pipeline: RenderPipeline,
+    shader_module: Option<&'a wgpu::ShaderModule>,
+    pipeline_layout: wgpu::PipelineLayout,
+    renderer_pipeline: RenderPipeline,  // TODO: probably also optional?
     vertex_buffer: Option<wgpu::Buffer>,  // TODO: maybe this is better to move, this buffer, and the index buffer, inside the render_pass or pipeline object
     index_buffer: Option<wgpu::Buffer>,
     num_indices: u32,
@@ -372,7 +383,7 @@ pub struct Renderer {
     instance_buffer: Option<wgpu::Buffer>,
 }
 
-impl Renderer {
+impl<'a> Renderer<'a> {
     //- Surface (Re)size ---------------------------------------------------------------------------
 
     /// Getter for the windows's physical size attribute.

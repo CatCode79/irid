@@ -11,7 +11,7 @@ use crate::texture_metadatas::TextureDepthMetadatas;
 pub struct RenderPipelineBuilder<'a> {
     // Descriptor fields
     label: wgpu::Label<'a>,
-    layout: Option<wgpu::PipelineLayout>,
+    layout: Option<&'a wgpu::PipelineLayout>,
     vertex: wgpu::VertexState<'a>,
     primitive: Option<wgpu::PrimitiveState>,
     depth_stencil: Option<wgpu::DepthStencilState>,
@@ -49,7 +49,7 @@ impl<'a> RenderPipelineBuilder<'a> {
     }
 
     ///
-    pub fn with_layout(mut self, layout: wgpu::PipelineLayout) -> Self {
+    pub fn with_layout(mut self, layout: &'a wgpu::PipelineLayout) -> Self {
         self.layout = Some(layout);
         self
     }
@@ -67,26 +67,26 @@ impl<'a> RenderPipelineBuilder<'a> {
     }
 
     ///
-    pub fn with_depth_stencil(&mut self, depth_stencil: wgpu::DepthStencilState) -> &mut Self {
+    pub fn with_depth_stencil(mut self, depth_stencil: wgpu::DepthStencilState) -> Self {
         self.depth_stencil = Some(depth_stencil);
         self
     }
 
     ///
-    pub fn with_multisample(&mut self, multisample: wgpu::MultisampleState) -> &mut Self {
+    pub fn with_multisample(mut self, multisample: wgpu::MultisampleState) -> Self {
         self.multisample = Some(multisample);
         self
     }
 
     ///
-    pub fn with_fragment(&mut self, fragment: wgpu::FragmentState<'a>) -> &mut Self {
+    pub fn with_fragment(mut self, fragment: wgpu::FragmentState<'a>) -> Self {
         self.fragment = Some(fragment);
         self
     }
 
     //- Build --------------------------------------------------------------------------------------
 
-    fn create_default_depth_stencil(&self) -> Option<wgpu::DepthStencilState> {
+    fn create_default_depth_stencil() -> Option<wgpu::DepthStencilState> {
         Some(wgpu::DepthStencilState {
             format: TextureDepthMetadatas::DEPTH_FORMAT,
             depth_write_enabled: true,
@@ -99,12 +99,12 @@ impl<'a> RenderPipelineBuilder<'a> {
     ///
     pub fn build<V: Vertex<'a>>(self, device: &Device) -> RenderPipeline {
         let depth_stencil = self.depth_stencil.or(
-            self.create_default_depth_stencil()
+            RenderPipelineBuilder::create_default_depth_stencil()
         );
 
         let wgpu_render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: self.label,
-            layout: self.layout.map(|l| &l),
+            layout: self.layout,
             vertex: self.vertex,
             primitive: self.primitive.unwrap_or_default(),
             depth_stencil,
