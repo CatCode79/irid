@@ -4,6 +4,7 @@ use std::marker::PhantomData;
 
 use bytemuck::Pod;
 use thiserror::Error;
+use wgpu::ColorTargetState;
 
 use irid_assets::{DiffuseImageSize, DiffuseTexture, ImageSize, Texture, Vertex};
 use irid_utils::log2;
@@ -41,7 +42,7 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 
 ///
 #[derive(Clone, Debug)]
-pub struct RendererBuilder<
+pub struct RenderBuilder<
     'a,
     P: AsRef<std::path::Path>,
     V: Vertex<'a> + Pod,
@@ -60,7 +61,7 @@ pub struct RendererBuilder<
     generic_texture: PhantomData<T>,
 }
 
-impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
+impl<'a, P, V, S, T> RenderBuilder<'a, P, V, S, T> where
     P: AsRef<std::path::Path>,
     V: Vertex<'a> + Pod,
     S: ImageSize,
@@ -123,7 +124,7 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
     //- Build --------------------------------------------------------------------------------------
 
     ///
-    pub fn build(self) -> Result<Renderer<'a>, RendererError> {
+    pub fn build(self) -> Result<Render<'a>, RendererError> {
         //- Surface, Device, Queue -----------------------------------------------------------------
 
         let window_size = self.window.inner_size();
@@ -168,16 +169,22 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
             .with_bind_group_layouts(&[texture_bgl, camera_bgl])
             .build(&device);
 
+        let targets = [wgpu::ColorTargetState {
+            format: surface.preferred_format(),  //.unwrap_or(wgpu::TextureFormat::Rgba16Float),
+            blend: Some(wgpu::BlendState {
+                color: wgpu::BlendComponent::REPLACE,
+                alpha: wgpu::BlendComponent::REPLACE,
+            }),
+            write_mask: wgpu::ColorWrites::ALL,
+        }];
         let fragment = self.shader_module.map(
-            |sm| self.create_fragment_state(sm, surface.preferred_format())
+            |sm| self.create_fragment_state(sm, &targets)
         );
 
-        let mut renderer_pipeline_builder = RenderPipelineBuilder::new(vertex.unwrap())  // TODO: uhm... unwrap...
-            .with_layout(&pipeline_layout);
-        if fragment.is_some() {
-            renderer_pipeline_builder = renderer_pipeline_builder.with_fragment(fragment.unwrap());
-        }
-        let renderer_pipeline = renderer_pipeline_builder.build::<V>(&device);
+        let renderer_pipeline = RenderPipelineBuilder::new(vertex.unwrap())  // TODO: uhm... unwrap...
+            .with_layout(&pipeline_layout)
+            .with_fragment(fragment)
+            .build::<V>(&device);
 
         //- Queue Schedule -------------------------------------------------------------------------
 
@@ -203,16 +210,17 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
 
         //- Instances ------------------------------------------------------------------------------
 
-        let instances = self.vertices.map(
-            |_| self.create_instances()
-        );
-        let instance_buffer = self.vertices.map(
-            |_| self.create_instances_buffer(&device,&instances.unwrap())
-        );
+        let (instances, instances_buffer) = if self.vertices.is_some() {
+            let instances = self.create_instances();
+            let instances_buffer = self.create_instances_buffer(&device, &instances);
+            (Some(instances), Some(instances_buffer))
+        } else {
+            (None, None)
+        };
 
         //- Renderer Creation ----------------------------------------------------------------------
 
-        Ok(Renderer {
+        Ok(Render {
             window_size,
             clear_color: self.clear_color.unwrap_or(wgpu::Color::WHITE),
             surface,
@@ -229,13 +237,12 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
             texture_depth_metadatas,
 
             shader_module: self.shader_module,
-            pipeline_layout,
             renderer_pipeline,
             vertex_buffer,
             index_buffer,
             num_indices,
             instances,
-            instance_buffer
+            instances_buffer
         })
     }
 
@@ -337,18 +344,10 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
     fn create_fragment_state(
         &self,
         shader_module: &'a wgpu::ShaderModule,
-        preferred_format: wgpu::TextureFormat,
+        targets: &'a [ColorTargetState],
     ) -> wgpu::FragmentState<'a> {
-        let targets = [wgpu::ColorTargetState {
-            format: preferred_format,  //.unwrap_or(wgpu::TextureFormat::Rgba16Float),
-            blend: Some(wgpu::BlendState {
-                color: wgpu::BlendComponent::REPLACE,
-                alpha: wgpu::BlendComponent::REPLACE,
-            }),
-            write_mask: wgpu::ColorWrites::ALL,
-        }];
         FragmentStateBuilder::new(shader_module)
-            .with_targets(&targets)
+            .with_targets(targets)
             .build()
     }
 }
@@ -356,7 +355,7 @@ impl<'a, P, V, S, T> RendererBuilder<'a, P, V, S, T> where
 //= RENDERER OBJECT ================================================================================
 
 ///
-pub struct Renderer<'a> {
+pub struct Render<'a> {
     window_size: winit::dpi::PhysicalSize<u32>,
     clear_color: wgpu::Color,
     surface: Surface,
@@ -374,16 +373,15 @@ pub struct Renderer<'a> {
     texture_depth_metadatas: TextureDepthMetadatas,
 
     shader_module: Option<&'a wgpu::ShaderModule>,
-    pipeline_layout: wgpu::PipelineLayout,
     renderer_pipeline: RenderPipeline,  // TODO: probably also optional?
     vertex_buffer: Option<wgpu::Buffer>,  // TODO: maybe this is better to move, this buffer, and the index buffer, inside the render_pass or pipeline object
     index_buffer: Option<wgpu::Buffer>,
     num_indices: u32,
     instances: Option<Vec<Instance>>,
-    instance_buffer: Option<wgpu::Buffer>,
+    instances_buffer: Option<wgpu::Buffer>,
 }
 
-impl<'a> Renderer<'a> {
+impl<'a> Render<'a> {
     //- Surface (Re)size ---------------------------------------------------------------------------
 
     /// Getter for the windows's physical size attribute.
@@ -477,8 +475,8 @@ impl<'a> Renderer<'a> {
             if self.vertex_buffer.is_some() {
                 render_pass.set_vertex_buffer(0, self.vertex_buffer.unwrap().slice(..));
             }
-            if self.instance_buffer.is_some() {
-                render_pass.set_vertex_buffer(1, self.instance_buffer.unwrap().slice(..));
+            if self.instances_buffer.is_some() {
+                render_pass.set_vertex_buffer(1, self.instances_buffer.unwrap().slice(..));
             }
             if self.index_buffer.is_some() {
                 render_pass.set_index_buffer(

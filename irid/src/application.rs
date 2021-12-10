@@ -9,7 +9,7 @@ use thiserror::Error;
 use winit::window::Fullscreen;
 
 use irid_assets::{DiffuseImageSize, DiffuseTexture, ModelVertex};
-use irid_renderer::{Renderer, RendererBuilder, RendererError, ShaderModuleBuilder};
+use irid_renderer::{Render, RenderBuilder, RendererError, ShaderModuleBuilder};
 
 use crate::{ApplicationConfig, Listener};
 
@@ -193,7 +193,7 @@ impl<'a, L: Listener> Application<'a, L> {
             .build(&event_loop)?;
 
         let mut renderer_builder =
-            RendererBuilder::<&Path, ModelVertex, DiffuseImageSize, DiffuseTexture>::new(&window);
+            RenderBuilder::<&Path, ModelVertex, DiffuseImageSize, DiffuseTexture>::new(&window);
         if self.clear_color().is_some() {
             renderer_builder = renderer_builder.with_clear_color(self.clear_color().unwrap());  // TODO: no, we have to have the with_clear_color only on RendererBuilder and not also in ApplicationBuilder, so we can ride with this unwrap
         }
@@ -427,7 +427,7 @@ impl<'a, L: Listener> Application<'a, L> {
     #[inline(always)]
     fn on_redraw(
         &self,
-        renderer: &mut Renderer,
+        renderer: &mut Render,
         control_flow: &mut winit::event_loop::ControlFlow
     ) {
         let use_default_behaviour = self.listener.on_redraw();
@@ -466,7 +466,7 @@ impl<'a, L: Listener> Application<'a, L> {
 
     fn on_window_resize(
         &self,
-        renderer: &mut Renderer,
+        renderer: &mut Render,
         physical_size: winit::dpi::PhysicalSize<u32>
     ) {
         let use_default_behaviour = self.listener.on_window_resize(physical_size);
@@ -522,7 +522,7 @@ impl<'a, L: Listener> Application<'a, L> {
         &self,
         control_flow: &mut winit::event_loop::ControlFlow,
         device_id: winit::event::DeviceId,
-        renderer: &mut Renderer,
+        renderer: &mut Render,
         input: &winit::event::KeyboardInput
     ) {
         // First call a generic method to manage the key events
@@ -611,7 +611,7 @@ impl<'a, L: Listener> Application<'a, L> {
 
     fn on_window_scale_change(
         &self,
-        renderer: &mut Renderer,
+        renderer: &mut Render,
         scale_factor: f64,
         new_inner_size: &mut winit::dpi::PhysicalSize<u32>// TODO Probably I have to pass it without & (also below)
     ) {
