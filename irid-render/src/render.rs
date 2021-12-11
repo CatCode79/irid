@@ -211,8 +211,8 @@ impl<'a, P, V, S, T> RenderBuilder<'a, P, V, S, T> where
         //- Instances ------------------------------------------------------------------------------
 
         let (instances, instances_buffer) = if self.vertices.is_some() {
-            let instances = self.create_instances();
-            let instances_buffer = self.create_instances_buffer(&device, &instances);
+            let instances = RenderBuilder::<'a, P, V, S, T>::create_instances();
+            let instances_buffer = RenderBuilder::<'a, P, V, S, T>::create_instances_buffer(&device, &instances);
             (Some(instances), Some(instances_buffer))
         } else {
             (None, None)
@@ -294,7 +294,7 @@ impl<'a, P, V, S, T> RenderBuilder<'a, P, V, S, T> where
         vec_w
     }
 
-    fn create_instances(&self) -> Vec<Instance> {
+    fn create_instances() -> Vec<Instance> {
         (0..NUM_INSTANCES_PER_ROW).flat_map(|z| {
             use cgmath::{Zero, Rotation3, InnerSpace};
 
@@ -320,7 +320,7 @@ impl<'a, P, V, S, T> RenderBuilder<'a, P, V, S, T> where
         }).collect::<Vec<_>>()
     }
 
-    fn create_instances_buffer(&self, device: &Device, instances: &Vec<Instance>) -> wgpu::Buffer {
+    fn create_instances_buffer(device: &Device, instances: &Vec<Instance>) -> wgpu::Buffer {
         let instance_data = instances.iter().map(Instance::to_raw)
             .collect::<Vec<_>>();
 
