@@ -1,7 +1,5 @@
 //= USES ===========================================================================================
 
-use irid_assets::Vertex;
-
 use crate::Device;
 use crate::texture_metadatas::TextureDepthMetadatas;
 
@@ -97,7 +95,7 @@ impl<'a> RenderPipelineBuilder<'a> {
     }
 
     ///
-    pub fn build<V: Vertex<'a>>(self, device: &Device) -> RenderPipeline {
+    pub fn build(self, device: &Device) -> RenderPipeline {
         let depth_stencil = self.depth_stencil.or(
             RenderPipelineBuilder::create_default_depth_stencil()
         );

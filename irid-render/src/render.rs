@@ -2,11 +2,10 @@
 
 use std::marker::PhantomData;
 
-use bytemuck::Pod;
 use thiserror::Error;
 use wgpu::ColorTargetState;
 
-use irid_assets::{DiffuseImageSize, DiffuseTexture, ImageSize, Texture, Vertex};
+use irid_assets::{DiffuseImageSize, DiffuseTexture, ImageSize, Texture, ModelVertex};
 use irid_utils::log2;
 
 use crate::{Adapter, Camera, CameraController, CameraMetadatas, Device, FragmentStateBuilder,
@@ -45,7 +44,6 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 pub struct RenderBuilder<
     'a,
     P: AsRef<std::path::Path>,
-    V: Vertex<'a> + Pod,
     S: ImageSize = DiffuseImageSize,
     T: Texture<S> = DiffuseTexture
 > {
@@ -54,16 +52,15 @@ pub struct RenderBuilder<
     clear_color: Option<wgpu::Color>,
     shader_module: Option<&'a wgpu::ShaderModule>,
     texture_path: Option<P>,
-    vertices: Option<&'a [V]>,  // TODO: Probably better to encapsulate the [V] logic
+    vertices: Option<&'a [ModelVertex]>,  // TODO: Probably better to encapsulate the [ModelVertex] logic
     indices: Option<&'a [u32]>,
 
     generic_size: PhantomData<S>,
     generic_texture: PhantomData<T>,
 }
 
-impl<'a, P, V, S, T> RenderBuilder<'a, P, V, S, T> where
+impl<'a, P, S, T> RenderBuilder<'a, P, S, T> where
     P: AsRef<std::path::Path>,
-    V: Vertex<'a> + Pod,
     S: ImageSize,
     T: Texture<S> {
     //- Constructors -------------------------------------------------------------------------------
@@ -110,7 +107,7 @@ impl<'a, P, V, S, T> RenderBuilder<'a, P, V, S, T> where
     }
 
     ///
-    pub fn with_vertices(mut self, vertices: &'a [V]) -> Self {
+    pub fn with_vertices(mut self, vertices: &'a [ModelVertex]) -> Self {
         self.vertices = Some(vertices);
         self
     }
@@ -159,9 +156,14 @@ impl<'a, P, V, S, T> RenderBuilder<'a, P, V, S, T> where
 
         //- Pipeline -------------------------------------------------------------------------------
 
-        let vertex = self.shader_module.map(
-            |sm| self.create_vertex_state(sm)
-        );
+        let buffers = [ModelVertex::desc(), InstanceRaw::desc()];  // TODO: the instances must be optional
+        let vertex = if self.shader_module.is_some() {
+            Some(VertexStateBuilder::new(self.shader_module.unwrap())
+                .with_buffers(&buffers)
+                .build())
+        } else {
+            None
+        };
 
         let texture_bgl = texture_bind_group_metadatas[8][8].bind_group_layout();  // TODO: 256x256 texture, hardcoded for now :(
         let camera_bgl = camera_metadatas.bind_group_layout();
@@ -184,7 +186,7 @@ impl<'a, P, V, S, T> RenderBuilder<'a, P, V, S, T> where
         let renderer_pipeline = RenderPipelineBuilder::new(vertex.unwrap())  // TODO: uhm... unwrap...
             .with_layout(&pipeline_layout)
             .with_fragment(fragment)
-            .build::<V>(&device);
+            .build(&device);
 
         //- Queue Schedule -------------------------------------------------------------------------
 
@@ -211,8 +213,8 @@ impl<'a, P, V, S, T> RenderBuilder<'a, P, V, S, T> where
         //- Instances ------------------------------------------------------------------------------
 
         let (instances, instances_buffer) = if self.vertices.is_some() {
-            let instances = RenderBuilder::<'a, P, V, S, T>::create_instances();
-            let instances_buffer = RenderBuilder::<'a, P, V, S, T>::create_instances_buffer(&device, &instances);
+            let instances = RenderBuilder::<'a, P, S, T>::create_instances();
+            let instances_buffer = RenderBuilder::<'a, P, S, T>::create_instances_buffer(&device, &instances);
             (Some(instances), Some(instances_buffer))
         } else {
             (None, None)
@@ -332,13 +334,6 @@ impl<'a, P, V, S, T> RenderBuilder<'a, P, V, S, T> where
                 usage: wgpu::BufferUsages::VERTEX,
             }
         )
-    }
-
-    fn create_vertex_state(&self, shader_module: &'a wgpu::ShaderModule) -> wgpu::VertexState<'a> {
-        let buffers = [V::desc(), InstanceRaw::desc()];  // TODO: the instances must be optional
-        VertexStateBuilder::new(shader_module)
-            .with_buffers(&buffers)
-            .build()
     }
 
     fn create_fragment_state(

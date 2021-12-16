@@ -1,8 +1,6 @@
 //= USES ===========================================================================================
 
-use bytemuck::Pod;
-
-use irid_assets::Vertex;
+use irid_assets::ModelVertex;
 
 use crate::{Adapter, Queue};
 
@@ -65,10 +63,10 @@ impl<'a> Device {
     }
 
     /// Creates a vertex Buffer with data to initialize it.
-    pub fn create_vertex_buffer_init<V: Vertex<'a> + Pod>(
+    pub fn create_vertex_buffer_init(
         &self,
         label_text: &str,
-        vertices: &[V]
+        vertices: &[ModelVertex]
     ) -> wgpu::Buffer {
         use wgpu::util::DeviceExt;
         self.wgpu_device.create_buffer_init(
