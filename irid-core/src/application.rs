@@ -9,7 +9,7 @@ use thiserror::Error;
 use winit::window::Fullscreen;
 
 use irid_assets::{DiffuseImageSize, DiffuseTexture, ModelVertex};
-use irid_renderer::{Render, RenderBuilder, RendererError, ShaderModuleBuilder};
+use irid_render::{Render, RenderBuilder, RendererError, ShaderModuleBuilder};
 
 use crate::{ApplicationConfig, Listener};
 
@@ -193,7 +193,7 @@ impl<'a, L: Listener> Application<'a, L> {
             .build(&event_loop)?;
 
         let mut renderer_builder =
-            RenderBuilder::<&Path, ModelVertex, DiffuseImageSize, DiffuseTexture>::new(&window);
+            RenderBuilder::<&Path, DiffuseImageSize, DiffuseTexture>::new(&window);
         if self.clear_color().is_some() {
             renderer_builder = renderer_builder.with_clear_color(self.clear_color().unwrap());  // TODO: no, we have to have the with_clear_color only on RendererBuilder and not also in ApplicationBuilder, so we can ride with this unwrap
         }
@@ -202,8 +202,7 @@ impl<'a, L: Listener> Application<'a, L> {
             let shader_source = wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(shader_key));
             //#[cfg(feature = "glsl")]
             //let shader_source = wgpu::ShaderSource::Glsl(std::borrow::Cow::Owned(shader_key));  // TODO: manage the glsl appropriately
-            let shader_module = ShaderModuleBuilder::new(shader_source).build(&device);
-            renderer_builder = renderer_builder.with_shader_module(&shader_module);
+            renderer_builder = renderer_builder.with_shader_module(&shader_source);
         }
         if self.texture_path.is_some() {
             renderer_builder = renderer_builder.with_texture_path(self.texture_path.unwrap())

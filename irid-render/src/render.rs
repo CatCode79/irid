@@ -8,9 +8,7 @@ use wgpu::ColorTargetState;
 use irid_assets::{DiffuseImageSize, DiffuseTexture, ImageSize, Texture, ModelVertex};
 use irid_utils::log2;
 
-use crate::{Adapter, Camera, CameraController, CameraMetadatas, Device, FragmentStateBuilder,
-            Instance, InstanceRaw, PipelineLayoutBuilder, Queue, RenderPipeline,
-            RenderPipelineBuilder, Surface, VertexStateBuilder};
+use crate::{Adapter, Camera, CameraController, CameraMetadatas, Device, FragmentStateBuilder, Instance, InstanceRaw, PipelineLayoutBuilder, Queue, RenderPipeline, RenderPipelineBuilder, ShaderModuleBuilder, Surface, VertexStateBuilder};
 use crate::texture_metadatas::{TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas};
 
 //= ERRORS =========================================================================================
@@ -50,7 +48,7 @@ pub struct RenderBuilder<
     window: &'a winit::window::Window,
 
     clear_color: Option<wgpu::Color>,
-    shader_module: Option<&'a wgpu::ShaderModule>,
+    shader_source: Option<&'a wgpu::ShaderSource<'a>>,
     texture_path: Option<P>,
     vertices: Option<&'a [ModelVertex]>,  // TODO: Probably better to encapsulate the [ModelVertex] logic
     indices: Option<&'a [u32]>,
@@ -70,7 +68,7 @@ impl<'a, P, S, T> RenderBuilder<'a, P, S, T> where
         Self {
             window,
             clear_color: None,
-            shader_module: None,
+            shader_source: None,
             texture_path: None,
             vertices: None,
             indices: None,
@@ -95,8 +93,8 @@ impl<'a, P, S, T> RenderBuilder<'a, P, S, T> where
     }
 
     ///
-    pub fn with_shader_module(mut self, shader_module: &'a wgpu::ShaderModule) -> Self {
-        self.shader_module = Some(shader_module);
+    pub fn with_shader_source(mut self, shader_source: &'a wgpu::ShaderSource<'a>) -> Self {
+        self.shader_source = Some(shader_source);
         self
     }
 
@@ -156,9 +154,15 @@ impl<'a, P, S, T> RenderBuilder<'a, P, S, T> where
 
         //- Pipeline -------------------------------------------------------------------------------
 
+        let shader_module = if self.shader_source.is_some() {
+            Some(&ShaderModuleBuilder::new(*self.shader_source.unwrap()).build(&device))
+        } else {
+            None
+        };
+
         let buffers = [ModelVertex::desc(), InstanceRaw::desc()];  // TODO: the instances must be optional
-        let vertex = if self.shader_module.is_some() {
-            Some(VertexStateBuilder::new(self.shader_module.unwrap())
+        let vertex = if shader_module.is_some() {
+            Some(VertexStateBuilder::new(shader_module.unwrap())
                 .with_buffers(&buffers)
                 .build())
         } else {
@@ -179,7 +183,7 @@ impl<'a, P, S, T> RenderBuilder<'a, P, S, T> where
             }),
             write_mask: wgpu::ColorWrites::ALL,
         }];
-        let fragment = self.shader_module.map(
+        let fragment = shader_module.map(
             |sm| self.create_fragment_state(sm, &targets)
         );
 
@@ -238,7 +242,7 @@ impl<'a, P, S, T> RenderBuilder<'a, P, S, T> where
             texture_bind_group_metadatas,
             texture_depth_metadatas,
 
-            shader_module: self.shader_module,
+            shader_module,
             renderer_pipeline,
             vertex_buffer,
             index_buffer,
@@ -363,11 +367,11 @@ pub struct Render<'a> {
     camera_metadatas: CameraMetadatas,
     camera_controller: CameraController,
 
-    texture_image_metadatas: Vec<Vec<TextureImageMetadatas>>,
+    #[allow(dead_code)] texture_image_metadatas: Vec<Vec<TextureImageMetadatas>>,
     texture_bind_group_metadatas: Vec<Vec<TextureBindGroupMetadatas>>,
     texture_depth_metadatas: TextureDepthMetadatas,
 
-    shader_module: Option<&'a wgpu::ShaderModule>,
+    #[allow(dead_code)] shader_module: Option<&'a wgpu::ShaderModule>,
     renderer_pipeline: RenderPipeline,  // TODO: probably also optional?
     vertex_buffer: Option<wgpu::Buffer>,  // TODO: maybe this is better to move, this buffer, and the index buffer, inside the render_pass or pipeline object
     index_buffer: Option<wgpu::Buffer>,
@@ -468,20 +472,20 @@ impl<'a> Render<'a> {
             render_pass.set_bind_group(0, self.texture_bind_group_metadatas[8][8].bind_group(), &[]);  // TODO: hardcoded :(
             render_pass.set_bind_group(1, self.camera_metadatas.bind_group(), &[]);
             if self.vertex_buffer.is_some() {
-                render_pass.set_vertex_buffer(0, self.vertex_buffer.unwrap().slice(..));
+                render_pass.set_vertex_buffer(0, self.vertex_buffer.as_ref().unwrap().slice(..));
             }
             if self.instances_buffer.is_some() {
-                render_pass.set_vertex_buffer(1, self.instances_buffer.unwrap().slice(..));
+                render_pass.set_vertex_buffer(1, self.instances_buffer.as_ref().unwrap().slice(..));
             }
             if self.index_buffer.is_some() {
                 render_pass.set_index_buffer(
-                    self.index_buffer.unwrap().slice(..),
+                    self.index_buffer.as_ref().unwrap().slice(..),
                     wgpu::IndexFormat::Uint16,
                 );
                 render_pass.draw_indexed(
                     0..self.num_indices,
                     0,
-                    0..self.instances.unwrap().len() as _,
+                    0..self.instances.as_ref().unwrap().len() as _,
                 );
             }
         }
