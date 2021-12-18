@@ -192,30 +192,21 @@ impl<'a, L: Listener> Application<'a, L> {
             //.with_window_icon() // TODO: because yes!
             .build(&event_loop)?;
 
-        let mut renderer_builder =
-            RenderBuilder::<&Path, DiffuseImageSize, DiffuseTexture>::new(&window);
-        if self.clear_color().is_some() {
-            renderer_builder = renderer_builder.with_clear_color(self.clear_color().unwrap());  // TODO: no, we have to have the with_clear_color only on RendererBuilder and not also in ApplicationBuilder, so we can ride with this unwrap
-        }
+        let mut render_builder = RenderBuilder::<&Path, DiffuseImageSize, DiffuseTexture>::new(&window)
+                .with_clear_color(self.clear_color())  // TODO: no, we have to have the with_clear_color only on RenderBuilder and not also in ApplicationBuilder, so we can ride with this unwrap
+                .with_texture_path(self.texture_path)
+                .with_vertices(self.vertices)
+                .with_indices(self.indices);
         if self.shaders.is_some() {
             let shader_key = self.shaders.unwrap().get("shader.wgsl").unwrap().clone();  // TODO: remove clone
             let shader_source = wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(shader_key));
             //#[cfg(feature = "glsl")]
             //let shader_source = wgpu::ShaderSource::Glsl(std::borrow::Cow::Owned(shader_key));  // TODO: manage the glsl appropriately
-            renderer_builder = renderer_builder.with_shader_module(&shader_source);
+            render_builder = render_builder.with_shader_source(&shader_source);
         }
-        if self.texture_path.is_some() {
-            renderer_builder = renderer_builder.with_texture_path(self.texture_path.unwrap())
-        }
-        if self.vertices.is_some() {
-            renderer_builder = renderer_builder.with_vertices(self.vertices.unwrap())
-        }
-        if self.indices.is_some() {
-            renderer_builder = renderer_builder.with_indices(self.indices.unwrap())
-        }
-        let mut renderer = renderer_builder.build()?;
+        let mut render = render_builder.build()?;
 
-        // It is preferable to maximize the windows after the surface and renderer setup,
+        // It is preferable to maximize the windows after the surface and render setup,
         // but is not mandatory.
         // TODO: Vulkan issue https://github.com/gfx-rs/wgpu/issues/1958 gives false positives
         if self.config.window_starts_maximized() {
@@ -245,7 +236,7 @@ impl<'a, L: Listener> Application<'a, L> {
             } => if window_id == window.id() {  // TODO: multi-monitor support
                 match window_event {
                     winit::event::WindowEvent::Resized(physical_size) => {
-                        self.on_window_resize(&mut renderer, physical_size);
+                        self.on_window_resize(&mut render, physical_size);
                     },
 
                     winit::event::WindowEvent::Moved(physical_position) => {
@@ -288,7 +279,7 @@ impl<'a, L: Listener> Application<'a, L> {
                         self.on_window_keyboard_input(
                             control_flow,
                             device_id,
-                            &mut renderer,
+                            &mut render,
                             &input);
                     },
 
@@ -356,7 +347,7 @@ impl<'a, L: Listener> Application<'a, L> {
                         new_inner_size
                     } => {
                         self.on_window_scale_change(
-                            &mut renderer,
+                            &mut render,
                             scale_factor,
                             new_inner_size
                         );
@@ -385,7 +376,7 @@ impl<'a, L: Listener> Application<'a, L> {
             },
 
             winit::event::Event::MainEventsCleared => {
-                self.on_redraw(&mut renderer, control_flow);
+                self.on_redraw(&mut render, control_flow);
             },
 
             winit::event::Event::RedrawRequested(window_id) => {
@@ -426,12 +417,12 @@ impl<'a, L: Listener> Application<'a, L> {
     #[inline(always)]
     fn on_redraw(
         &self,
-        renderer: &mut Render,
+        render: &mut Render,
         control_flow: &mut winit::event_loop::ControlFlow
     ) {
         let use_default_behaviour = self.listener.on_redraw();
         if use_default_behaviour {
-            match renderer.redraw() {
+            match render.redraw() {
                 Ok(_) => {},
                 Err(error) => match error {
                     // These errors should be resolved by the next frame
@@ -439,7 +430,7 @@ impl<'a, L: Listener> Application<'a, L> {
                         eprintln!("{:?}", error),  // TODO: better error messages?
 
                     // Recreate the swap chain if lost
-                    wgpu::SurfaceError::Lost => renderer.refresh_current_size(),
+                    wgpu::SurfaceError::Lost => render.refresh_current_size(),
 
                     // The system is out of memory, we should probably quit
                     wgpu::SurfaceError::OutOfMemory =>
@@ -465,14 +456,14 @@ impl<'a, L: Listener> Application<'a, L> {
 
     fn on_window_resize(
         &self,
-        renderer: &mut Render,
+        render: &mut Render,
         physical_size: winit::dpi::PhysicalSize<u32>
     ) {
         let use_default_behaviour = self.listener.on_window_resize(physical_size);
         if use_default_behaviour {
-            // TODO I have to choose if I have to to keep this method here or move it to renderer
+            // TODO I have to choose if I have to to keep this method here or move it to render
             //  or window struct.
-            renderer.resize(physical_size);
+            render.resize(physical_size);
         }
     }
 
@@ -521,7 +512,7 @@ impl<'a, L: Listener> Application<'a, L> {
         &self,
         control_flow: &mut winit::event_loop::ControlFlow,
         device_id: winit::event::DeviceId,
-        renderer: &mut Render,
+        render: &mut Render,
         input: &winit::event::KeyboardInput
     ) {
         // First call a generic method to manage the key events
@@ -534,7 +525,7 @@ impl<'a, L: Listener> Application<'a, L> {
         // Then check the input's type for default behaviours
         if use_default_behaviour {
             // Check the camera controller
-            renderer.process_camera_events(input);  // TODO Enhance this system
+            render.process_camera_events(input);  // TODO Enhance this system
 
             if let winit::event::KeyboardInput {
                     state: winit::event::ElementState::Pressed,
@@ -610,7 +601,7 @@ impl<'a, L: Listener> Application<'a, L> {
 
     fn on_window_scale_change(
         &self,
-        renderer: &mut Render,
+        render: &mut Render,
         scale_factor: f64,
         new_inner_size: &mut winit::dpi::PhysicalSize<u32>// TODO Probably I have to pass it without & (also below)
     ) {
@@ -620,7 +611,7 @@ impl<'a, L: Listener> Application<'a, L> {
         );
 
         if use_default_behaviour {
-            renderer.resize(*new_inner_size);
+            render.resize(*new_inner_size);
         }
     }
 

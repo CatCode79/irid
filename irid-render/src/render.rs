@@ -87,32 +87,32 @@ impl<'a, P, S, T> RenderBuilder<'a, P, S, T> where
 
     /// Color used by a [render pass color attachment](wgpu::RenderPassColorAttachment)
     /// to perform a [clear operation](wgpu::LoadOp).
-    pub fn with_clear_color(mut self, clear_color: wgpu::Color) -> Self {
-        self.clear_color = Some(clear_color);
+    pub fn with_clear_color<CC: Into<Option<wgpu::Color>>>(mut self, clear_color: wgpu::Color) -> Self {
+        self.clear_color = clear_color.into();
         self
     }
 
     ///
-    pub fn with_shader_source(mut self, shader_source: &'a wgpu::ShaderSource<'a>) -> Self {
+    pub fn with_glsl_shader_id(mut self, shader_source: &'a wgpu::ShaderSource<'a>) -> Self {
         self.shader_source = Some(shader_source);
         self
     }
 
     ///
-    pub fn with_texture_path(mut self, texture_path: P) -> Self {
-        self.texture_path = Some(texture_path);
+    pub fn with_texture_path<TP: Into<Option<P>>>(mut self, texture_path: TP) -> Self {
+        self.texture_path = texture_path.into();
         self
     }
 
     ///
-    pub fn with_vertices(mut self, vertices: &'a [ModelVertex]) -> Self {
-        self.vertices = Some(vertices);
+    pub fn with_vertices<VE: Into<Option<&'a [ModelVertex]>>>(mut self, vertices: &'a [ModelVertex]) -> Self {
+        self.vertices = vertices.into();
         self
     }
 
     ///
-    pub fn with_indices(mut self, indices: &'a [u32]) -> Self {
-        self.indices = Some(indices);
+    pub fn with_indices<IN: Into<Option<&'a [u32]>>>(mut self, indices: &'a [u32]) -> Self {
+        self.indices = indices.into();
         self
     }
 
