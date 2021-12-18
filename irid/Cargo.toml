@@ -11,6 +11,6 @@ publish = false
 
 [dependencies]
 irid-assets = { path = "../irid-assets" }
-irid-core = { path = "../irid-core" }
+irid-core = { path = "../irid-app" }
 irid-render = { path = "../irid-render" }
 irid-utils = { path = "../irid-utils" }

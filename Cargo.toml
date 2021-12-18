@@ -2,8 +2,8 @@
 resolver = "2"
 members = [
     "irid",
+    "irid-app",
     "irid-assets",
-    "irid-core",
     "irid-render",
     "irid-utils",
 ]
