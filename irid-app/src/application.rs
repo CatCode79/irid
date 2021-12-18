@@ -22,13 +22,11 @@ pub enum ApplicationError {
     PrimaryMonitorNotFound,
     #[error("the OS cannot perform the requested operation")]
     WindowOsError {
-        #[from]
-        source: winit::error::OsError,
+        #[from] source: winit::error::OsError,
     },
     #[error("the Renderer cannot be built")]
     RendererError {
-        #[from]
-        source: RendererError,
+        #[from] source: RendererError,
     },
 }
 

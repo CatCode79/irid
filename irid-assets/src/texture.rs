@@ -11,8 +11,7 @@ use crate::{DiffuseImage, DiffuseImageSize, Image, ImageSize};
 pub enum TextureError {
     #[error("can’t identify any monitor as a primary one")]
     ImageError {
-        #[from]
-        source: image::error::ImageError,
+        #[from] source: image::error::ImageError,
     },
 }
 

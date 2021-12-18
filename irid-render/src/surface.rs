@@ -13,8 +13,7 @@ pub enum SurfaceError {
     NoPreferredFormat(wgpu::AdapterInfo),
     #[error("An adapter compatible with the given surface could not be obtained")]
     AdapterNotObtained {
-        #[from]
-        source: AdapterError,
+        #[from] source: AdapterError,
     },
 }
 

@@ -23,8 +23,7 @@ pub enum RendererError {
     SurfaceAdapterRequest,
     #[error("unable to get a Device")]
     DeviceRequest {
-        #[from]
-        source: wgpu::RequestDeviceError,
+        #[from] source: wgpu::RequestDeviceError,
     },
 }
 
