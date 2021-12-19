@@ -39,7 +39,7 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 //= RENDERER BUILDER ===============================================================================
 
 ///
-#[derive(Clone, Debug)]
+#[derive(Clone)]  // TODO: try to add also the Debug trait
 pub struct RenderBuilder<
     'a,
     P: AsRef<std::path::Path>,

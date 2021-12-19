@@ -10,7 +10,7 @@ license = "MIT OR Apache-2.0"
 publish = false
 
 [dependencies]
+irid-app = { path = "../irid-app" }
 irid-assets = { path = "../irid-assets" }
-irid-core = { path = "../irid-app" }
 irid-render = { path = "../irid-render" }
 irid-utils = { path = "../irid-utils" }

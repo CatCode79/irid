@@ -34,12 +34,14 @@ pub enum ApplicationError {
 
 /// Build a new [Application] with wanted values.
 #[derive(Debug)]
-pub struct ApplicationBuilder<'a, L: Listener> {
+pub struct ApplicationBuilder<'a, L, P> where L: Listener, P: AsRef<std::path::Path> {
     listener: L,
     config: Option<ApplicationConfig>,
     title: Option<String>,
-    shaders: Option<HashMap<String, String>>,
-    texture_path: Option<&'a Path>,
+
+    // Renderer stuff
+    shader_paths: Option<Vec<P>>,
+    texture_path: Option<P>,
     vertices: Option<&'a [ModelVertex]>,
     indices: Option<&'a [u32]>,
 
@@ -47,7 +49,7 @@ pub struct ApplicationBuilder<'a, L: Listener> {
     clear_color: Option<wgpu::Color>,
 }
 
-impl<'a, L: Listener> ApplicationBuilder<'a, L> {
+impl<'a, L, P> ApplicationBuilder<'a, L, P> where L: Listener, P: AsRef<std::path::Path> {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
@@ -56,7 +58,7 @@ impl<'a, L: Listener> ApplicationBuilder<'a, L> {
             listener,
             config: None,
             title: None,
-            shaders: None,
+            shader_paths: None,
             texture_path: None,
             vertices: None,
             indices: None,
@@ -73,13 +75,13 @@ impl<'a, L: Listener> ApplicationBuilder<'a, L> {
     }
 
     ///
-    pub fn with_config_path<P: AsRef<std::path::Path>>(mut self, filepath: P) -> Self {
+    pub fn with_config_path(mut self, filepath: P) -> Self {
         self.config = Some(ApplicationConfig::new(filepath));
         self
     }
 
     ///
-    pub fn with_config(mut self, config: ApplicationConfig) -> Self {
+    pub fn with_config<C: Into<Option<ApplicationConfig>>>(mut self, config: C) -> Self {
         self.config = Some(config);
         self
     }
@@ -91,13 +93,13 @@ impl<'a, L: Listener> ApplicationBuilder<'a, L> {
     }
 
     /// TODO "I have to refactor all the assets and pipeline management"
-    pub fn with_shaders(mut self, shaders: HashMap<String, String>) -> Self {
-        self.shaders = Some(shaders);
+    pub fn with_shader_paths(mut self, shader_paths: Vec<P>) -> Self {
+        self.shader_paths = Some(shader_paths);
         self
     }
 
     /// TODO "I have to refactor all the assets and pipeline management"
-    pub fn with_texture_path(mut self, texture_path: &'a Path) -> Self {
+    pub fn with_texture_path(mut self, texture_path: P) -> Self {
         self.texture_path = Some(texture_path);
         self
     }
@@ -125,12 +127,12 @@ impl<'a, L: Listener> ApplicationBuilder<'a, L> {
 
     /// Build a new [Application] with given values.
     // TODO I have to manage the Nones values for every unwrap
-    pub fn build(self) -> Application<'a, L> {
+    pub fn build(self) -> Application<'a, L, P> {
         Application {
             listener: self.listener,
             config: self.config.unwrap_or_default(),
             title: self.title.unwrap_or_else(||String::from("Irid Application")),
-            shaders: self.shaders,
+            shader_paths: self.shader_paths,
             texture_path: self.texture_path,
             vertices: self.vertices,
             indices: self.indices,
@@ -143,14 +145,14 @@ impl<'a, L: Listener> ApplicationBuilder<'a, L> {
 
 /// Manages the whole game setup and logic.
 #[derive(Debug)]
-pub struct Application<'a, L: Listener> {
+pub struct Application<'a, L, P> where L: Listener, P: AsRef<std::path::Path> {
     listener: L,
     config: ApplicationConfig,
     title: String,
 
-    // Optional fields
-    shaders: Option<HashMap<String, String>>,
-    texture_path: Option<&'a Path>,
+    // Renderer stuffs
+    shader_paths: Option<Vec<P>>,
+    texture_path: Option<P>,
     vertices: Option<&'a [ModelVertex]>,
     indices: Option<&'a [u32]>,
 
@@ -158,7 +160,7 @@ pub struct Application<'a, L: Listener> {
     clear_color: Option<wgpu::Color>,
 }
 
-impl<'a, L: Listener> Application<'a, L> {
+impl<'a, L, P> Application<'a, L, P> where L: Listener, P: AsRef<std::path::Path> {
     /// Starts the
     /// [event loop](https://docs.rs/winit/0.25.0/winit/event_loop/struct.EventLoop.html).
     ///
@@ -191,12 +193,12 @@ impl<'a, L: Listener> Application<'a, L> {
             .build(&event_loop)?;
 
         let mut render_builder = RenderBuilder::<&Path, DiffuseImageSize, DiffuseTexture>::new(&window)
-                .with_clear_color(self.clear_color())  // TODO: no, we have to have the with_clear_color only on RenderBuilder and not also in ApplicationBuilder, so we can ride with this unwrap
-                .with_texture_path(self.texture_path)
-                .with_vertices(self.vertices)
-                .with_indices(self.indices);
-        if self.shaders.is_some() {
-            let shader_key = self.shaders.unwrap().get("shader.wgsl").unwrap().clone();  // TODO: remove clone
+            .with_clear_color(self.clear_color())  // TODO: no, we have to have the with_clear_color only on RenderBuilder and not also in ApplicationBuilder, so we can ride with this unwrap
+            .with_texture_path(self.texture_path)
+            .with_vertices(self.vertices)
+            .with_indices(self.indices);
+        if self.shader_paths.is_some() {
+            let shader_key = self.shader_paths.unwrap().get("shader.wgsl").unwrap().clone();  // TODO: remove clone
             let shader_source = wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(shader_key));
             //#[cfg(feature = "glsl")]
             //let shader_source = wgpu::ShaderSource::Glsl(std::borrow::Cow::Owned(shader_key));  // TODO: manage the glsl appropriately
