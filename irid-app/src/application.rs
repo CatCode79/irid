@@ -81,7 +81,7 @@ impl<'a, L, P> ApplicationBuilder<'a, L, P> where L: Listener, P: AsRef<std::pat
     }
 
     ///
-    pub fn with_config<C: Into<Option<ApplicationConfig>>>(mut self, config: C) -> Self {
+    pub fn with_config<AC: Into<Option<ApplicationConfig>>>(mut self, config: AC) -> Self {
         self.config = Some(config);
         self
     }
@@ -192,19 +192,13 @@ impl<'a, L, P> Application<'a, L, P> where L: Listener, P: AsRef<std::path::Path
             //.with_window_icon() // TODO: because yes!
             .build(&event_loop)?;
 
-        let mut render_builder = RenderBuilder::<&Path, DiffuseImageSize, DiffuseTexture>::new(&window)
+        let render = RenderBuilder::<P, DiffuseImageSize, DiffuseTexture>::new(&window)
             .with_clear_color(self.clear_color())  // TODO: no, we have to have the with_clear_color only on RenderBuilder and not also in ApplicationBuilder, so we can ride with this unwrap
+            .with_shader_source(self.shader_paths.unwrap().first())  // TODO: remove unwrap
             .with_texture_path(self.texture_path)
             .with_vertices(self.vertices)
-            .with_indices(self.indices);
-        if self.shader_paths.is_some() {
-            let shader_key = self.shader_paths.unwrap().get("shader.wgsl").unwrap().clone();  // TODO: remove clone
-            let shader_source = wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(shader_key));
-            //#[cfg(feature = "glsl")]
-            //let shader_source = wgpu::ShaderSource::Glsl(std::borrow::Cow::Owned(shader_key));  // TODO: manage the glsl appropriately
-            render_builder = render_builder.with_shader_source(&shader_source);
-        }
-        let mut render = render_builder.build()?;
+            .with_indices(self.indices)
+            .build();
 
         // It is preferable to maximize the windows after the surface and render setup,
         // but is not mandatory.

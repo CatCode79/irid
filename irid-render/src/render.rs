@@ -1,9 +1,10 @@
 //= USES ===========================================================================================
 
+use std::fmt::Debug;
+use std::fs::read_to_string;
 use std::marker::PhantomData;
 
 use thiserror::Error;
-use wgpu::ColorTargetState;
 
 use irid_assets::{DiffuseImageSize, DiffuseTexture, ImageSize, Texture, ModelVertex};
 use irid_utils::log2;
@@ -49,7 +50,7 @@ pub struct RenderBuilder<
     window: &'a winit::window::Window,
 
     clear_color: Option<wgpu::Color>,
-    shader_source: Option<&'a wgpu::ShaderSource<'a>>,
+    shader_path: Option<P>,
     texture_path: Option<P>,
     vertices: Option<&'a [ModelVertex]>,  // TODO: Probably better to encapsulate the [ModelVertex] logic
     indices: Option<&'a [u32]>,
@@ -59,7 +60,7 @@ pub struct RenderBuilder<
 }
 
 impl<'a, P, S, T> RenderBuilder<'a, P, S, T> where
-    P: AsRef<std::path::Path>,
+    P: AsRef<std::path::Path> + Debug,
     S: ImageSize,
     T: Texture<S> {
     //- Constructors -------------------------------------------------------------------------------
@@ -69,7 +70,7 @@ impl<'a, P, S, T> RenderBuilder<'a, P, S, T> where
         Self {
             window,
             clear_color: None,
-            shader_source: None,
+            shader_path: None,
             texture_path: None,
             vertices: None,
             indices: None,
@@ -94,8 +95,8 @@ impl<'a, P, S, T> RenderBuilder<'a, P, S, T> where
     }
 
     ///
-    pub fn with_glsl_shader_id(mut self, shader_source: &'a wgpu::ShaderSource<'a>) -> Self {
-        self.shader_source = Some(shader_source);
+    pub fn with_shader_path<SP: Into<Option<P>>>(mut self, shader_path: SP) -> Self {
+        self.shader_path = shader_path.into();
         self
     }
 
@@ -120,7 +121,7 @@ impl<'a, P, S, T> RenderBuilder<'a, P, S, T> where
     //- Build --------------------------------------------------------------------------------------
 
     ///
-    pub fn build(self) -> Result<Render<'a>, RendererError> {
+    pub fn build(self) -> Result<Render, RendererError> {
         //- Surface, Device, Queue -----------------------------------------------------------------
 
         let window_size = self.window.inner_size();
@@ -155,42 +156,52 @@ impl<'a, P, S, T> RenderBuilder<'a, P, S, T> where
 
         //- Pipeline -------------------------------------------------------------------------------
 
-        let shader_module = if self.shader_source.is_some() {
-            Some(&ShaderModuleBuilder::new(*self.shader_source.unwrap()).build(&device))
-        } else {
-            None
-        };
+        let (shader_module, vertex, fragment) = if self.shader_path.is_some() {
+            let path = &self.shader_path.unwrap();
+            let frag_wgsl = match read_to_string(path) {
+                Ok(file) => file,
+                Err(why) => panic!("Couldn't open {:?} file: {}", path, why),
+            };
 
-        let buffers = [ModelVertex::desc(), InstanceRaw::desc()];  // TODO: the instances must be optional
-        let vertex = if shader_module.is_some() {
-            Some(VertexStateBuilder::new(shader_module.unwrap())
+            let shader_source = wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(frag_wgsl));
+            //#[cfg(feature = "glsl")]  // TODO: manage the glsl appropriately
+            //wgpu::ShaderSource::Glsl(std::borrow::Cow::Owned(shader_key))
+
+            let shader_module = ShaderModuleBuilder::new(shader_source).build(&device);
+
+            let buffers = [ModelVertex::desc(), InstanceRaw::desc()];  // TODO: the instances must be optional
+            let vertex = VertexStateBuilder::new(&shader_module)
                 .with_buffers(&buffers)
-                .build())
+                .build();
+
+            let targets = [wgpu::ColorTargetState {
+                format: surface.preferred_format(),  //.unwrap_or(wgpu::TextureFormat::Rgba16Float),
+                blend: Some(wgpu::BlendState {
+                    color: wgpu::BlendComponent::REPLACE,
+                    alpha: wgpu::BlendComponent::REPLACE,
+                }),
+                write_mask: wgpu::ColorWrites::ALL,
+            }];
+            let fragment = FragmentStateBuilder::new(&shader_module)
+                .with_targets(&targets)
+                .build();
+
+            (Some(shader_module), Some(vertex), Some(fragment))
         } else {
-            None
+            (None, None, None)
         };
 
-        let texture_bgl = texture_bind_group_metadatas[8][8].bind_group_layout();  // TODO: 256x256 texture, hardcoded for now :(
-        let camera_bgl = camera_metadatas.bind_group_layout();
-        let pipeline_layout = PipelineLayoutBuilder::new()
-            .with_bind_group_layouts(&[texture_bgl, camera_bgl])
-            .build(&device);
-
-        let targets = [wgpu::ColorTargetState {
-            format: surface.preferred_format(),  //.unwrap_or(wgpu::TextureFormat::Rgba16Float),
-            blend: Some(wgpu::BlendState {
-                color: wgpu::BlendComponent::REPLACE,
-                alpha: wgpu::BlendComponent::REPLACE,
-            }),
-            write_mask: wgpu::ColorWrites::ALL,
-        }];
-        let fragment = shader_module.map(
-            |sm| self.create_fragment_state(sm, &targets)
-        );
+        let pipeline_layout = {
+            let texture_bgl = texture_bind_group_metadatas[8][8].bind_group_layout();  // TODO: 256x256 texture, hardcoded for now :(
+            let camera_bgl = camera_metadatas.bind_group_layout();
+            PipelineLayoutBuilder::new()
+                .with_bind_group_layouts(&[texture_bgl, camera_bgl])
+                .build(&device)
+        };
 
         let renderer_pipeline = RenderPipelineBuilder::new(vertex.unwrap())  // TODO: uhm... unwrap...
-            .with_layout(&pipeline_layout)
             .with_fragment(fragment)
+            .with_layout(&pipeline_layout)
             .build(&device);
 
         //- Queue Schedule -------------------------------------------------------------------------
@@ -340,22 +351,12 @@ impl<'a, P, S, T> RenderBuilder<'a, P, S, T> where
             }
         )
     }
-
-    fn create_fragment_state(
-        &self,
-        shader_module: &'a wgpu::ShaderModule,
-        targets: &'a [ColorTargetState],
-    ) -> wgpu::FragmentState<'a> {
-        FragmentStateBuilder::new(shader_module)
-            .with_targets(targets)
-            .build()
-    }
 }
 
 //= RENDERER OBJECT ================================================================================
 
 ///
-pub struct Render<'a> {
+pub struct Render {
     window_size: winit::dpi::PhysicalSize<u32>,
     clear_color: wgpu::Color,
     surface: Surface,
@@ -372,7 +373,7 @@ pub struct Render<'a> {
     texture_bind_group_metadatas: Vec<Vec<TextureBindGroupMetadatas>>,
     texture_depth_metadatas: TextureDepthMetadatas,
 
-    #[allow(dead_code)] shader_module: Option<&'a wgpu::ShaderModule>,
+    #[allow(dead_code)] shader_module: Option<wgpu::ShaderModule>,
     renderer_pipeline: RenderPipeline,  // TODO: probably also optional?
     vertex_buffer: Option<wgpu::Buffer>,  // TODO: maybe this is better to move, this buffer, and the index buffer, inside the render_pass or pipeline object
     index_buffer: Option<wgpu::Buffer>,
@@ -381,7 +382,7 @@ pub struct Render<'a> {
     instances_buffer: Option<wgpu::Buffer>,
 }
 
-impl<'a> Render<'a> {
+impl Render {
     //- Surface (Re)size ---------------------------------------------------------------------------
 
     /// Getter for the windows's physical size attribute.
