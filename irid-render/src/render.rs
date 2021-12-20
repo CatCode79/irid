@@ -156,21 +156,25 @@ impl<'a, P, S, T> RenderBuilder<'a, P, S, T> where
 
         //- Pipeline -------------------------------------------------------------------------------
 
-        let (shader_module, vertex, fragment) = if self.shader_path.is_some() {
+        let shader_module = if self.shader_path.is_some() {
             let path = &self.shader_path.unwrap();
-            let frag_wgsl = match read_to_string(path) {
-                Ok(file) => file,
-                Err(why) => panic!("Couldn't open {:?} file: {}", path, why),
+            let content = match read_to_string(path) {
+                Ok(content) => content,
+                Err(err) => panic!("Couldn't open {:?} file: {}", path, err),
             };
 
-            let shader_source = wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(frag_wgsl));
-            //#[cfg(feature = "glsl")]  // TODO: manage the glsl appropriately
+            let source = wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(content));
+            //#[cfg(feature = "glsl")]  // TODO: manage the glsl appropriately checking at least the file extension (pretty rough..)
             //wgpu::ShaderSource::Glsl(std::borrow::Cow::Owned(shader_key))
 
-            let shader_module = ShaderModuleBuilder::new(shader_source).build(&device);
+            Some(ShaderModuleBuilder::new(source).build(&device))
+        } else {
+            None
+        };
 
+        let (vertex, fragment) = if shader_module.is_some() {
             let buffers = [ModelVertex::desc(), InstanceRaw::desc()];  // TODO: the instances must be optional
-            let vertex = VertexStateBuilder::new(&shader_module)
+            let vertex = VertexStateBuilder::new(&shader_module.unwrap())
                 .with_buffers(&buffers)
                 .build();
 
@@ -182,13 +186,13 @@ impl<'a, P, S, T> RenderBuilder<'a, P, S, T> where
                 }),
                 write_mask: wgpu::ColorWrites::ALL,
             }];
-            let fragment = FragmentStateBuilder::new(&shader_module)
+            let fragment = FragmentStateBuilder::new(&shader_module.unwrap())
                 .with_targets(&targets)
                 .build();
 
-            (Some(shader_module), Some(vertex), Some(fragment))
+            (Some(vertex), Some(fragment))
         } else {
-            (None, None, None)
+            (None, None)
         };
 
         let pipeline_layout = {
