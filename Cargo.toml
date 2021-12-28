@@ -4,6 +4,6 @@ members = [
     "irid",
     "irid-app",
     "irid-assets",
-    "irid-render",
+    "irid-renderer",
     "irid-utils",
 ]

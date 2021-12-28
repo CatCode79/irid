@@ -9,7 +9,7 @@ use thiserror::Error;
 use winit::window::Fullscreen;
 
 use irid_assets::{DiffuseImageSize, DiffuseTexture, ModelVertex};
-use irid_render::{Render, RenderBuilder, RendererError, ShaderModuleBuilder};
+use irid_render::{Renderer, RendererBuilder, RendererError, ShaderModuleBuilder};
 
 use crate::{ApplicationConfig, Listener};
 
@@ -192,7 +192,7 @@ impl<'a, L, P> Application<'a, L, P> where L: Listener, P: AsRef<std::path::Path
             //.with_window_icon() // TODO: because yes!
             .build(&event_loop)?;
 
-        let render = RenderBuilder::<P, DiffuseImageSize, DiffuseTexture>::new(&window)
+        let renderer = RendererBuilder::<P, DiffuseImageSize, DiffuseTexture>::new(&window)
             .with_clear_color(self.clear_color())  // TODO: no, we have to have the with_clear_color only on RenderBuilder and not also in ApplicationBuilder, so we can ride with this unwrap
             .with_shader_source(self.shader_paths.unwrap().first())  // TODO: remove unwrap
             .with_texture_path(self.texture_path)
@@ -200,7 +200,7 @@ impl<'a, L, P> Application<'a, L, P> where L: Listener, P: AsRef<std::path::Path
             .with_indices(self.indices)
             .build();
 
-        // It is preferable to maximize the windows after the surface and render setup,
+        // It is preferable to maximize the windows after the surface and renderer setup,
         // but is not mandatory.
         // TODO: Vulkan issue https://github.com/gfx-rs/wgpu/issues/1958 gives false positives
         if self.config.window_starts_maximized() {
@@ -230,7 +230,7 @@ impl<'a, L, P> Application<'a, L, P> where L: Listener, P: AsRef<std::path::Path
             } => if window_id == window.id() {  // TODO: multi-monitor support
                 match window_event {
                     winit::event::WindowEvent::Resized(physical_size) => {
-                        self.on_window_resize(&mut render, physical_size);
+                        self.on_window_resize(&mut renderer, physical_size);
                     },
 
                     winit::event::WindowEvent::Moved(physical_position) => {
@@ -273,7 +273,7 @@ impl<'a, L, P> Application<'a, L, P> where L: Listener, P: AsRef<std::path::Path
                         self.on_window_keyboard_input(
                             control_flow,
                             device_id,
-                            &mut render,
+                            &mut renderer,
                             &input);
                     },
 
@@ -341,7 +341,7 @@ impl<'a, L, P> Application<'a, L, P> where L: Listener, P: AsRef<std::path::Path
                         new_inner_size
                     } => {
                         self.on_window_scale_change(
-                            &mut render,
+                            &mut renderer,
                             scale_factor,
                             new_inner_size
                         );
@@ -370,7 +370,7 @@ impl<'a, L, P> Application<'a, L, P> where L: Listener, P: AsRef<std::path::Path
             },
 
             winit::event::Event::MainEventsCleared => {
-                self.on_redraw(&mut render, control_flow);
+                self.on_redraw(&mut renderer, control_flow);
             },
 
             winit::event::Event::RedrawRequested(window_id) => {
@@ -411,12 +411,12 @@ impl<'a, L, P> Application<'a, L, P> where L: Listener, P: AsRef<std::path::Path
     #[inline(always)]
     fn on_redraw(
         &self,
-        render: &mut Render,
+        renderer: &mut Renderer,
         control_flow: &mut winit::event_loop::ControlFlow
     ) {
         let use_default_behaviour = self.listener.on_redraw();
         if use_default_behaviour {
-            match render.redraw() {
+            match renderer.redraw() {
                 Ok(_) => {},
                 Err(error) => match error {
                     // These errors should be resolved by the next frame
@@ -424,7 +424,7 @@ impl<'a, L, P> Application<'a, L, P> where L: Listener, P: AsRef<std::path::Path
                         eprintln!("{:?}", error),  // TODO: better error messages?
 
                     // Recreate the swap chain if lost
-                    wgpu::SurfaceError::Lost => render.refresh_current_size(),
+                    wgpu::SurfaceError::Lost => renderer.refresh_current_size(),
 
                     // The system is out of memory, we should probably quit
                     wgpu::SurfaceError::OutOfMemory =>
@@ -450,14 +450,14 @@ impl<'a, L, P> Application<'a, L, P> where L: Listener, P: AsRef<std::path::Path
 
     fn on_window_resize(
         &self,
-        render: &mut Render,
+        renderer: &mut Renderer,
         physical_size: winit::dpi::PhysicalSize<u32>
     ) {
         let use_default_behaviour = self.listener.on_window_resize(physical_size);
         if use_default_behaviour {
             // TODO I have to choose if I have to to keep this method here or move it to render
             //  or window struct.
-            render.resize(physical_size);
+            renderer.resize(physical_size);
         }
     }
 
@@ -506,7 +506,7 @@ impl<'a, L, P> Application<'a, L, P> where L: Listener, P: AsRef<std::path::Path
         &self,
         control_flow: &mut winit::event_loop::ControlFlow,
         device_id: winit::event::DeviceId,
-        render: &mut Render,
+        renderer: &mut Renderer,
         input: &winit::event::KeyboardInput
     ) {
         // First call a generic method to manage the key events
@@ -519,7 +519,7 @@ impl<'a, L, P> Application<'a, L, P> where L: Listener, P: AsRef<std::path::Path
         // Then check the input's type for default behaviours
         if use_default_behaviour {
             // Check the camera controller
-            render.process_camera_events(input);  // TODO Enhance this system
+            renderer.process_camera_events(input);  // TODO Enhance this system
 
             if let winit::event::KeyboardInput {
                     state: winit::event::ElementState::Pressed,
@@ -595,7 +595,7 @@ impl<'a, L, P> Application<'a, L, P> where L: Listener, P: AsRef<std::path::Path
 
     fn on_window_scale_change(
         &self,
-        render: &mut Render,
+        renderer: &mut Renderer,
         scale_factor: f64,
         new_inner_size: &mut winit::dpi::PhysicalSize<u32>// TODO Probably I have to pass it without & (also below)
     ) {
@@ -605,7 +605,7 @@ impl<'a, L, P> Application<'a, L, P> where L: Listener, P: AsRef<std::path::Path
         );
 
         if use_default_behaviour {
-            render.resize(*new_inner_size);
+            renderer.resize(*new_inner_size);
         }
     }
 

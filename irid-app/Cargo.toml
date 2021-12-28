@@ -2,8 +2,8 @@
 name = "irid-app"
 version = "0.1.0"
 authors = ["https://github.com/irid-game-framework/irid/graphs/contributors"]
-edition = "2021"
-rust-version = "1.56"
+edition = "2018"
+rust-version = "1.48"
 description = "Irid Game Framework App"
 repository = "https://github.com/irid-game-framework/irid"
 license = "MIT OR Apache-2.0"
@@ -11,7 +11,7 @@ publish = false
 
 [dependencies]
 irid-assets = { path = "../irid-assets" }
-irid-render = { path = "../irid-render" }
+irid-renderer = { path = "../irid-renderer" }
 log = "0.4"
 thiserror = "1.0"
 wgpu = "0.11"

@@ -41,7 +41,7 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 
 ///
 #[derive(Clone)]  // TODO: try to add also the Debug trait
-pub struct RenderBuilder<
+pub struct RendererBuilder<
     'a,
     P: AsRef<std::path::Path>,
     S: ImageSize = DiffuseImageSize,
@@ -59,7 +59,7 @@ pub struct RenderBuilder<
     generic_texture: PhantomData<T>,
 }
 
-impl<'a, P, S, T> RenderBuilder<'a, P, S, T> where
+impl<'a, P, S, T> RendererBuilder<'a, P, S, T> where
     P: AsRef<std::path::Path> + Debug,
     S: ImageSize,
     T: Texture<S> {
@@ -121,7 +121,7 @@ impl<'a, P, S, T> RenderBuilder<'a, P, S, T> where
     //- Build --------------------------------------------------------------------------------------
 
     ///
-    pub fn build(self) -> Result<Render, RendererError> {
+    pub fn build(self) -> Result<Renderer, RendererError> {
         //- Surface, Device, Queue -----------------------------------------------------------------
 
         let window_size = self.window.inner_size();
@@ -172,20 +172,21 @@ impl<'a, P, S, T> RenderBuilder<'a, P, S, T> where
             None
         };
 
+        let buffers = [ModelVertex::desc(), InstanceRaw::desc()];  // TODO: the instances must be optional
+        let targets = [wgpu::ColorTargetState {
+            format: surface.preferred_format(),  //.unwrap_or(wgpu::TextureFormat::Rgba16Float),
+            blend: Some(wgpu::BlendState {
+                color: wgpu::BlendComponent::REPLACE,
+                alpha: wgpu::BlendComponent::REPLACE,
+            }),
+            write_mask: wgpu::ColorWrites::ALL,
+        }];
+
         let (vertex, fragment) = if shader_module.is_some() {
-            let buffers = [ModelVertex::desc(), InstanceRaw::desc()];  // TODO: the instances must be optional
             let vertex = VertexStateBuilder::new(&shader_module.unwrap())
                 .with_buffers(&buffers)
                 .build();
 
-            let targets = [wgpu::ColorTargetState {
-                format: surface.preferred_format(),  //.unwrap_or(wgpu::TextureFormat::Rgba16Float),
-                blend: Some(wgpu::BlendState {
-                    color: wgpu::BlendComponent::REPLACE,
-                    alpha: wgpu::BlendComponent::REPLACE,
-                }),
-                write_mask: wgpu::ColorWrites::ALL,
-            }];
             let fragment = FragmentStateBuilder::new(&shader_module.unwrap())
                 .with_targets(&targets)
                 .build();
@@ -233,8 +234,8 @@ impl<'a, P, S, T> RenderBuilder<'a, P, S, T> where
         //- Instances ------------------------------------------------------------------------------
 
         let (instances, instances_buffer) = if self.vertices.is_some() {
-            let instances = RenderBuilder::<'a, P, S, T>::create_instances();
-            let instances_buffer = RenderBuilder::<'a, P, S, T>::create_instances_buffer(&device, &instances);
+            let instances = RendererBuilder::<'a, P, S, T>::create_instances();
+            let instances_buffer = RendererBuilder::<'a, P, S, T>::create_instances_buffer(&device, &instances);
             (Some(instances), Some(instances_buffer))
         } else {
             (None, None)
@@ -242,7 +243,7 @@ impl<'a, P, S, T> RenderBuilder<'a, P, S, T> where
 
         //- Renderer Creation ----------------------------------------------------------------------
 
-        Ok(Render {
+        Ok(Renderer {
             window_size,
             clear_color: self.clear_color.unwrap_or(wgpu::Color::WHITE),
             surface,
@@ -360,7 +361,7 @@ impl<'a, P, S, T> RenderBuilder<'a, P, S, T> where
 //= RENDERER OBJECT ================================================================================
 
 ///
-pub struct Render {
+pub struct Renderer {
     window_size: winit::dpi::PhysicalSize<u32>,
     clear_color: wgpu::Color,
     surface: Surface,
@@ -386,7 +387,7 @@ pub struct Render {
     instances_buffer: Option<wgpu::Buffer>,
 }
 
-impl Render {
+impl Renderer {
     //- Surface (Re)size ---------------------------------------------------------------------------
 
     /// Getter for the windows's physical size attribute.

@@ -1,9 +1,9 @@
 [package]
 name = "irid-utils"
-version = "0.1.0"
+version = "0.0.11"
 authors = ["https://github.com/irid-game-framework/irid/graphs/contributors"]
-edition = "2021"
-rust-version = "1.56"
+edition = "2018"
+rust-version = "1.48"
 description = "Irid Game Framework Utils"
 repository = "https://github.com/irid-game-framework/irid"
 license = "MIT OR Apache-2.0"
