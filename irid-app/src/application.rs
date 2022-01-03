@@ -1,15 +1,12 @@
 //= USES ===========================================================================================
 
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf}
-};
-
+use std::fmt::Debug;
+use std::path::PathBuf;
 use thiserror::Error;
 use winit::window::Fullscreen;
 
 use irid_assets::{DiffuseImageSize, DiffuseTexture, ModelVertex};
-use irid_render::{Renderer, RendererBuilder, RendererError, ShaderModuleBuilder};
+use irid_renderer::{Renderer, RendererBuilder, RendererError};
 
 use crate::{ApplicationConfig, Listener};
 
@@ -49,7 +46,10 @@ pub struct ApplicationBuilder<'a, L, P> where L: Listener, P: AsRef<std::path::P
     clear_color: Option<wgpu::Color>,
 }
 
-impl<'a, L, P> ApplicationBuilder<'a, L, P> where L: Listener, P: AsRef<std::path::Path> {
+impl<'a, L, P> ApplicationBuilder<'a, L, P> where
+    L: Listener,
+    P: AsRef<std::path::Path> + Debug
+{
     //- Constructors -------------------------------------------------------------------------------
 
     ///
@@ -82,7 +82,7 @@ impl<'a, L, P> ApplicationBuilder<'a, L, P> where L: Listener, P: AsRef<std::pat
 
     ///
     pub fn with_config<AC: Into<Option<ApplicationConfig>>>(mut self, config: AC) -> Self {
-        self.config = Some(config);
+        self.config = config.into();
         self
     }
 
@@ -145,7 +145,10 @@ impl<'a, L, P> ApplicationBuilder<'a, L, P> where L: Listener, P: AsRef<std::pat
 
 /// Manages the whole game setup and logic.
 #[derive(Debug)]
-pub struct Application<'a, L, P> where L: Listener, P: AsRef<std::path::Path> {
+pub struct Application<'a, L, P> where
+    L: Listener,
+    P: AsRef<std::path::Path> + Debug
+{
     listener: L,
     config: ApplicationConfig,
     title: String,
@@ -160,7 +163,10 @@ pub struct Application<'a, L, P> where L: Listener, P: AsRef<std::path::Path> {
     clear_color: Option<wgpu::Color>,
 }
 
-impl<'a, L, P> Application<'a, L, P> where L: Listener, P: AsRef<std::path::Path> {
+impl<'a, L, P> Application<'a, L, P> where
+    L: Listener,
+    P: AsRef<std::path::Path> + Debug
+{
     /// Starts the
     /// [event loop](https://docs.rs/winit/0.25.0/winit/event_loop/struct.EventLoop.html).
     ///
@@ -193,12 +199,12 @@ impl<'a, L, P> Application<'a, L, P> where L: Listener, P: AsRef<std::path::Path
             .build(&event_loop)?;
 
         let renderer = RendererBuilder::<P, DiffuseImageSize, DiffuseTexture>::new(&window)
-            .with_clear_color(self.clear_color())  // TODO: no, we have to have the with_clear_color only on RenderBuilder and not also in ApplicationBuilder, so we can ride with this unwrap
-            .with_shader_source(self.shader_paths.unwrap().first())  // TODO: remove unwrap
+            .with_clear_color(self.clear_color().unwrap())  // TODO: no, we have to have the with_clear_color only on RenderBuilder and not also in ApplicationBuilder, so we can ride with this unwrap
+            .with_shader_path(self.shader_paths.unwrap().first())  // TODO: remove unwrap
             .with_texture_path(self.texture_path)
-            .with_vertices(self.vertices)
-            .with_indices(self.indices)
-            .build();
+            .with_vertices(self.vertices.unwrap())
+            .with_indices(self.indices.unwrap())
+            .build().unwrap();  // TODO: yeah.. another ones
 
         // It is preferable to maximize the windows after the surface and renderer setup,
         // but is not mandatory.

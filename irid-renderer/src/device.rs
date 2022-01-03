@@ -15,7 +15,7 @@ use crate::{Adapter, Queue};
 /// [`Adapter::request_device`](Adapter::request_device).
 #[derive(Debug)]
 pub struct Device {
-    label_text: String,
+    #[allow(dead_code)] label_text: String,
     wgpu_device: wgpu::Device,
 }
 

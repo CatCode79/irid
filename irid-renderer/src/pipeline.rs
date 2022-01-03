@@ -77,8 +77,8 @@ impl<'a> RenderPipelineBuilder<'a> {
     }
 
     ///
-    pub fn with_fragment(mut self, fragment: Option<wgpu::FragmentState<'a>>) -> Self {
-        self.fragment = fragment;
+    pub fn with_fragment(mut self, fragment: wgpu::FragmentState<'a>) -> Self {
+        self.fragment = Some(fragment);
         self
     }
 

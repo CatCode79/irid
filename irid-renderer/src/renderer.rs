@@ -43,7 +43,7 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 #[derive(Clone)]  // TODO: try to add also the Debug trait
 pub struct RendererBuilder<
     'a,
-    P: AsRef<std::path::Path>,
+    P: AsRef<std::path::Path> + Debug,
     S: ImageSize = DiffuseImageSize,
     T: Texture<S> = DiffuseTexture
 > {
@@ -59,7 +59,7 @@ pub struct RendererBuilder<
     generic_texture: PhantomData<T>,
 }
 
-impl<'a, P, S, T> RendererBuilder<'a, P, S, T> where
+impl<'a, P, S, T>RendererBuilder<'a, P, S, T> where
     P: AsRef<std::path::Path> + Debug,
     S: ImageSize,
     T: Texture<S> {
@@ -95,13 +95,13 @@ impl<'a, P, S, T> RendererBuilder<'a, P, S, T> where
     }
 
     ///
-    pub fn with_shader_path<SP: Into<Option<P>>>(mut self, shader_path: SP) -> Self {
+    pub fn with_shader_path<IP: Into<Option<P>>>(mut self, shader_path: IP) -> Self {
         self.shader_path = shader_path.into();
         self
     }
 
     ///
-    pub fn with_texture_path<TP: Into<Option<P>>>(mut self, texture_path: TP) -> Self {
+    pub fn with_texture_path<IP: Into<Option<P>>>(mut self, texture_path: IP) -> Self {
         self.texture_path = texture_path.into();
         self
     }
@@ -156,7 +156,7 @@ impl<'a, P, S, T> RendererBuilder<'a, P, S, T> where
 
         //- Pipeline -------------------------------------------------------------------------------
 
-        let shader_module = if self.shader_path.is_some() {
+        let renderer_pipeline = if self.shader_path.is_some() {
             let path = &self.shader_path.unwrap();
             let content = match read_to_string(path) {
                 Ok(content) => content,
@@ -167,47 +167,41 @@ impl<'a, P, S, T> RendererBuilder<'a, P, S, T> where
             //#[cfg(feature = "glsl")]  // TODO: manage the glsl appropriately checking at least the file extension (pretty rough..)
             //wgpu::ShaderSource::Glsl(std::borrow::Cow::Owned(shader_key))
 
-            Some(ShaderModuleBuilder::new(source).build(&device))
-        } else {
-            None
-        };
+            let shader_module = ShaderModuleBuilder::new(source).build(&device);
 
-        let buffers = [ModelVertex::desc(), InstanceRaw::desc()];  // TODO: the instances must be optional
-        let targets = [wgpu::ColorTargetState {
-            format: surface.preferred_format(),  //.unwrap_or(wgpu::TextureFormat::Rgba16Float),
-            blend: Some(wgpu::BlendState {
-                color: wgpu::BlendComponent::REPLACE,
-                alpha: wgpu::BlendComponent::REPLACE,
-            }),
-            write_mask: wgpu::ColorWrites::ALL,
-        }];
+            let buffers = [ModelVertex::desc(), InstanceRaw::desc()];  // TODO: the instances must be optional
+            let targets = [wgpu::ColorTargetState {
+                format: surface.preferred_format(),  //.unwrap_or(wgpu::TextureFormat::Rgba16Float),
+                blend: Some(wgpu::BlendState {
+                    color: wgpu::BlendComponent::REPLACE,
+                    alpha: wgpu::BlendComponent::REPLACE,
+                }),
+                write_mask: wgpu::ColorWrites::ALL,
+            }];
 
-        let (vertex, fragment) = if shader_module.is_some() {
-            let vertex = VertexStateBuilder::new(&shader_module.unwrap())
+            let vertex = VertexStateBuilder::new(&shader_module)
                 .with_buffers(&buffers)
                 .build();
 
-            let fragment = FragmentStateBuilder::new(&shader_module.unwrap())
+            let fragment = FragmentStateBuilder::new(&shader_module)
                 .with_targets(&targets)
                 .build();
 
-            (Some(vertex), Some(fragment))
+            let pipeline_layout = {
+                let texture_bgl = texture_bind_group_metadatas[8][8].bind_group_layout();  // TODO: 256x256 texture, hardcoded for now :(
+                let camera_bgl = camera_metadatas.bind_group_layout();
+                PipelineLayoutBuilder::new()
+                    .with_bind_group_layouts(&[texture_bgl, camera_bgl])
+                    .build(&device)
+            };
+
+            Some(RenderPipelineBuilder::new(vertex)
+                .with_fragment(fragment)
+                .with_layout(&pipeline_layout)
+                .build(&device))
         } else {
-            (None, None)
+            None
         };
-
-        let pipeline_layout = {
-            let texture_bgl = texture_bind_group_metadatas[8][8].bind_group_layout();  // TODO: 256x256 texture, hardcoded for now :(
-            let camera_bgl = camera_metadatas.bind_group_layout();
-            PipelineLayoutBuilder::new()
-                .with_bind_group_layouts(&[texture_bgl, camera_bgl])
-                .build(&device)
-        };
-
-        let renderer_pipeline = RenderPipelineBuilder::new(vertex.unwrap())  // TODO: uhm... unwrap...
-            .with_fragment(fragment)
-            .with_layout(&pipeline_layout)
-            .build(&device);
 
         //- Queue Schedule -------------------------------------------------------------------------
 
@@ -259,7 +253,6 @@ impl<'a, P, S, T> RendererBuilder<'a, P, S, T> where
             texture_bind_group_metadatas,
             texture_depth_metadatas,
 
-            shader_module,
             renderer_pipeline,
             vertex_buffer,
             index_buffer,
@@ -378,8 +371,7 @@ pub struct Renderer {
     texture_bind_group_metadatas: Vec<Vec<TextureBindGroupMetadatas>>,
     texture_depth_metadatas: TextureDepthMetadatas,
 
-    #[allow(dead_code)] shader_module: Option<wgpu::ShaderModule>,
-    renderer_pipeline: RenderPipeline,  // TODO: probably also optional?
+    renderer_pipeline: Option<RenderPipeline>,  // TODO: probably also optional?
     vertex_buffer: Option<wgpu::Buffer>,  // TODO: maybe this is better to move, this buffer, and the index buffer, inside the render_pass or pipeline object
     index_buffer: Option<wgpu::Buffer>,
     num_indices: u32,
@@ -475,25 +467,28 @@ impl Renderer {
                 }
             );
 
-            render_pass.set_pipeline(self.renderer_pipeline.expose_wrapped_render_pipeline());  // TODO: to remove this expose call creating an RenderPass wrapper
-            render_pass.set_bind_group(0, self.texture_bind_group_metadatas[8][8].bind_group(), &[]);  // TODO: hardcoded :(
-            render_pass.set_bind_group(1, self.camera_metadatas.bind_group(), &[]);
-            if self.vertex_buffer.is_some() {
-                render_pass.set_vertex_buffer(0, self.vertex_buffer.as_ref().unwrap().slice(..));
-            }
-            if self.instances_buffer.is_some() {
-                render_pass.set_vertex_buffer(1, self.instances_buffer.as_ref().unwrap().slice(..));
-            }
-            if self.index_buffer.is_some() {
-                render_pass.set_index_buffer(
-                    self.index_buffer.as_ref().unwrap().slice(..),
-                    wgpu::IndexFormat::Uint16,
-                );
-                render_pass.draw_indexed(
-                    0..self.num_indices,
-                    0,
-                    0..self.instances.as_ref().unwrap().len() as _,
-                );
+            if self.renderer_pipeline.is_some() {
+                let rp = self.renderer_pipeline.as_ref().unwrap();
+                render_pass.set_pipeline(rp.expose_wrapped_render_pipeline());  // TODO: to remove this expose call creating an RenderPass wrapper
+                render_pass.set_bind_group(0, self.texture_bind_group_metadatas[8][8].bind_group(), &[]);  // TODO: hardcoded :(
+                render_pass.set_bind_group(1, self.camera_metadatas.bind_group(), &[]);
+                if self.vertex_buffer.is_some() {
+                    render_pass.set_vertex_buffer(0, self.vertex_buffer.as_ref().unwrap().slice(..));
+                }
+                if self.instances_buffer.is_some() {
+                    render_pass.set_vertex_buffer(1, self.instances_buffer.as_ref().unwrap().slice(..));
+                }
+                if self.index_buffer.is_some() {
+                    render_pass.set_index_buffer(
+                        self.index_buffer.as_ref().unwrap().slice(..),
+                        wgpu::IndexFormat::Uint16,
+                    );
+                    render_pass.draw_indexed(
+                        0..self.num_indices,
+                        0,
+                        0..self.instances.as_ref().unwrap().len() as _,
+                    );
+                }
             }
         }
 
