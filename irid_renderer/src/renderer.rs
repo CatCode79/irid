@@ -43,7 +43,7 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 #[derive(Clone)]  // TODO: try to add also the Debug trait
 pub struct RendererBuilder<
     'a,
-    P: AsRef<std::path::Path> + Debug,
+    P: AsRef<std::path::Path> + Debug = &'a std::path::Path,
     S: ImageSize = DiffuseImageSize,
     T: Texture<S> = DiffuseTexture
 > {
