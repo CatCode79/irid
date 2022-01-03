@@ -2,7 +2,7 @@
 resolver = "2"
 members = [
     "irid",
-    "irid-app",
-    "irid-assets",
-    "irid-renderer",
+    "irid_app",
+    "irid_assets",
+    "irid_renderer",
 ]

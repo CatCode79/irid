@@ -8,7 +8,7 @@ use std::num::NonZeroU32;
 ///
 /// # Known Implementations:
 ///
-/// - [irid-assets::DiffuseImage](irid-assets::DiffuseImage)
+/// - [irid_assets::DiffuseImage](irid_assets::DiffuseImage)
 pub trait Image<S: ImageSize> {
     /// **Associated type** regarding the implementation of this trait.
     type Output;
@@ -131,7 +131,7 @@ impl<S: ImageSize + Copy> Image<S> for DiffuseImage<S> {
 ///
 /// # Known Implementations:
 ///
-/// - [irid-assets::DiffuseImageSize](irid-assets::DiffuseImageSize)
+/// - [irid_assets::DiffuseImageSize](irid_assets::DiffuseImageSize)
 pub trait ImageSize: From<(u32, u32)> + From<[u32; 2]> {
     ///
     fn new(width: u32, height: u32) -> Self;
