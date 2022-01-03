@@ -15,7 +15,7 @@ impl AppConfigBuilder {
     pub const DEFAULT_WINDOW_INNER_HEIGHT: Option<std::num::NonZeroU32> =
         std::num::NonZeroU32::new(1080 / 2);
     pub const DEFAULT_WINDOW_STARTS_MAXIMIZED: bool =
-        true;  // false value as default can gives less starting problems
+        false;  // false as default can gives less starting problems
 
     /// Create it to build new [AppConfig].
     pub fn new() -> Self {
@@ -92,6 +92,16 @@ pub struct ApplicationConfig {
     window_starts_maximized: bool,
 }
 
+impl Default for ApplicationConfig {
+    fn default() -> Self {
+        Self {
+            window_inner_width: AppConfigBuilder::DEFAULT_WINDOW_INNER_WIDTH.unwrap(),
+            window_inner_height: AppConfigBuilder::DEFAULT_WINDOW_INNER_HEIGHT.unwrap(),
+            window_starts_maximized: AppConfigBuilder::DEFAULT_WINDOW_STARTS_MAXIMIZED,
+        }
+    }
+}
+
 impl ApplicationConfig {
     //- Constructors -------------------------------------------------------------------------------
 
@@ -138,16 +148,6 @@ impl ApplicationConfig {
         winit::dpi::PhysicalSize {
             width: self.window_inner_width.get() / 2,
             height: self.window_inner_height.get() / 2,
-        }
-    }
-}
-
-impl Default for ApplicationConfig {
-    fn default() -> Self {
-        Self {
-            window_inner_width: AppConfigBuilder::DEFAULT_WINDOW_INNER_WIDTH.unwrap(),
-            window_inner_height: AppConfigBuilder::DEFAULT_WINDOW_INNER_HEIGHT.unwrap(),
-            window_starts_maximized: AppConfigBuilder::DEFAULT_WINDOW_STARTS_MAXIMIZED,
         }
     }
 }

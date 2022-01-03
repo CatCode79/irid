@@ -37,21 +37,26 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
     NUM_INSTANCES_PER_ROW as f32 * 0.5
 );
 
+//= TRAIT FOR DEFAULT PATH TYPE ====================================================================
+
+pub trait RendererPathType {
+    type P: AsRef<std::path::Path>;
+}
+
 //= RENDERER BUILDER ===============================================================================
 
 ///
 #[derive(Clone)]  // TODO: try to add also the Debug trait
 pub struct RendererBuilder<
     'a,
-    P: AsRef<std::path::Path> + Debug = &'a std::path::Path,
     S: ImageSize = DiffuseImageSize,
     T: Texture<S> = DiffuseTexture
 > {
     window: &'a winit::window::Window,
 
     clear_color: Option<wgpu::Color>,
-    shader_path: Option<P>,
-    texture_path: Option<P>,
+    shader_path: Option<&'a std::path::Path>,
+    texture_path: Option<&'a std::path::Path>,
     vertices: Option<&'a [ModelVertex]>,  // TODO: Probably better to encapsulate the [ModelVertex] logic
     indices: Option<&'a [u32]>,
 
@@ -59,8 +64,13 @@ pub struct RendererBuilder<
     generic_texture: PhantomData<T>,
 }
 
-impl<'a, P, S, T>RendererBuilder<'a, P, S, T> where
-    P: AsRef<std::path::Path> + Debug,
+impl<'a, S, T> RendererPathType for RendererBuilder<'a, S, T> where
+    S: ImageSize,
+    T: Texture<S> {
+    type P = &'a std::path::Path;
+}
+
+impl<'a, S, T> RendererBuilder<'a, S, T> where
     S: ImageSize,
     T: Texture<S> {
     //- Constructors -------------------------------------------------------------------------------
@@ -95,14 +105,14 @@ impl<'a, P, S, T>RendererBuilder<'a, P, S, T> where
     }
 
     ///
-    pub fn with_shader_path<IP: Into<Option<P>>>(mut self, shader_path: IP) -> Self {
-        self.shader_path = shader_path.into();
+    pub fn with_shader_path(mut self, shader_path: <RendererBuilder<'a, S, T> as RendererPathType>::P) -> Self {
+        self.shader_path = Some(shader_path);
         self
     }
 
     ///
-    pub fn with_texture_path<IP: Into<Option<P>>>(mut self, texture_path: IP) -> Self {
-        self.texture_path = texture_path.into();
+    pub fn with_texture_path(mut self, texture_path: <RendererBuilder<'a, S, T> as RendererPathType>::P) -> Self {
+        self.texture_path = Some(texture_path);
         self
     }
 
@@ -157,7 +167,7 @@ impl<'a, P, S, T>RendererBuilder<'a, P, S, T> where
         //- Pipeline -------------------------------------------------------------------------------
 
         let renderer_pipeline = if self.shader_path.is_some() {
-            let path = &self.shader_path.unwrap();
+            let path = self.shader_path.unwrap();
             let content = match read_to_string(path) {
                 Ok(content) => content,
                 Err(err) => panic!("Couldn't open {:?} file: {}", path, err),
@@ -228,8 +238,8 @@ impl<'a, P, S, T>RendererBuilder<'a, P, S, T> where
         //- Instances ------------------------------------------------------------------------------
 
         let (instances, instances_buffer) = if self.vertices.is_some() {
-            let instances = RendererBuilder::<'a, P, S, T>::create_instances();
-            let instances_buffer = RendererBuilder::<'a, P, S, T>::create_instances_buffer(&device, &instances);
+            let instances = RendererBuilder::<'a, S, T>::create_instances();
+            let instances_buffer = RendererBuilder::<'a, S, T>::create_instances_buffer(&device, &instances);
             (Some(instances), Some(instances_buffer))
         } else {
             (None, None)

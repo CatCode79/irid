@@ -27,18 +27,24 @@ pub enum ApplicationError {
     },
 }
 
+//= TRAIT FOR DEFAULT PATH TYPE ====================================================================
+
+pub trait ApplicationPathType {
+    type P: AsRef<std::path::Path>;
+}
+
 //= APPLICATION BUILDER ============================================================================
 
 /// Build a new [Application] with wanted values.
 #[derive(Debug)]
-pub struct ApplicationBuilder<'a, L, P> where L: Listener, P: AsRef<std::path::Path> {
+pub struct ApplicationBuilder<'a, L: Listener> {
     listener: L,
     config: Option<ApplicationConfig>,
     title: Option<String>,
 
     // Renderer stuff
-    shader_paths: Option<Vec<P>>,
-    texture_path: Option<P>,
+    shader_paths: Option<Vec<&'a std::path::Path>>,
+    texture_path: Option<&'a std::path::Path>,
     vertices: Option<&'a [ModelVertex]>,
     indices: Option<&'a [u32]>,
 
@@ -46,10 +52,11 @@ pub struct ApplicationBuilder<'a, L, P> where L: Listener, P: AsRef<std::path::P
     clear_color: Option<wgpu::Color>,
 }
 
-impl<'a, L, P> ApplicationBuilder<'a, L, P> where
-    L: Listener,
-    P: AsRef<std::path::Path> + Debug + Clone
-{
+impl<'a, L: Listener> ApplicationPathType for ApplicationBuilder<'a, L> {
+    type P = &'a std::path::Path;
+}
+
+impl<'a, L: Listener> ApplicationBuilder<'a, L> {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
@@ -75,7 +82,7 @@ impl<'a, L, P> ApplicationBuilder<'a, L, P> where
     }
 
     ///
-    pub fn with_config_path(mut self, filepath: P) -> Self {
+    pub fn with_config_path(mut self, filepath: <ApplicationBuilder<'a, L> as ApplicationPathType>::P) -> Self {
         self.config = Some(ApplicationConfig::new(filepath));
         self
     }
@@ -93,13 +100,13 @@ impl<'a, L, P> ApplicationBuilder<'a, L, P> where
     }
 
     /// TODO "I have to refactor all the assets and pipeline management"
-    pub fn with_shader_paths(mut self, shader_paths: Vec<P>) -> Self {
+    pub fn with_shader_paths(mut self, shader_paths: Vec<<ApplicationBuilder<'a, L> as ApplicationPathType>::P>) -> Self {
         self.shader_paths = Some(shader_paths);
         self
     }
 
     /// TODO "I have to refactor all the assets and pipeline management"
-    pub fn with_texture_path(mut self, texture_path: P) -> Self {
+    pub fn with_texture_path(mut self, texture_path: <ApplicationBuilder<'a, L> as ApplicationPathType>::P) -> Self {
         self.texture_path = Some(texture_path);
         self
     }
@@ -127,7 +134,7 @@ impl<'a, L, P> ApplicationBuilder<'a, L, P> where
 
     /// Build a new [Application] with given values.
     // TODO I have to manage the Nones values for every unwrap
-    pub fn build(self) -> Application<'a, L, P> {
+    pub fn build(self) -> Application<'a, L> {
         Application {
             listener: self.listener,
             config: self.config.unwrap_or_default(),
@@ -145,17 +152,14 @@ impl<'a, L, P> ApplicationBuilder<'a, L, P> where
 
 /// Manages the whole game setup and logic.
 #[derive(Debug)]
-pub struct Application<'a, L, P> where
-    L: Listener,
-    P: AsRef<std::path::Path> + Debug + Clone
-{
+pub struct Application<'a, L: Listener> {
     listener: L,
     config: ApplicationConfig,
     title: String,
 
     // Renderer stuffs
-    shader_paths: Option<Vec<P>>,
-    texture_path: Option<P>,
+    shader_paths: Option<Vec<&'a std::path::Path>>,
+    texture_path: Option<&'a std::path::Path>,
     vertices: Option<&'a [ModelVertex]>,
     indices: Option<&'a [u32]>,
 
@@ -163,10 +167,7 @@ pub struct Application<'a, L, P> where
     clear_color: Option<wgpu::Color>,
 }
 
-impl<'a, L, P> Application<'a, L, P> where
-    L: Listener,
-    P: AsRef<std::path::Path> + Debug + Clone
-{
+impl<'a, L: Listener> Application<'a, L> {
     /// Starts the
     /// [event loop](https://docs.rs/winit/0.25.0/winit/event_loop/struct.EventLoop.html).
     ///
@@ -198,13 +199,23 @@ impl<'a, L, P> Application<'a, L, P> where
             //.with_window_icon() // TODO: because yes!
             .build(&event_loop)?;
 
-        let mut renderer = RendererBuilder::<P, DiffuseImageSize, DiffuseTexture>::new(&window)
-            .with_clear_color(self.clear_color().unwrap())  // TODO: no, we have to have the with_clear_color only on RenderBuilder and not also in ApplicationBuilder, so we can ride with this unwrap
-            .with_shader_path(self.shader_paths.as_ref().unwrap().as_slice()[0].clone())  // TODO: remove unwrap and the wild cloning
-            .with_texture_path(self.texture_path.as_ref().unwrap().clone())// TODO: i want to clone myself and die
-            .with_vertices(self.vertices.unwrap())
-            .with_indices(self.indices.unwrap())
-            .build().unwrap();  // TODO: yeah.. another ones
+        let mut renderer_builder = RendererBuilder::<DiffuseImageSize, DiffuseTexture>::new(&window);
+        if self.clear_color.is_some() {
+            renderer_builder = renderer_builder.with_clear_color(self.clear_color);  // TODO: no, we have to have the with_clear_color only on RenderBuilder and not also in ApplicationBuilder, so we can ride with this unwrap
+        }
+        if self.shader_paths.is_some() {
+            renderer_builder = renderer_builder.with_shader_path(self.shader_paths.as_ref().map(|v| v.as_slice()[0]).unwrap());  // TODO: remove unwrap
+        }
+        if self.texture_path.is_some() {
+            renderer_builder = renderer_builder.with_texture_path(self.texture_path.unwrap());
+        }
+        if self.vertices.is_some() {
+            renderer_builder = renderer_builder.with_vertices(self.vertices.unwrap());
+        }
+        if self.indices.is_some() {
+            renderer_builder = renderer_builder.with_indices(self.indices.unwrap());
+        }
+        let mut renderer = renderer_builder.build()?;
 
         // It is preferable to maximize the windows after the surface and renderer setup,
         // but is not mandatory.
@@ -617,11 +628,5 @@ impl<'a, L, P> Application<'a, L, P> where
 
     fn on_window_theme_change(&self, theme: winit::window::Theme) {
         let _use_default_behaviour = self.listener.on_window_theme_change(theme);
-    }
-
-    //- Getters ------------------------------------------------------------------------------------
-
-    fn clear_color(&self) -> Option<wgpu::Color> {
-        self.clear_color
     }
 }
