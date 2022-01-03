@@ -89,7 +89,7 @@ impl<'a, P, S, T>RendererBuilder<'a, P, S, T> where
 
     /// Color used by a [render pass color attachment](wgpu::RenderPassColorAttachment)
     /// to perform a [clear operation](wgpu::LoadOp).
-    pub fn with_clear_color<CC: Into<Option<wgpu::Color>>>(mut self, clear_color: wgpu::Color) -> Self {
+    pub fn with_clear_color<CC: Into<Option<wgpu::Color>>>(mut self, clear_color: CC) -> Self {
         self.clear_color = clear_color.into();
         self
     }
@@ -107,13 +107,13 @@ impl<'a, P, S, T>RendererBuilder<'a, P, S, T> where
     }
 
     ///
-    pub fn with_vertices<VE: Into<Option<&'a [ModelVertex]>>>(mut self, vertices: &'a [ModelVertex]) -> Self {
+    pub fn with_vertices<VE: Into<Option<&'a [ModelVertex]>>>(mut self, vertices: VE) -> Self {
         self.vertices = vertices.into();
         self
     }
 
     ///
-    pub fn with_indices<IN: Into<Option<&'a [u32]>>>(mut self, indices: &'a [u32]) -> Self {
+    pub fn with_indices<IN: Into<Option<&'a [u32]>>>(mut self, indices: IN) -> Self {
         self.indices = indices.into();
         self
     }

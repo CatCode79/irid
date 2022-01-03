@@ -48,7 +48,7 @@ pub struct ApplicationBuilder<'a, L, P> where L: Listener, P: AsRef<std::path::P
 
 impl<'a, L, P> ApplicationBuilder<'a, L, P> where
     L: Listener,
-    P: AsRef<std::path::Path> + Debug
+    P: AsRef<std::path::Path> + Debug + Clone
 {
     //- Constructors -------------------------------------------------------------------------------
 
@@ -147,7 +147,7 @@ impl<'a, L, P> ApplicationBuilder<'a, L, P> where
 #[derive(Debug)]
 pub struct Application<'a, L, P> where
     L: Listener,
-    P: AsRef<std::path::Path> + Debug
+    P: AsRef<std::path::Path> + Debug + Clone
 {
     listener: L,
     config: ApplicationConfig,
@@ -165,7 +165,7 @@ pub struct Application<'a, L, P> where
 
 impl<'a, L, P> Application<'a, L, P> where
     L: Listener,
-    P: AsRef<std::path::Path> + Debug
+    P: AsRef<std::path::Path> + Debug + Clone
 {
     /// Starts the
     /// [event loop](https://docs.rs/winit/0.25.0/winit/event_loop/struct.EventLoop.html).
@@ -198,9 +198,9 @@ impl<'a, L, P> Application<'a, L, P> where
             //.with_window_icon() // TODO: because yes!
             .build(&event_loop)?;
 
-        let renderer = RendererBuilder::<P, DiffuseImageSize, DiffuseTexture>::new(&window)
+        let mut renderer = RendererBuilder::<P, DiffuseImageSize, DiffuseTexture>::new(&window)
             .with_clear_color(self.clear_color().unwrap())  // TODO: no, we have to have the with_clear_color only on RenderBuilder and not also in ApplicationBuilder, so we can ride with this unwrap
-            .with_shader_path(self.shader_paths.unwrap().first())  // TODO: remove unwrap
+            .with_shader_path(self.shader_paths.unwrap().as_slice()[0].clone())  // TODO: remove unwrap and the wild cloning
             .with_texture_path(self.texture_path)
             .with_vertices(self.vertices.unwrap())
             .with_indices(self.indices.unwrap())
