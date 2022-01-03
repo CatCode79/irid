@@ -274,17 +274,17 @@ impl<'a, P, S, T>RendererBuilder<'a, P, S, T> where
         // so as to obtain consistent behavior on all devices.
         let qty = log2(wgpu::Limits::default().max_texture_dimension_2d as i32) as usize;
         let mut vec_w = Vec::<Vec<TextureImageMetadatas>>::with_capacity(qty);
-        for width in 0..=qty {
+        for (width, w_element) in vec_w.iter_mut().enumerate() {
             let mut vec_h = Vec::<TextureImageMetadatas>::with_capacity(qty);
-            for height in 0..=qty {
-                vec_h[height] = TextureImageMetadatas::new(
-                    &device,
+            for (height, h_element) in vec_h.iter_mut().enumerate() {
+                *h_element = TextureImageMetadatas::new(
+                    device,
                     preferred_format,
                     2_u32.pow(width as u32),
                     2_u32.pow(height as u32),
                 );
             }
-            vec_w[width] = vec_h;
+            *w_element = vec_h;
         }
         vec_w
     }
@@ -293,19 +293,19 @@ impl<'a, P, S, T>RendererBuilder<'a, P, S, T> where
     pub fn create_texture_bind_group_metadatas(
         &self,
         device: &Device,
-        texture_image_metadatas: &Vec<Vec<TextureImageMetadatas>>,
+        texture_image_metadatas: &[Vec<TextureImageMetadatas>],
     ) -> Vec<Vec<TextureBindGroupMetadatas>> {
         let qty= texture_image_metadatas.len();
         let mut vec_w = Vec::<Vec<TextureBindGroupMetadatas>>::with_capacity(qty);
-        for width in 0..=qty {
+        for (width, w_element) in vec_w.iter_mut().enumerate() {
             let mut vec_h = Vec::<TextureBindGroupMetadatas>::with_capacity(qty);
-            for height in 0..=qty {
-                vec_h[height] = TextureBindGroupMetadatas::new(
-                    &device,
-                    &texture_image_metadatas[width][height].texture()
+            for (height, h_element) in vec_h.iter_mut().enumerate() {
+                *h_element = TextureBindGroupMetadatas::new(
+                    device,
+                    texture_image_metadatas[width][height].texture()
                 );
             }
-            vec_w[width] = vec_h;
+            *w_element = vec_h;
         }
         vec_w
     }
@@ -336,7 +336,7 @@ impl<'a, P, S, T>RendererBuilder<'a, P, S, T> where
         }).collect::<Vec<_>>()
     }
 
-    fn create_instances_buffer(device: &Device, instances: &Vec<Instance>) -> wgpu::Buffer {
+    fn create_instances_buffer(device: &Device, instances: &[Instance]) -> wgpu::Buffer {
         let instance_data = instances.iter().map(Instance::to_raw)
             .collect::<Vec<_>>();
 

@@ -51,7 +51,7 @@ impl Queue {
     /// internally to happen at the start of the next `submit()` call.
     pub fn write_texture<T: Texture<S>, S: ImageSize>(
         &self,
-        texture_image_metadatas: &Vec<Vec<TextureImageMetadatas>>,
+        texture_image_metadatas: &[Vec<TextureImageMetadatas>],
         texture: T
     ) {
         let metadatas = &texture_image_metadatas  // TODO: better add a ref to metas inside irid Texture structs

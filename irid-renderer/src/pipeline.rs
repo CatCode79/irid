@@ -96,8 +96,8 @@ impl<'a> RenderPipelineBuilder<'a> {
 
     ///
     pub fn build(self, device: &Device) -> RenderPipeline {
-        let depth_stencil = self.depth_stencil.or(
-            RenderPipelineBuilder::create_default_depth_stencil()
+        let depth_stencil = self.depth_stencil.or_else(
+            RenderPipelineBuilder::create_default_depth_stencil
         );
 
         let wgpu_render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
