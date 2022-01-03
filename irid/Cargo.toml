@@ -13,4 +13,3 @@ publish = false
 irid-app = { path = "../irid-app" }
 irid-assets = { path = "../irid-assets" }
 irid-renderer = { path = "../irid-renderer" }
-irid-utils = { path = "../irid-utils" }

@@ -11,6 +11,7 @@ pub use self::queue::*;
 pub use self::renderer::*;
 pub use self::shader::*;
 pub use self::surface::*;
+pub use self::utils::*;
 
 //= MODS ===========================================================================================
 
@@ -26,6 +27,7 @@ pub(crate) mod queue;
 pub(crate) mod renderer;
 pub(crate) mod shader;
 pub(crate) mod surface;
+pub(crate) mod utils;
 
 // Used only internally
 mod texture_metadatas;

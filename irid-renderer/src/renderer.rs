@@ -7,12 +7,12 @@ use std::marker::PhantomData;
 use thiserror::Error;
 
 use irid_assets::{DiffuseImageSize, DiffuseTexture, ImageSize, Texture, ModelVertex};
-use irid_utils::log2;
 
 use crate::{Adapter, Camera, CameraController, CameraMetadatas, Device, FragmentStateBuilder,
             Instance, InstanceRaw, PipelineLayoutBuilder, Queue, RenderPipeline,
             RenderPipelineBuilder, ShaderModuleBuilder, Surface, VertexStateBuilder};
 use crate::texture_metadatas::{TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas};
+use crate::utils::log2;
 
 //= ERRORS =========================================================================================
 

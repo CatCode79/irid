@@ -3,10 +3,10 @@
 use std::future::Future;
 
 use irid_assets::{ImageSize, Texture};
-use irid_utils::log2;
 
 use crate::{Camera, CameraMetadatas};
 use crate::texture_metadatas::TextureImageMetadatas;
+use crate::utils::log2;
 
 //= QUEUE ==========================================================================================
 
