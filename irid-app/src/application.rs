@@ -200,8 +200,8 @@ impl<'a, L, P> Application<'a, L, P> where
 
         let mut renderer = RendererBuilder::<P, DiffuseImageSize, DiffuseTexture>::new(&window)
             .with_clear_color(self.clear_color().unwrap())  // TODO: no, we have to have the with_clear_color only on RenderBuilder and not also in ApplicationBuilder, so we can ride with this unwrap
-            .with_shader_path(self.shader_paths.unwrap().as_slice()[0].clone())  // TODO: remove unwrap and the wild cloning
-            .with_texture_path(self.texture_path)
+            .with_shader_path(self.shader_paths.as_ref().unwrap().as_slice()[0].clone())  // TODO: remove unwrap and the wild cloning
+            .with_texture_path(self.texture_path.as_ref().unwrap().clone())// TODO: i want to clone myself and die
             .with_vertices(self.vertices.unwrap())
             .with_indices(self.indices.unwrap())
             .build().unwrap();  // TODO: yeah.. another ones
