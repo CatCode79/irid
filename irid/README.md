@@ -1,1 +1,1 @@
-This crate handles the basic logic of the game: application deploy and input.
+This crate will manage all the other crates.

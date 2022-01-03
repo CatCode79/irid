@@ -1,6 +1,6 @@
 [package]
 name = "irid-app"
-version = "0.1.0"
+version = "0.0.11"
 authors = ["https://github.com/irid-game-framework/irid/graphs/contributors"]
 edition = "2018"
 rust-version = "1.48"
