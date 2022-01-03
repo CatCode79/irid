@@ -96,11 +96,9 @@ impl Surface {
 
     /// Updates the Surface for presentation.
     pub fn update(&mut self, device: &Device, size: winit::dpi::PhysicalSize<u32>) {
-        if size.width > 0 && size.height > 0 {
-            self.configuration.width = size.width;
-            self.configuration.height = size.height;
-            self.wgpu_surface.configure(device.expose_wrapped_device(), &self.configuration);
-        }
+        self.configuration.width = size.width;
+        self.configuration.height = size.height;
+        self.wgpu_surface.configure(device.expose_wrapped_device(), &self.configuration);
     }
 
     /// Returns the next texture to be presented by the Surface for drawing.

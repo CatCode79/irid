@@ -405,8 +405,10 @@ impl Renderer {
     /// Resize the renderer window.
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
         self.window_size = new_size;
-        self.texture_depth_metadatas = TextureDepthMetadatas::new(&self.device, self.window_size);
-        self.refresh_current_size();
+        if new_size.width > 0 && new_size.height > 0 {
+            self.texture_depth_metadatas = TextureDepthMetadatas::new(&self.device, self.window_size);
+            self.refresh_current_size();
+        }
     }
 
     ///
