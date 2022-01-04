@@ -197,16 +197,16 @@ impl<'a, P, S, T> RendererBuilder<'a, P, S, T> where
                 .with_targets(&targets)
                 .build();
 
-            let pipeline_layout = if texture_bind_group_metadatas.len() > 0 {
+            let pipeline_layout = if texture_bind_group_metadatas.is_empty() {
+                let camera_bgl = camera_metadatas.bind_group_layout();
+                PipelineLayoutBuilder::new()
+                    .with_bind_group_layouts(&[camera_bgl])
+                    .build(&device)
+            } else {
                 let texture_bgl = texture_bind_group_metadatas[8][8].bind_group_layout();  // TODO: 256x256 texture, hardcoded for now :(
                 let camera_bgl = camera_metadatas.bind_group_layout();
                 PipelineLayoutBuilder::new()
                     .with_bind_group_layouts(&[texture_bgl, camera_bgl])
-                    .build(&device)
-            } else {
-                let camera_bgl = camera_metadatas.bind_group_layout();
-                PipelineLayoutBuilder::new()
-                    .with_bind_group_layouts(&[camera_bgl])
                     .build(&device)
             };
 
@@ -478,11 +478,11 @@ impl Renderer {
             if self.renderer_pipeline.is_some() {
                 let rp = self.renderer_pipeline.as_ref().unwrap();
                 render_pass.set_pipeline(rp.expose_wrapped_render_pipeline());  // TODO: to remove this expose call creating an RenderPass wrapper
-                if self.texture_bind_group_metadatas.len() > 0 {
+                if self.texture_bind_group_metadatas.is_empty() {
+                    render_pass.set_bind_group(0, self.camera_metadatas.bind_group(), &[]);
+                } else {
                     render_pass.set_bind_group(0, self.texture_bind_group_metadatas[8][8].bind_group(), &[]);  // TODO: hardcoded :(
                     render_pass.set_bind_group(1, self.camera_metadatas.bind_group(), &[]);
-                } else {
-                    render_pass.set_bind_group(0, self.camera_metadatas.bind_group(), &[]);
                 }
                 if self.vertex_buffer.is_some() {
                     render_pass.set_vertex_buffer(0, self.vertex_buffer.as_ref().unwrap().slice(..));
