@@ -3,13 +3,14 @@
 use std::fmt::Debug;
 use std::fs::read_to_string;
 use std::marker::PhantomData;
+use std::path::Path;
 
 use thiserror::Error;
 
 use irid_assets::{DiffuseImageSize, DiffuseTexture, ImageSize, Texture, ModelVertex};
 
 use crate::{Adapter, Camera, CameraController, CameraMetadatas, Device, FragmentStateBuilder,
-            Instance, InstanceRaw, PipelineLayoutBuilder, Queue, RenderPipeline,
+            Instance, PipelineLayoutBuilder, Queue, RenderPipeline,
             RenderPipelineBuilder, ShaderModuleBuilder, Surface, VertexStateBuilder};
 use crate::texture_metadatas::{TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas};
 use crate::utils::log2;
@@ -49,14 +50,15 @@ pub trait RendererPathType {
 #[derive(Clone)]  // TODO: try to add also the Debug trait
 pub struct RendererBuilder<
     'a,
+    P: AsRef<Path>,
     S: ImageSize = DiffuseImageSize,
     T: Texture<S> = DiffuseTexture
 > {
     window: &'a winit::window::Window,
 
     clear_color: Option<wgpu::Color>,
-    shader_path: Option<&'a std::path::Path>,
-    texture_path: Option<&'a std::path::Path>,
+    shader_path: Option<P>,
+    texture_path: Option<P>,
     vertices: Option<&'a [ModelVertex]>,  // TODO: Probably better to encapsulate the [ModelVertex] logic
     indices: Option<&'a [u32]>,
 
@@ -64,15 +66,11 @@ pub struct RendererBuilder<
     generic_texture: PhantomData<T>,
 }
 
-impl<'a, S, T> RendererPathType for RendererBuilder<'a, S, T> where
+impl<'a, P, S, T> RendererBuilder<'a, P, S, T> where
+    P: AsRef<Path> + Debug,
     S: ImageSize,
-    T: Texture<S> {
-    type P = &'a std::path::Path;
-}
-
-impl<'a, S, T> RendererBuilder<'a, S, T> where
-    S: ImageSize,
-    T: Texture<S> {
+    T: Texture<S>
+{
     //- Constructors -------------------------------------------------------------------------------
 
     ///
@@ -105,13 +103,13 @@ impl<'a, S, T> RendererBuilder<'a, S, T> where
     }
 
     ///
-    pub fn with_shader_path(mut self, shader_path: <RendererBuilder<'a, S, T> as RendererPathType>::P) -> Self {
+    pub fn with_shader_path(mut self, shader_path: P) -> Self {
         self.shader_path = Some(shader_path);
         self
     }
 
     ///
-    pub fn with_texture_path(mut self, texture_path: <RendererBuilder<'a, S, T> as RendererPathType>::P) -> Self {
+    pub fn with_texture_path(mut self, texture_path: P) -> Self {
         self.texture_path = Some(texture_path);
         self
     }
@@ -152,23 +150,25 @@ impl<'a, S, T> RendererBuilder<'a, S, T> where
 
         //- Texture Metadatas ----------------------------------------------------------------------
 
-        let texture_image_metadatas = self.create_texture_image_metadatas(
-            &device,
-            surface.preferred_format()
-        );
+        let texture_image_metadatas = if self.texture_path.is_some() {
+            self.create_texture_image_metadatas(&device, surface.preferred_format())
+        } else {
+            vec![]
+        };
 
-        let texture_bind_group_metadatas = self.create_texture_bind_group_metadatas(
-            &device,
-            &texture_image_metadatas,
-        );
+        let texture_bind_group_metadatas = if self.texture_path.is_some() {
+            self.create_texture_bind_group_metadatas(&device, &texture_image_metadatas)
+        } else {
+            vec![]
+        };
 
         let texture_depth_metadatas = TextureDepthMetadatas::new(&device, window_size);
 
         //- Pipeline -------------------------------------------------------------------------------
 
         let renderer_pipeline = if self.shader_path.is_some() {
-            let path = self.shader_path.unwrap();
-            let content = match read_to_string(path) {
+            let path = std::env::current_dir().unwrap().as_path().join(&self.shader_path.unwrap());
+            let content = match read_to_string(&path) {
                 Ok(content) => content,
                 Err(err) => panic!("Couldn't open {:?} file: {}", path, err),
             };
@@ -179,7 +179,7 @@ impl<'a, S, T> RendererBuilder<'a, S, T> where
 
             let shader_module = ShaderModuleBuilder::new(source).build(&device);
 
-            let buffers = [ModelVertex::desc(), InstanceRaw::desc()];  // TODO: the instances must be optional
+            /*let buffers = [ModelVertex::desc(), InstanceRaw::desc()];*/  // TODO: the instances must be optional
             let targets = [wgpu::ColorTargetState {
                 format: surface.preferred_format(),  //.unwrap_or(wgpu::TextureFormat::Rgba16Float),
                 blend: Some(wgpu::BlendState {
@@ -190,18 +190,23 @@ impl<'a, S, T> RendererBuilder<'a, S, T> where
             }];
 
             let vertex = VertexStateBuilder::new(&shader_module)
-                .with_buffers(&buffers)
+                //.with_buffers(&buffers)
                 .build();
 
             let fragment = FragmentStateBuilder::new(&shader_module)
                 .with_targets(&targets)
                 .build();
 
-            let pipeline_layout = {
+            let pipeline_layout = if texture_bind_group_metadatas.len() > 0 {
                 let texture_bgl = texture_bind_group_metadatas[8][8].bind_group_layout();  // TODO: 256x256 texture, hardcoded for now :(
                 let camera_bgl = camera_metadatas.bind_group_layout();
                 PipelineLayoutBuilder::new()
                     .with_bind_group_layouts(&[texture_bgl, camera_bgl])
+                    .build(&device)
+            } else {
+                let camera_bgl = camera_metadatas.bind_group_layout();
+                PipelineLayoutBuilder::new()
+                    .with_bind_group_layouts(&[camera_bgl])
                     .build(&device)
             };
 
@@ -238,8 +243,8 @@ impl<'a, S, T> RendererBuilder<'a, S, T> where
         //- Instances ------------------------------------------------------------------------------
 
         let (instances, instances_buffer) = if self.vertices.is_some() {
-            let instances = RendererBuilder::<'a, S, T>::create_instances();
-            let instances_buffer = RendererBuilder::<'a, S, T>::create_instances_buffer(&device, &instances);
+            let instances = RendererBuilder::<'a, P, S, T>::create_instances();
+            let instances_buffer = RendererBuilder::<'a, P, S, T>::create_instances_buffer(&device, &instances);
             (Some(instances), Some(instances_buffer))
         } else {
             (None, None)
@@ -443,16 +448,7 @@ impl Renderer {
 
         let frame = self.surface.get_current_texture()?;
         let texture = &frame.texture;
-        let frame_view = texture.create_view(&wgpu::TextureViewDescriptor {
-            label: None,
-            format: None,
-            dimension: None,
-            aspect: wgpu::TextureAspect::All,
-            base_mip_level: 0,
-            mip_level_count: None,
-            base_array_layer: 0,
-            array_layer_count: None
-        });
+        let frame_view = texture.create_view(&wgpu::TextureViewDescriptor::default());
 
         let mut encoder = self.create_command_encoder("Render Encoder");
 
@@ -482,8 +478,12 @@ impl Renderer {
             if self.renderer_pipeline.is_some() {
                 let rp = self.renderer_pipeline.as_ref().unwrap();
                 render_pass.set_pipeline(rp.expose_wrapped_render_pipeline());  // TODO: to remove this expose call creating an RenderPass wrapper
-                render_pass.set_bind_group(0, self.texture_bind_group_metadatas[8][8].bind_group(), &[]);  // TODO: hardcoded :(
-                render_pass.set_bind_group(1, self.camera_metadatas.bind_group(), &[]);
+                if self.texture_bind_group_metadatas.len() > 0 {
+                    render_pass.set_bind_group(0, self.texture_bind_group_metadatas[8][8].bind_group(), &[]);  // TODO: hardcoded :(
+                    render_pass.set_bind_group(1, self.camera_metadatas.bind_group(), &[]);
+                } else {
+                    render_pass.set_bind_group(0, self.camera_metadatas.bind_group(), &[]);
+                }
                 if self.vertex_buffer.is_some() {
                     render_pass.set_vertex_buffer(0, self.vertex_buffer.as_ref().unwrap().slice(..));
                 }
@@ -500,6 +500,8 @@ impl Renderer {
                         0,
                         0..self.instances.as_ref().unwrap().len() as _,
                     );
+                } else {
+                    render_pass.draw(0..3, 0..1);
                 }
             }
         }

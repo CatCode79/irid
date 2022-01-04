@@ -1,3 +1,7 @@
+//= USES ===========================================================================================
+
+use std::path::Path;
+
 //= APPLICATION CONFIG BUILDER =====================================================================
 
 /// Build a new [AppConfig] with wanted values.
@@ -106,7 +110,7 @@ impl ApplicationConfig {
     //- Constructors -------------------------------------------------------------------------------
 
     /// Create a Config struct by reading the values from given file path.
-    pub fn new<P: AsRef<std::path::Path>>(#[allow(unused)] filepath: P) -> Self {
+    pub fn new<P: AsRef<Path>>(#[allow(unused)] filepath: P) -> Self {
         ApplicationConfig::default()
     }
 
