@@ -32,7 +32,7 @@ impl Default for IridWindowBuilder {
         })
         .with_resizable(true)
         .with_title("Irid Application")
-        .with_visible(true)
+        .with_visible(false)
     }
 }
 
@@ -90,7 +90,7 @@ impl WindowBuilder for IridWindowBuilder {
     }
 
     fn with_visible(mut self, visible: bool) -> Self {
-        self.winit_builder.window.visible = visible;
+        self.postponed_visibility = visible;
         self
     }
 
@@ -116,9 +116,10 @@ impl WindowBuilder for IridWindowBuilder {
 
     //- Building -----------------------------------------------------------------------------------
 
-    fn build(self) -> Result<(Self::BuildOutput, winit::event_loop::EventLoop<()>), OsError> {
-        let event_loop = winit::event_loop::EventLoop::new();
-
+    fn build(
+        self,
+        event_loop: &winit::event_loop::EventLoop<()>
+    ) -> Result<Self::BuildOutput, OsError> {
         // TODO: it could be considered questionable to give a different behavior than usual, probably remove this part
         /*
         // In this particular case the borderless fullscreen is forced instead of maximization
@@ -132,10 +133,10 @@ impl WindowBuilder for IridWindowBuilder {
         }
         */
 
-        Ok((IridWindow {
-            winit_window: self.winit_builder.build(&event_loop)?,
-            visible: self.postponed_visibility,
-        }, winit::event_loop::EventLoop::new()))
+        Ok(IridWindow {
+            winit_window: self.winit_builder.build(event_loop)?,
+            postponed_visibility: self.postponed_visibility,
+        })
     }
 }
 
@@ -143,7 +144,7 @@ impl WindowBuilder for IridWindowBuilder {
 
 pub struct IridWindow {
     winit_window: winit::window::Window,
-    visible: bool,
+    postponed_visibility: bool,
 }
 
 impl Window for IridWindow {
@@ -154,8 +155,8 @@ impl Window for IridWindow {
     //- Base Window Functions ----------------------------------------------------------------------
 
     #[inline]
-    fn new() -> Result<(Self::Output, winit::event_loop::EventLoop<()>), OsError> {
-        IridWindowBuilder::default().build()
+    fn new(event_loop: &winit::event_loop::EventLoop<()>) -> Result<Self::Output, OsError> {
+        IridWindowBuilder::default().build(event_loop)
     }
 
     #[inline]
@@ -340,5 +341,10 @@ impl Window for IridWindow {
     #[inline]
     fn expose_inner_window(&self) -> &winit::window::Window {
         &self.winit_window
+    }
+
+    #[inline]
+    fn postponed_visibility(&self) -> bool {
+        self.postponed_visibility
     }
 }

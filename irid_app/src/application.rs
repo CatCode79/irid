@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 
 use thiserror::Error;
 
-use irid_app_interface::Window;
+use irid_app_interface::{Window, WindowBuilder};
 use irid_assets::{DiffuseImageSize, DiffuseTexture, ModelVertex};
 use irid_renderer::{Renderer, RendererBuilder, RendererError};
 
@@ -16,6 +16,10 @@ use crate::Listener;
 #[non_exhaustive]
 #[derive(Debug, Error)]
 pub enum ApplicationError {
+    #[error("the OS cannot perform the requested operation")]
+    WindowOsError {
+        #[from] source: winit::error::OsError,
+    },
     #[error("the Renderer cannot be built")]
     RendererError {
         #[from] source: RendererError,
@@ -26,10 +30,9 @@ pub enum ApplicationError {
 
 /// Build a new [Application] with wanted values.
 #[derive(Debug)]
-pub struct ApplicationBuilder<'a, L: Listener, W: Window, P: AsRef<Path>> {
+pub struct ApplicationBuilder<'a, L: Listener, W: WindowBuilder, P: AsRef<Path>> {
     listener: L,
-    window: Option<W>,
-    event_loop: Option<winit::event_loop::EventLoop<()>>,
+    window_builder: Option<W>,
 
     // Renderer stuff
     shader_paths: Option<Vec<P>>,
@@ -43,7 +46,7 @@ pub struct ApplicationBuilder<'a, L: Listener, W: Window, P: AsRef<Path>> {
 
 impl<'a, L, W, P> ApplicationBuilder<'a, L, W, P> where
     L: Listener,
-    W: Window + irid_app_interface::Window<Output = W>,
+    W: WindowBuilder,
     P : AsRef<std::path::Path>
 {
     //- Constructors -------------------------------------------------------------------------------
@@ -52,8 +55,7 @@ impl<'a, L, W, P> ApplicationBuilder<'a, L, W, P> where
     pub fn new(listener: L) -> Self {
         Self {
             listener,
-            window: None,
-            event_loop: None,
+            window_builder: None,
             shader_paths: None,
             texture_path: None,
             vertices: None,
@@ -71,6 +73,13 @@ impl<'a, L, W, P> ApplicationBuilder<'a, L, W, P> where
     }
 
     ///
+    pub fn with_window_builder(mut self, window_builder: W) -> Self {
+        self.window_builder = Some(window_builder);
+        self
+    }
+
+    /*
+    ///
     pub fn with_window(mut self, window: W) -> Self {
         self.window = Some(window);
         self
@@ -81,6 +90,7 @@ impl<'a, L, W, P> ApplicationBuilder<'a, L, W, P> where
         self.event_loop = Some(event_loop);
         self
     }
+    */
 
     /// TODO "I have to refactor all the assets and pipeline management"
     pub fn with_shader_paths(mut self, shader_paths: Vec<P>) -> Self {
@@ -118,17 +128,9 @@ impl<'a, L, W, P> ApplicationBuilder<'a, L, W, P> where
     /// Build a new [Application] with given values.
     // TODO I have to manage the Nones values for every unwrap
     pub fn build(self) -> Application<'a, L, W, P> {
-        let (window,  event_loop) = match (self.window, self.event_loop) {
-            (None,    None) => { let (w, e) = W::new().unwrap(); (w, e) }
-            (None, Some(_)) => { let (w, e) = W::new().unwrap(); (w, e) }  // TODO: this must be an error
-            (Some(_), None) => { let (w, e) = W::new().unwrap(); (w, e) }  // TODO: this must be an error
-            (Some(window), Some(event_loop)) => { (window, event_loop) }
-        };
-
         Application {
             listener: self.listener,
-            window,
-            event_loop,
+            window_builder: self.window_builder.unwrap_or(W::new()),
             shader_paths: self.shader_paths,
             texture_path: self.texture_path,
             vertices: self.vertices,
@@ -142,10 +144,9 @@ impl<'a, L, W, P> ApplicationBuilder<'a, L, W, P> where
 
 /// Manages the whole game setup and logic.
 #[derive(Debug)]
-pub struct Application<'a, L: Listener, W: Window, P: AsRef<Path>> {
+pub struct Application<'a, L: Listener, W: WindowBuilder, P: AsRef<Path>> {
     listener: L,
-    window: W,
-    event_loop: winit::event_loop::EventLoop<()>,
+    window_builder: W,
 
     // Renderer stuffs
     shader_paths: Option<Vec<P>>,
@@ -159,7 +160,7 @@ pub struct Application<'a, L: Listener, W: Window, P: AsRef<Path>> {
 
 impl<'a, L, W, P> Application<'a, L, W, P> where
     L: Listener,
-    W: Window,
+    W: WindowBuilder + Clone,
     P: AsRef<Path> + Clone + Debug
 {
     /// Starts the
@@ -176,8 +177,12 @@ impl<'a, L, W, P> Application<'a, L, W, P> where
     /// method instead but all those static variables are a bore to handle.
     ///
     /// To remember that the resize is not managed perfectly with run_return.
-    pub fn start(self) -> Result<(), ApplicationError> {
-        let mut renderer_builder = RendererBuilder::<W, P, DiffuseImageSize, DiffuseTexture>::new(&self.window);
+    pub fn start<V: Window>(self) -> Result<(), ApplicationError> where <W as irid_app_interface::WindowBuilder>::BuildOutput: irid_app_interface::Window {
+        let mut event_loop = winit::event_loop::EventLoop::new();
+        let window = self.window_builder.clone().build(&event_loop)?;  // TODO: remove the clone, used to avoid partial move
+
+        let mut renderer_builder =
+            RendererBuilder::<<W as WindowBuilder>::BuildOutput, P, DiffuseImageSize, DiffuseTexture>::new(&window);
         if self.clear_color.is_some() {
             renderer_builder = renderer_builder.with_clear_color(self.clear_color.unwrap());  // TODO: no, we have to have the with_clear_color only on RenderBuilder and not also in ApplicationBuilder, so we can ride with this unwrap
         }
@@ -197,11 +202,10 @@ impl<'a, L, W, P> Application<'a, L, W, P> where
 
         // Now is a good time to make the window visible: after the renderer has been initialized,
         // in this way we avoid a slight visible/invisible toggling effect of the window
-        self.window.set_visible(true);
+        window.set_visible(window.postponed_visibility());
 
         use winit::platform::run_return::EventLoopExtRunReturn;
-        let mut el = self.event_loop;
-        el.run_return(move |event, _, control_flow| match event {
+        event_loop.run_return(move |event, _, control_flow| match event {
             winit::event::Event::NewEvents(start_cause) => {
                 self.on_new_events(start_cause);
             },
@@ -209,7 +213,7 @@ impl<'a, L, W, P> Application<'a, L, W, P> where
             winit::event::Event::WindowEvent {
                 event: window_event,
                 window_id,
-            } => if window_id == self.window.id() {  // TODO: multi-monitor support
+            } => if window_id == window.id() {  // TODO: multi-monitor support
                 match window_event {
                     winit::event::WindowEvent::Resized(physical_size) => {
                         self.on_window_resize(&mut renderer, physical_size);
