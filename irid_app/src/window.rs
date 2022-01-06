@@ -116,7 +116,7 @@ impl WindowBuilder for IridWindowBuilder {
 
     //- Building -----------------------------------------------------------------------------------
 
-    fn build(self) -> Result<Self::BuildOutput, OsError> {
+    fn build(self) -> Result<(Self::BuildOutput, winit::event_loop::EventLoop<()>), OsError> {
         let event_loop = winit::event_loop::EventLoop::new();
 
         // TODO: it could be considered questionable to give a different behavior than usual, probably remove this part
@@ -132,11 +132,10 @@ impl WindowBuilder for IridWindowBuilder {
         }
         */
 
-        Ok(Self::BuildOutput {
+        Ok((IridWindow {
             winit_window: self.winit_builder.build(&event_loop)?,
             visible: self.postponed_visibility,
-            event_loop,
-        })
+        }, winit::event_loop::EventLoop::new()))
     }
 }
 
@@ -145,19 +144,17 @@ impl WindowBuilder for IridWindowBuilder {
 pub struct IridWindow {
     winit_window: winit::window::Window,
     visible: bool,
-    event_loop: winit::event_loop::EventLoop<()>,
 }
 
 impl Window for IridWindow {
     //- Associated Types ---------------------------------------------------------------------------
 
     type Output = IridWindow;
-    //type MonitorsIterator = impl Iterator<Item = winit::monitor::MonitorHandle>;
 
     //- Base Window Functions ----------------------------------------------------------------------
 
     #[inline]
-    fn new() -> Result<Self::Output, OsError> {
+    fn new() -> Result<(Self::Output, winit::event_loop::EventLoop<()>), OsError> {
         IridWindowBuilder::default().build()
     }
 
@@ -343,10 +340,5 @@ impl Window for IridWindow {
     #[inline]
     fn expose_inner_window(&self) -> &winit::window::Window {
         &self.winit_window
-    }
-
-    #[inline]
-    fn event_loop(&self) -> &winit::event_loop::EventLoop<()> {
-        &self.event_loop
     }
 }

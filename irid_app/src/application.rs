@@ -29,6 +29,7 @@ pub enum ApplicationError {
 pub struct ApplicationBuilder<'a, L: Listener, W: Window, P: AsRef<Path>> {
     listener: L,
     window: Option<W>,
+    event_loop: Option<winit::event_loop::EventLoop<()>>,
 
     // Renderer stuff
     shader_paths: Option<Vec<P>>,
@@ -42,7 +43,7 @@ pub struct ApplicationBuilder<'a, L: Listener, W: Window, P: AsRef<Path>> {
 
 impl<'a, L, W, P> ApplicationBuilder<'a, L, W, P> where
     L: Listener,
-    W: Window + Default,
+    W: Window + irid_app_interface::Window<Output = W>,
     P : AsRef<std::path::Path>
 {
     //- Constructors -------------------------------------------------------------------------------
@@ -52,6 +53,7 @@ impl<'a, L, W, P> ApplicationBuilder<'a, L, W, P> where
         Self {
             listener,
             window: None,
+            event_loop: None,
             shader_paths: None,
             texture_path: None,
             vertices: None,
@@ -71,6 +73,12 @@ impl<'a, L, W, P> ApplicationBuilder<'a, L, W, P> where
     ///
     pub fn with_window(mut self, window: W) -> Self {
         self.window = Some(window);
+        self
+    }
+
+    ///
+    pub fn with_event_loop(mut self, event_loop: winit::event_loop::EventLoop<()>) -> Self {
+        self.event_loop = Some(event_loop);
         self
     }
 
@@ -110,9 +118,17 @@ impl<'a, L, W, P> ApplicationBuilder<'a, L, W, P> where
     /// Build a new [Application] with given values.
     // TODO I have to manage the Nones values for every unwrap
     pub fn build(self) -> Application<'a, L, W, P> {
+        let (window,  event_loop) = match (self.window, self.event_loop) {
+            (None,    None) => { let (w, e) = W::new().unwrap(); (w, e) }
+            (None, Some(_)) => { let (w, e) = W::new().unwrap(); (w, e) }  // TODO: this must be an error
+            (Some(_), None) => { let (w, e) = W::new().unwrap(); (w, e) }  // TODO: this must be an error
+            (Some(window), Some(event_loop)) => { (window, event_loop) }
+        };
+
         Application {
             listener: self.listener,
-            window: self.window.unwrap_or(W::default()),
+            window,
+            event_loop,
             shader_paths: self.shader_paths,
             texture_path: self.texture_path,
             vertices: self.vertices,
@@ -129,6 +145,7 @@ impl<'a, L, W, P> ApplicationBuilder<'a, L, W, P> where
 pub struct Application<'a, L: Listener, W: Window, P: AsRef<Path>> {
     listener: L,
     window: W,
+    event_loop: winit::event_loop::EventLoop<()>,
 
     // Renderer stuffs
     shader_paths: Option<Vec<P>>,
@@ -183,7 +200,8 @@ impl<'a, L, W, P> Application<'a, L, W, P> where
         self.window.set_visible(true);
 
         use winit::platform::run_return::EventLoopExtRunReturn;
-        self.window.event_loop().run_return(move |event, _, control_flow| match event {
+        let mut el = self.event_loop;
+        el.run_return(move |event, _, control_flow| match event {
             winit::event::Event::NewEvents(start_cause) => {
                 self.on_new_events(start_cause);
             },

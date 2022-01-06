@@ -102,7 +102,7 @@ pub trait WindowBuilder {
     /// Builds the window.
     ///
     /// Possible causes of error include denied permission, incompatible system, and lack of memory.
-    fn build(self) -> Result<Self::BuildOutput, winit::error::OsError>;
+    fn build(self) -> Result<(Self::BuildOutput, winit::event_loop::EventLoop<()>), winit::error::OsError>;
 }
 
 //= WINDOW TRAIT ===================================================================================
@@ -122,7 +122,7 @@ pub trait Window {
     ///  out of memory, etc.
     ///
     /// [`WindowBuilder::new().build(event_loop)`]: crate::window::WindowBuilder::build
-    fn new() -> Result<Self::Output, winit::error::OsError>;
+    fn new() -> Result<(Self::Output, winit::event_loop::EventLoop<()>), winit::error::OsError>;
 
     /// Returns an identifier unique to the window.
     fn id(&self) -> winit::window::WindowId;
@@ -580,6 +580,4 @@ pub trait Window {
     //- Wrapper Functions --------------------------------------------------------------------------
 
     fn expose_inner_window(&self) -> &winit::window::Window;
-
-    fn event_loop(&self) -> &winit::event_loop::EventLoop<()>;
 }
