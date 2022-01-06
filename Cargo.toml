@@ -4,6 +4,7 @@ resolver = "2"
 members = [
     "irid",
     "irid_app",
+    "irid_app_interface",
     "irid_assets",
     "irid_renderer",
 ]

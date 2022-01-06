@@ -2,6 +2,8 @@
 
 use thiserror::Error;
 
+use irid_app_interface::Window;
+
 use crate::{adapter::Adapter, AdapterError, device::Device};
 
 //= ERRORS =========================================================================================
@@ -32,16 +34,16 @@ impl Surface {
 
     /// Create a new Surface using the window handle and retrieves an Adapter which matches
     /// the created surface.
-    pub fn new(
+    pub fn new<W: Window>(
         backends: wgpu::Backends,
-        window: &winit::window::Window,
+        window: &W,
         size: winit::dpi::PhysicalSize<u32>
     ) -> Result<(Self, Adapter), SurfaceError> {
         // Context for all other wgpu objects
         let wgpu_instance = wgpu::Instance::new(backends);
 
         // Handle to a presentable surface onto which rendered images
-        let wgpu_surface = unsafe { wgpu_instance.create_surface(window) };
+        let wgpu_surface = unsafe { wgpu_instance.create_surface(window.expose_inner_window()) };
 
         // For debug purpose prints on console all the available adapters
         #[cfg(debug_assertions)]

@@ -1,19 +1,13 @@
 [package]
-name = "irid_app"
+name = "irid_app_interface"
 version = "0.0.11"
 authors = ["https://github.com/irid-game-framework/irid/graphs/contributors"]
 edition = "2018"
 rust-version = "1.48"
-description = "Irid Game Framework App"
+description = "Irid Game Framework App Interface"
 repository = "https://github.com/irid-game-framework/irid"
 license = "MIT OR Apache-2.0"
 publish = false
 
 [dependencies]
-irid_app_interface = { path = "../irid_app_interface" }
-irid_assets = { path = "../irid_assets" }
-irid_renderer = { path = "../irid_renderer" }
-log = "0.4"
-thiserror = "1.0"
-wgpu = "0.11"
 winit = "0.25"

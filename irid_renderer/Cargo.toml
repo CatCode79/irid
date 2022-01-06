@@ -1,5 +1,5 @@
 [package]
-name = "irid-renderer"
+name = "irid_renderer"
 version = "0.0.11"
 authors = ["https://github.com/irid-game-framework/irid/graphs/contributors"]
 edition = "2018"
@@ -13,7 +13,8 @@ publish = false
 bytemuck = { version = "1.7", features = ["derive"] }
 cgmath = "0.18"
 image = "0.23"
-irid-assets = { path = "../irid_assets" }
+irid_app_interface = { path = "../irid_app_interface" }
+irid_assets = { path = "../irid_assets" }
 log = "0.4"
 pollster = "0.2"
 thiserror = "1.0"

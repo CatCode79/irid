@@ -7,6 +7,7 @@ use std::path::Path;
 
 use thiserror::Error;
 
+use irid_app_interface::Window;
 use irid_assets::{DiffuseImageSize, DiffuseTexture, ImageSize, Texture, ModelVertex};
 
 use crate::{Adapter, Camera, CameraController, CameraMetadatas, Device, FragmentStateBuilder,
@@ -50,11 +51,12 @@ pub trait RendererPathType {
 #[derive(Clone)]  // TODO: try to add also the Debug trait
 pub struct RendererBuilder<
     'a,
+    W: Window,
     P: AsRef<Path>,
     S: ImageSize = DiffuseImageSize,
     T: Texture<S> = DiffuseTexture
 > {
-    window: &'a winit::window::Window,
+    window: &'a W,
 
     clear_color: Option<wgpu::Color>,
     shader_path: Option<P>,
@@ -66,7 +68,8 @@ pub struct RendererBuilder<
     generic_texture: PhantomData<T>,
 }
 
-impl<'a, P, S, T> RendererBuilder<'a, P, S, T> where
+impl<'a, W, P, S, T> RendererBuilder<'a, W, P, S, T> where
+    W: Window,
     P: AsRef<Path> + Debug,
     S: ImageSize,
     T: Texture<S>
@@ -74,7 +77,7 @@ impl<'a, P, S, T> RendererBuilder<'a, P, S, T> where
     //- Constructors -------------------------------------------------------------------------------
 
     ///
-    pub fn new(window: &'a winit::window::Window) -> Self {
+    pub fn new(window: &'a W) -> Self {
         Self {
             window,
             clear_color: None,
@@ -90,14 +93,14 @@ impl<'a, P, S, T> RendererBuilder<'a, P, S, T> where
     //- Setters ------------------------------------------------------------------------------------
 
     ///
-    pub fn with_window(mut self, window: &'a winit::window::Window) -> Self {
+    pub fn with_window(mut self, window: &'a W) -> Self {
         self.window = window;
         self
     }
 
     /// Color used by a [render pass color attachment](wgpu::RenderPassColorAttachment)
     /// to perform a [clear operation](wgpu::LoadOp).
-    pub fn with_clear_color<CC: Into<Option<wgpu::Color>>>(mut self, clear_color: CC) -> Self {
+    pub fn with_clear_color(mut self, clear_color: wgpu::Color) -> Self {
         self.clear_color = clear_color.into();
         self
     }
@@ -243,8 +246,8 @@ impl<'a, P, S, T> RendererBuilder<'a, P, S, T> where
         //- Instances ------------------------------------------------------------------------------
 
         let (instances, instances_buffer) = if self.vertices.is_some() {
-            let instances = RendererBuilder::<'a, P, S, T>::create_instances();
-            let instances_buffer = RendererBuilder::<'a, P, S, T>::create_instances_buffer(&device, &instances);
+            let instances = RendererBuilder::<'a, W, P, S, T>::create_instances();
+            let instances_buffer = RendererBuilder::<'a, W, P, S, T>::create_instances_buffer(&device, &instances);
             (Some(instances), Some(instances_buffer))
         } else {
             (None, None)

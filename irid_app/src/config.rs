@@ -14,12 +14,6 @@ pub struct AppConfigBuilder {
 
 /// Application configuration.
 impl AppConfigBuilder {
-    pub const DEFAULT_WINDOW_INNER_WIDTH: Option<std::num::NonZeroU32> =
-        std::num::NonZeroU32::new(1920 / 2);
-    pub const DEFAULT_WINDOW_INNER_HEIGHT: Option<std::num::NonZeroU32> =
-        std::num::NonZeroU32::new(1080 / 2);
-    pub const DEFAULT_WINDOW_STARTS_MAXIMIZED: bool =
-        false;  // false as default can gives less starting problems
 
     /// Create it to build new [AppConfig].
     pub fn new() -> Self {
@@ -135,23 +129,5 @@ impl ApplicationConfig {
     /// Checks if the game's window starts maximized.
     pub fn window_starts_maximized(&self) -> bool {
         self.window_starts_maximized
-    }
-
-    //- Windows Inner Size -------------------------------------------------------------------------
-
-    /// Returns the window inner size.
-    pub fn window_inner_size(&self) -> winit::dpi::PhysicalSize<u32> {
-        winit::dpi::PhysicalSize {
-            width: self.window_inner_width.get(),
-            height: self.window_inner_height.get(),
-        }
-    }
-
-    /// Returns the minimum window inner size. You cannot resize the window below these values.
-    pub fn window_min_inner_size(&self) -> winit::dpi::PhysicalSize<u32> {
-        winit::dpi::PhysicalSize {
-            width: self.window_inner_width.get() / 2,
-            height: self.window_inner_height.get() / 2,
-        }
     }
 }

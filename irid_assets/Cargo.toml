@@ -1,5 +1,5 @@
 [package]
-name = "irid-assets"
+name = "irid_assets"
 version = "0.0.11"
 authors = ["https://github.com/irid-game-framework/irid/graphs/contributors"]
 edition = "2018"
