@@ -9,7 +9,7 @@ use irid_app_interface::{Window, WindowBuilder};
 use irid_assets::{DiffuseImageSize, DiffuseTexture, ModelVertex};
 use irid_renderer::{Renderer, RendererBuilder, RendererError};
 
-use crate::{IridWindowBuilder, Listener};
+use crate::Listener;
 
 //= ERRORS =========================================================================================
 
@@ -144,9 +144,9 @@ impl<'a, L, B, P> ApplicationBuilder<'a, L, B, P> where
 
 /// Manages the whole game setup and logic.
 #[derive(Debug)]
-pub struct Application<'a, L: Listener, W: WindowBuilder, P: AsRef<Path>> {
+pub struct Application<'a, L: Listener, B: WindowBuilder, P: AsRef<Path>> {
     listener: L,
-    window_builder: W,
+    window_builder: B,
 
     // Renderer stuffs
     shader_paths: Option<Vec<P>>,
@@ -158,9 +158,9 @@ pub struct Application<'a, L: Listener, W: WindowBuilder, P: AsRef<Path>> {
     clear_color: Option<wgpu::Color>,
 }
 
-impl<'a, L, W, P> Application<'a, L, W, P> where
+impl<'a, L, B, P> Application<'a, L, B, P> where
     L: Listener,
-    W: WindowBuilder + Clone,
+    B: WindowBuilder + Clone,
     P: AsRef<Path> + Clone + Debug
 {
     /// Starts the
@@ -177,12 +177,12 @@ impl<'a, L, W, P> Application<'a, L, W, P> where
     /// method instead but all those static variables are a bore to handle.
     ///
     /// To remember that the resize is not managed perfectly with run_return.
-    pub fn start<V: Window>(self) -> Result<(), ApplicationError> where <W as irid_app_interface::WindowBuilder>::BuildOutput: irid_app_interface::Window {
+    pub fn start<W: Window>(self) -> Result<(), ApplicationError> where <B as irid_app_interface::WindowBuilder>::BuildOutput: irid_app_interface::Window {
         let mut event_loop = winit::event_loop::EventLoop::new();
         let window = self.window_builder.clone().build(&event_loop)?;  // TODO: remove the clone, used to avoid partial move
 
         let mut renderer_builder =
-            RendererBuilder::<<W as WindowBuilder>::BuildOutput, P, DiffuseImageSize, DiffuseTexture>::new(&window);
+            RendererBuilder::<<B as WindowBuilder>::BuildOutput, P, DiffuseImageSize, DiffuseTexture>::new(&window);
         if self.clear_color.is_some() {
             renderer_builder = renderer_builder.with_clear_color(self.clear_color.unwrap());  // TODO: no, we have to have the with_clear_color only on RenderBuilder and not also in ApplicationBuilder, so we can ride with this unwrap
         }
