@@ -130,7 +130,7 @@ impl<'a, L, W, P> ApplicationBuilder<'a, L, W, P> where
     pub fn build(self) -> Application<'a, L, W, P> {
         Application {
             listener: self.listener,
-            window_builder: self.window_builder.unwrap_or(W::new()),
+            window_builder: self.window_builder.unwrap_or_else(W::new),
             shader_paths: self.shader_paths,
             texture_path: self.texture_path,
             vertices: self.vertices,
