@@ -25,14 +25,13 @@ impl Default for IridWindowBuilder {
         /*.with_inner_size(winit::dpi::PhysicalSize {
             width: 1980 / 2,
             height: 720 / 2,
-        });*/
+        })
         .with_min_inner_size(winit::dpi::PhysicalSize {
             width: 1980 / 4,
             height: 720 / 4,
-        })
+        })*/
         .with_resizable(true)
         .with_title("Irid Application")
-        .with_visible(false)
     }
 }
 

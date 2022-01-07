@@ -1,7 +1,9 @@
 //= USES ===========================================================================================
 
-use std::fmt::Debug;
-use std::path::{Path, PathBuf};
+use std::{
+    fmt::Debug,
+    path::{Path, PathBuf},
+};
 
 use thiserror::Error;
 
@@ -177,7 +179,7 @@ impl<'a, L, B, P> Application<'a, L, B, P> where
     /// method instead but all those static variables are a bore to handle.
     ///
     /// To remember that the resize is not managed perfectly with run_return.
-    pub fn start<W: Window>(self) -> Result<(), ApplicationError> where <B as irid_app_interface::WindowBuilder>::BuildOutput: irid_app_interface::Window {
+    pub fn start(self) -> Result<(), ApplicationError> where <B as irid_app_interface::WindowBuilder>::BuildOutput: irid_app_interface::Window {
         let mut event_loop = winit::event_loop::EventLoop::new();
         let window = self.window_builder.clone().build(&event_loop)?;  // TODO: remove the clone, used to avoid partial move
 
