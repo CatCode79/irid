@@ -9,7 +9,7 @@ use irid_app_interface::{Window, WindowBuilder};
 use irid_assets::{DiffuseImageSize, DiffuseTexture, ModelVertex};
 use irid_renderer::{Renderer, RendererBuilder, RendererError};
 
-use crate::Listener;
+use crate::{IridWindowBuilder, Listener};
 
 //= ERRORS =========================================================================================
 
@@ -29,10 +29,10 @@ pub enum ApplicationError {
 //= APPLICATION BUILDER ============================================================================
 
 /// Build a new [Application] with wanted values.
-#[derive(Debug)]
-pub struct ApplicationBuilder<'a, L: Listener, W: WindowBuilder, P: AsRef<Path>> {
+#[derive(Debug, Clone)]
+pub struct ApplicationBuilder<'a, L: Listener, B: WindowBuilder, P: AsRef<Path>> {
     listener: L,
-    window_builder: Option<W>,
+    window_builder: Option<B>,
 
     // Renderer stuff
     shader_paths: Option<Vec<P>>,
@@ -44,9 +44,9 @@ pub struct ApplicationBuilder<'a, L: Listener, W: WindowBuilder, P: AsRef<Path>>
     clear_color: Option<wgpu::Color>,
 }
 
-impl<'a, L, W, P> ApplicationBuilder<'a, L, W, P> where
+impl<'a, L, B, P> ApplicationBuilder<'a, L, B, P> where
     L: Listener,
-    W: WindowBuilder,
+    B: WindowBuilder,
     P : AsRef<std::path::Path>
 {
     //- Constructors -------------------------------------------------------------------------------
@@ -73,7 +73,7 @@ impl<'a, L, W, P> ApplicationBuilder<'a, L, W, P> where
     }
 
     ///
-    pub fn with_window_builder(mut self, window_builder: W) -> Self {
+    pub fn with_window_builder(mut self, window_builder: B) -> Self {
         self.window_builder = Some(window_builder);
         self
     }
@@ -127,10 +127,10 @@ impl<'a, L, W, P> ApplicationBuilder<'a, L, W, P> where
 
     /// Build a new [Application] with given values.
     // TODO I have to manage the Nones values for every unwrap
-    pub fn build(self) -> Application<'a, L, W, P> {
+    pub fn build(self) -> Application<'a, L, B, P> {
         Application {
             listener: self.listener,
-            window_builder: self.window_builder.unwrap_or_else(W::new),
+            window_builder: self.window_builder.unwrap_or_else(B::new),
             shader_paths: self.shader_paths,
             texture_path: self.texture_path,
             vertices: self.vertices,
