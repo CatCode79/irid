@@ -13,14 +13,12 @@ use irid_app_interface::{Window, WindowBuilder};
 #[derive(Clone, Debug)]
 pub struct IridWindowBuilder {
     winit_builder: winit::window::WindowBuilder,
-    postponed_visibility: bool,
 }
 
 impl Default for IridWindowBuilder {
     fn default() -> Self {
         IridWindowBuilder {
             winit_builder: winit::window::WindowBuilder::default(),
-            postponed_visibility: true,
         }
         /*.with_inner_size(winit::dpi::PhysicalSize {
             width: 1980 / 2,
@@ -89,7 +87,7 @@ impl WindowBuilder for IridWindowBuilder {
     }
 
     fn with_visible(mut self, visible: bool) -> Self {
-        self.postponed_visibility = visible;
+        self.winit_builder.window.visible = visible;
         self
     }
 
@@ -116,12 +114,15 @@ impl WindowBuilder for IridWindowBuilder {
     //- Building -----------------------------------------------------------------------------------
 
     fn build(
-        self,
+        mut self,
         event_loop: &winit::event_loop::EventLoop<()>,
     ) -> Result<Self::BuildOutput, OsError> {
+        let delayed_visibility = Some(self.winit_builder.window.visible);
+        self.winit_builder.window.visible = false;
+
         Ok(IridWindow {
             winit_window: self.winit_builder.build(event_loop)?,
-            postponed_visibility: self.postponed_visibility,
+            delayed_visibility,
         })
     }
 }
@@ -130,7 +131,7 @@ impl WindowBuilder for IridWindowBuilder {
 
 pub struct IridWindow {
     winit_window: winit::window::Window,
-    postponed_visibility: bool,
+    delayed_visibility: Option<bool>,
 }
 
 impl Window for IridWindow {
@@ -329,8 +330,10 @@ impl Window for IridWindow {
         &self.winit_window
     }
 
-    #[inline]
-    fn postponed_visibility(&self) -> bool {
-        self.postponed_visibility
+    fn conclude_visibility_delay(&mut self) {
+        if self.delayed_visibility.is_some() {
+            self.set_visible(self.delayed_visibility.unwrap());
+            self.delayed_visibility = None;
+        }
     }
 }

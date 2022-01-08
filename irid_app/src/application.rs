@@ -188,7 +188,7 @@ where
     {
         let mut event_loop = winit::event_loop::EventLoop::new();
         // TODO: remove the clone
-        let window = self.window_builder.clone().build(&event_loop)?;
+        let mut window = self.window_builder.clone().build(&event_loop)?;
 
         let mut renderer_builder = RendererBuilder::<
             <B as WindowBuilder>::BuildOutput,
@@ -225,7 +225,7 @@ where
 
         // Now is a good time to make the window visible: after the renderer has been initialized,
         // in this way we avoid a slight visible/invisible toggling effect of the window
-        window.set_visible(window.postponed_visibility());
+        window.conclude_visibility_delay();
 
         use winit::platform::run_return::EventLoopExtRunReturn;
         event_loop.run_return(move |event, _, control_flow| match event {

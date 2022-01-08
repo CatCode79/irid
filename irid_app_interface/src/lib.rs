@@ -591,7 +591,9 @@ pub trait Window {
 
     //- Wrapper Functions --------------------------------------------------------------------------
 
+    ///
     fn expose_inner_window(&self) -> &winit::window::Window;
 
-    fn postponed_visibility(&self) -> bool;
+    ///
+    fn conclude_visibility_delay(&mut self);
 }
