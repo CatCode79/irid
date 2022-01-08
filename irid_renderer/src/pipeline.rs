@@ -17,13 +17,12 @@ pub struct RenderPipelineBuilder<'a> {
     fragment: Option<wgpu::FragmentState<'a>>,
 }
 
-// TODO: here we have to create directly an irid pipeline and not a wgpu pipeline
 impl<'a> RenderPipelineBuilder<'a> {
     //- Constructors -------------------------------------------------------------------------------
 
     pub(crate) fn new(vertex: wgpu::VertexState<'a>) -> Self {
         Self {
-            label: None, // TODO: add the default_labels feature
+            label: None,
             layout: None,
             vertex,
             primitive: None,

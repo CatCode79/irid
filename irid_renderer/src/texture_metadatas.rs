@@ -5,7 +5,7 @@ use crate::Device;
 //= TEXTURE IMAGE METADATAS ========================================================================
 
 /// Struct containing values used by queue.write_texture()
-#[derive(Debug)]
+#[derive(Debug)] // TODO: Cannot use the Clone trait because of wgpu::Texture
 pub struct TextureImageMetadatas {
     texture: wgpu::Texture,
     image_data_layout: wgpu::ImageDataLayout,
@@ -161,7 +161,7 @@ impl TextureBindGroupMetadatas {
     fn create_sampler(device: &Device) -> wgpu::Sampler {
         device.create_sampler(&wgpu::SamplerDescriptor {
             label: Some("Diffuse Texture Sampler"),
-            address_mode_u: wgpu::AddressMode::ClampToEdge, // TODO: probably is better to use MirrorRepeated to avoid bleeding textures, also below
+            address_mode_u: wgpu::AddressMode::ClampToEdge,
             address_mode_v: wgpu::AddressMode::ClampToEdge,
             address_mode_w: wgpu::AddressMode::ClampToEdge,
             mag_filter: wgpu::FilterMode::Linear,

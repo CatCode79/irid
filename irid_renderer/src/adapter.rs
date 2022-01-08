@@ -35,7 +35,7 @@ impl Adapter {
             // About force_fallback_adapter: https://github.com/gfx-rs/wgpu/issues/2063
             wgpu_instance
                 .request_adapter(&wgpu::RequestAdapterOptions {
-                    power_preference: wgpu::PowerPreference::HighPerformance, // TODO: maybe better to give power of choice to the user, probably creating an AdapterBuilder
+                    power_preference: wgpu::PowerPreference::HighPerformance,
                     force_fallback_adapter: false,
                     compatible_surface: Some(wgpu_surface),
                 })

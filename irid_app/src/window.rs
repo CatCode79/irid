@@ -119,19 +119,6 @@ impl WindowBuilder for IridWindowBuilder {
         self,
         event_loop: &winit::event_loop::EventLoop<()>,
     ) -> Result<Self::BuildOutput, OsError> {
-        // TODO: it could be considered questionable to give a different behavior than usual, probably remove this part
-        /*
-        // In this particular case the borderless fullscreen is forced instead of maximization
-        if self.winit_builder.window.maximized && self.winit_builder.window.fullscreen.is_none() {
-            // Searching for primary monitor on Wayland returns always None
-            if let Some(primary_monitor) = event_loop.primary_monitor() {
-                self.with_fullscreen(
-                    Some(winit::window::Fullscreen::Borderless(Some(primary_monitor)))
-                );
-            };
-        }
-        */
-
         Ok(IridWindow {
             winit_window: self.winit_builder.build(event_loop)?,
             postponed_visibility: self.postponed_visibility,

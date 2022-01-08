@@ -45,7 +45,7 @@ impl<'a> ShaderModuleBuilder<'a> {
     /// Build the shader module.
     pub fn build(self, device: &Device) -> wgpu::ShaderModule {
         device.create_shader_module(&wgpu::ShaderModuleDescriptor {
-            label: Some(self.label.unwrap()), // TODO: to check the None
+            label: Some(self.label.unwrap()), // TODO: remove unwrap
             source: self.source,
         })
     }
@@ -190,7 +190,7 @@ impl<'a> FragmentStateBuilder<'a> {
             entry_point: self
                 .entry_point
                 .unwrap_or(FragmentStateBuilder::DEFAULT_ENTRY_POINT),
-            targets: self.targets.unwrap(), // TODO: manage unwrap
+            targets: self.targets.unwrap(), // TODO: remove unwrap
         }
     }
 }

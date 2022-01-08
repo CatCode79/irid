@@ -111,7 +111,7 @@ impl Camera {
 
 ///
 #[repr(C)]
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)] // TODO trying to avoid Copy trait (is used by bytemuck)
+#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct CameraUniform {
     // We can't use cgmath with bytemuck directly so we'll have
     // to convert the Matrix4 into a 4x4 f32 array

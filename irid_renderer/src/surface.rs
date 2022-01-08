@@ -57,7 +57,7 @@ impl Surface {
         println!("Picked Adapter: {:?}", adapter.get_info());
 
         // Most images are stored using sRGB so we need to reflect that here.
-        //let preferred_format = wgpu::TextureFormat::Rgba8UnormSrgb;  // TODO: to be made also user-choosable
+        //let preferred_format = wgpu::TextureFormat::Rgba8UnormSrgb;
         let preferred_format = wgpu_surface
             .get_preferred_format(adapter.expose_wrapped_adapter())
             .ok_or_else(|| SurfaceError::NoPreferredFormat(adapter.get_info()))?;
@@ -70,7 +70,7 @@ impl Surface {
             // Fifo is "vsync on". Immediate is "vsync off".
             // Mailbox is a hybrid between the two (gpu doesn't block if running faster
             // than the display, but screen tearing doesn't happen)
-            present_mode: wgpu::PresentMode::Fifo, // TODO user choosable
+            present_mode: wgpu::PresentMode::Fifo,
         };
 
         let surface = Self {

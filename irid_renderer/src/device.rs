@@ -36,7 +36,7 @@ impl<'a> Device {
                     &wgpu::DeviceDescriptor {
                         label: Some(label_text.as_str()),
                         features: wgpu::Features::empty(),
-                        limits: wgpu::Limits::downlevel_defaults(), // TODO: choosable by user
+                        limits: wgpu::Limits::downlevel_defaults(),
                     },
                     None, // Trace path
                 )

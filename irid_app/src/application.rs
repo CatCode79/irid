@@ -97,25 +97,25 @@ where
     }
     */
 
-    /// TODO "I have to refactor all the assets and pipeline management"
+    ///
     pub fn with_shader_paths(mut self, shader_paths: Vec<P>) -> Self {
         self.shader_paths = Some(shader_paths);
         self
     }
 
-    /// TODO "I have to refactor all the assets and pipeline management"
+    ///
     pub fn with_texture_path(mut self, texture_path: P) -> Self {
         self.texture_path = Some(texture_path);
         self
     }
 
-    /// TODO "I have to refactor all the assets and pipeline management"
+    ///
     pub fn with_vertices(mut self, vertices: &'a [ModelVertex]) -> Self {
         self.vertices = Some(vertices);
         self
     }
 
-    /// TODO "I have to refactor all the assets and pipeline management"
+    ///
     pub fn with_indices(mut self, indices: &'a [u32]) -> Self {
         self.indices = Some(indices);
         self
@@ -131,7 +131,6 @@ where
     //- Build --------------------------------------------------------------------------------------
 
     /// Build a new [Application] with given values.
-    // TODO I have to manage the Nones values for every unwrap
     pub fn build(self) -> Application<'a, L, B, P> {
         Application {
             listener: self.listener,
@@ -188,7 +187,8 @@ where
         <B as irid_app_interface::WindowBuilder>::BuildOutput: irid_app_interface::Window,
     {
         let mut event_loop = winit::event_loop::EventLoop::new();
-        let window = self.window_builder.clone().build(&event_loop)?; // TODO: remove the clone, used to avoid partial move
+        // TODO: remove the clone
+        let window = self.window_builder.clone().build(&event_loop)?;
 
         let mut renderer_builder = RendererBuilder::<
             <B as WindowBuilder>::BuildOutput,
@@ -197,21 +197,23 @@ where
             DiffuseTexture,
         >::new(&window);
         if self.clear_color.is_some() {
+            // TODO: we have to have with_clear_color method only on RenderBuilder
+            //  and not also in ApplicationBuilder, so we can ride with this unwrap
             renderer_builder = renderer_builder.with_clear_color(self.clear_color.unwrap());
-            // TODO: no, we have to have the with_clear_color only on RenderBuilder and not also in ApplicationBuilder, so we can ride with this unwrap
         }
         if self.shader_paths.is_some() {
+            // TODO: remove unwrap and clone
             renderer_builder = renderer_builder.with_shader_path(
                 self.shader_paths
                     .as_ref()
                     .map(|v| v.as_slice()[0].clone())
                     .unwrap(),
-            ); // TODO: remove unwrap and clone
+            );
         }
         if self.texture_path.is_some() {
+            // TODO: remove the clone
             renderer_builder =
                 renderer_builder.with_texture_path(self.texture_path.as_ref().unwrap().clone());
-            // TODO: remove the clone
         }
         if self.vertices.is_some() {
             renderer_builder = renderer_builder.with_vertices(self.vertices.unwrap());
@@ -235,8 +237,8 @@ where
                 event: window_event,
                 window_id,
             } => {
+                // TODO: add a multi-monitor support
                 if window_id == window.id() {
-                    // TODO: multi-monitor support
                     match window_event {
                         winit::event::WindowEvent::Resized(physical_size) => {
                             self.on_window_resize(&mut renderer, physical_size);
@@ -437,8 +439,9 @@ where
                 Err(error) => match error {
                     // These errors should be resolved by the next frame
                     wgpu::SurfaceError::Timeout | wgpu::SurfaceError::Outdated => {
+                        // TODO: better error messages?
                         eprintln!("{:?}", error)
-                    } // TODO: better error messages?
+                    }
 
                     // Recreate the swap chain if lost
                     wgpu::SurfaceError::Lost => renderer.refresh_current_size(),
@@ -473,8 +476,6 @@ where
     ) {
         let use_default_behaviour = self.listener.on_window_resize(physical_size);
         if use_default_behaviour {
-            // TODO I have to choose if I have to to keep this method here or move it to render
-            //  or window struct.
             renderer.resize(physical_size);
         }
     }
@@ -537,7 +538,7 @@ where
         // Then check the input's type for default behaviours
         if use_default_behaviour {
             // Check the camera controller
-            renderer.process_camera_events(input); // TODO Enhance this system
+            renderer.process_camera_events(input);
 
             if let winit::event::KeyboardInput {
                 state: winit::event::ElementState::Pressed,
@@ -613,14 +614,17 @@ where
         &self,
         renderer: &mut Renderer,
         scale_factor: f64,
-        new_inner_size: &mut winit::dpi::PhysicalSize<u32>, // TODO Probably I have to pass it without & (also below)
+        new_inner_size: &mut winit::dpi::PhysicalSize<u32>,
     ) {
         let use_default_behaviour = self
             .listener
             .on_window_scale_change(scale_factor, new_inner_size);
 
         if use_default_behaviour {
-            renderer.resize(*new_inner_size);
+            // listener.on_window_scale_change may change the new_inner_size values,
+            // renderer.resize no
+            let new_inner_size_copy = *new_inner_size;
+            renderer.resize(new_inner_size_copy);
         }
     }
 

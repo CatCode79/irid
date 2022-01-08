@@ -564,7 +564,7 @@ pub trait Window {
     /// **iOS:** Can only be called on the main thread.
     fn current_monitor(&self) -> Option<winit::monitor::MonitorHandle>;
 
-    // TODO: this is possible to correct only(?) using a platform_impl Window, line winit::window::Window
+    // TODO: this is possible to correct using a platform_impl Window (other solutions?)
     /*
     /// Returns the list of all the monitors available on the system.
     ///

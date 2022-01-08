@@ -45,7 +45,7 @@ impl<S: ImageSize + Copy> DiffuseImage<S> {
         guess_the_format: bool,
     ) -> image::ImageResult<Self> {
         let file_reader = if guess_the_format {
-            image::io::Reader::open(filepath)?.with_guessed_format()? // TODO: use anyhow context instead, also below
+            image::io::Reader::open(filepath)?.with_guessed_format()?
         } else {
             image::io::Reader::open(filepath)?
         };
@@ -151,8 +151,9 @@ impl ImageSize for DiffuseImageSize {
     //- Constructors -------------------------------------------------------------------------------
 
     fn new(width: u32, height: u32) -> Self {
+        // TODO: create try_new constructor here, to check the non-zero-ity
         Self {
-            width: NonZeroU32::new(width).unwrap(), // TODO: we have to create try_new constructor here, to check the non-zeroity
+            width: NonZeroU32::new(width).unwrap(),
             height: NonZeroU32::new(height).unwrap(),
         }
     }

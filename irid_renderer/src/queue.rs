@@ -52,12 +52,13 @@ impl Queue {
         texture_image_metadatas: &[Vec<TextureImageMetadatas>],
         texture: T,
     ) {
-        let metadatas = &texture_image_metadatas  // TODO: better add a ref to metas inside irid Texture structs
-            [log2(texture.size().width() as i32) as usize]
+        // TODO: better add a ref to metas inside irid Texture structs
+        let metadatas = &texture_image_metadatas[log2(texture.size().width() as i32) as usize]
             [log2(texture.size().height() as i32) as usize];
         self.wgpu_queue.write_texture(
             metadatas.create_image_copy(),
-            texture.as_rgba8_bytes().unwrap(), // TODO: try to remove the Option at the root
+            // TODO: try to remove the Option at the root
+            texture.as_rgba8_bytes().unwrap(),
             *metadatas.image_data_layout(),
             *metadatas.image_size(),
         );

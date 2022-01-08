@@ -42,7 +42,7 @@ pub trait Texture<S: ImageSize> {
 //= DIFFUSE TEXTURE ================================================================================
 
 ///
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct DiffuseTexture<S: ImageSize + Copy = DiffuseImageSize> {
     image: DiffuseImage<S>,
 }
@@ -70,7 +70,7 @@ impl<S: ImageSize + Copy> Texture<S> for DiffuseTexture<S> {
         })
     }
 
-    // TODO: to be used instead dynamic_image.as_rgba8_bytes on queue.create_texture after created the IridQueue
+    // TODO: use instead dynamic_image.as_rgba8_bytes on queue.create_texture after IridQueue refact
     fn as_rgba8_bytes(&self) -> Option<&[u8]> {
         self.image.as_rgba8_bytes()
     }
@@ -79,7 +79,3 @@ impl<S: ImageSize + Copy> Texture<S> for DiffuseTexture<S> {
         self.image.size()
     }
 }
-
-//= TEXTURE SIZE INTERFACE =========================================================================
-
-// TODO: aliases and wrapper from GenericImageSize

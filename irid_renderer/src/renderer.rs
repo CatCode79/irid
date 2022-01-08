@@ -1,9 +1,6 @@
 //= USES ===========================================================================================
 
-use std::fmt::Debug;
-use std::fs::read_to_string;
-use std::marker::PhantomData;
-use std::path::Path;
+use std::{fmt::Debug, fs::read_to_string, marker::PhantomData, path::Path};
 
 use thiserror::Error;
 
@@ -53,7 +50,7 @@ pub trait RendererPathType {
 //= RENDERER BUILDER ===============================================================================
 
 ///
-#[derive(Clone)] // TODO: try to add also the Debug trait
+#[derive(Clone, Debug)]
 pub struct RendererBuilder<
     'a,
     W: Window,
@@ -66,7 +63,8 @@ pub struct RendererBuilder<
     clear_color: Option<wgpu::Color>,
     shader_path: Option<P>,
     texture_path: Option<P>,
-    vertices: Option<&'a [ModelVertex]>, // TODO: Probably better to encapsulate the [ModelVertex] logic
+    // TODO: Probably better to encapsulate the [ModelVertex] logic or use an Into
+    vertices: Option<&'a [ModelVertex]>,
     indices: Option<&'a [u32]>,
 
     generic_size: PhantomData<S>,
@@ -143,9 +141,10 @@ where
 
         let window_size = self.window.inner_size();
 
-        let backends = wgpu::Backends::VULKAN | wgpu::Backends::DX12; // TODO: choosable by user
+        let backends = wgpu::Backends::VULKAN | wgpu::Backends::DX12;
         let (surface, adapter) = Surface::new(backends, self.window, window_size)
-            .map_err(|_| RendererError::SurfaceAdapterRequest)?; // TODO: probably better pass e as argument to SurfaceAdapterRequest for chaining error description
+            // TODO: better pass `e` as argument to SurfaceAdapterRequest for chaining error descr?
+            .map_err(|_| RendererError::SurfaceAdapterRequest)?;
 
         let (device, queue) = pollster::block_on(Device::new(&adapter))?;
 
@@ -186,13 +185,13 @@ where
             };
 
             let source = wgpu::ShaderSource::Wgsl(std::borrow::Cow::Owned(content));
-            //#[cfg(feature = "glsl")]  // TODO: manage the glsl appropriately checking at least the file extension (pretty rough..)
+            //#[cfg(feature = "glsl")]
             //wgpu::ShaderSource::Glsl(std::borrow::Cow::Owned(shader_key))
 
             let shader_module = ShaderModuleBuilder::new(source).build(&device);
 
+            // TODO: raw instances must be optional
             /*let buffers = [ModelVertex::desc(), InstanceRaw::desc()];*/
- // TODO: the instances must be optional
             let targets = [wgpu::ColorTargetState {
                 format: surface.preferred_format(), //.unwrap_or(wgpu::TextureFormat::Rgba16Float),
                 blend: Some(wgpu::BlendState {
@@ -216,7 +215,8 @@ where
                     .with_bind_group_layouts(&[camera_bgl])
                     .build(&device)
             } else {
-                let texture_bgl = texture_bind_group_metadatas[8][8].bind_group_layout(); // TODO: 256x256 texture, hardcoded for now :(
+                // TODO: 256x256 texture, hardcoded for now :(
+                let texture_bgl = texture_bind_group_metadatas[8][8].bind_group_layout();
                 let camera_bgl = camera_metadatas.bind_group_layout();
                 PipelineLayoutBuilder::new()
                     .with_bind_group_layouts(&[texture_bgl, camera_bgl])
@@ -236,7 +236,8 @@ where
         //- Queue Schedule -------------------------------------------------------------------------
 
         if self.texture_path.is_some() {
-            // TODO: here we use unwrap because texture loading will probably not be done at this point and therefore it is useless to add a new type of error
+            // TODO: here we use unwrap because texture loading will probably not be done at this point
+            //  and therefore it is useless to add a new type of error
             queue.write_texture(
                 &texture_image_metadatas,
                 T::load(self.texture_path.unwrap()).unwrap(),
@@ -379,7 +380,8 @@ where
     fn create_instances_buffer(device: &Device, instances: &[Instance]) -> wgpu::Buffer {
         let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
 
-        // TODO: when we will create the generics about Vertices we will use the Device.create_vertex_buffer_init instead
+        // TODO: When we will create the generics about Vertices we will use the
+        //  Device.create_vertex_buffer_init instead
         device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Instance Buffer"),
             contents: bytemuck::cast_slice(&instance_data),
@@ -409,8 +411,9 @@ pub struct Renderer {
     texture_bind_group_metadatas: Vec<Vec<TextureBindGroupMetadatas>>,
     texture_depth_metadatas: TextureDepthMetadatas,
 
-    renderer_pipeline: Option<RenderPipeline>, // TODO: probably also optional?
-    vertex_buffer: Option<wgpu::Buffer>, // TODO: maybe this is better to move, this buffer, and the index buffer, inside the render_pass or pipeline object
+    renderer_pipeline: Option<RenderPipeline>,
+    // TODO: maybe this is better to move inside the render_pass or pipeline object (also the fields below)
+    vertex_buffer: Option<wgpu::Buffer>,
     index_buffer: Option<wgpu::Buffer>,
     num_indices: u32,
     instances: Option<Vec<Instance>>,
@@ -499,15 +502,17 @@ impl Renderer {
 
             if self.renderer_pipeline.is_some() {
                 let rp = self.renderer_pipeline.as_ref().unwrap();
-                render_pass.set_pipeline(rp.expose_wrapped_render_pipeline()); // TODO: to remove this expose call creating an RenderPass wrapper
+                // TODO: remove this expose call creating an RenderPass wrapper
+                render_pass.set_pipeline(rp.expose_wrapped_render_pipeline());
                 if self.texture_bind_group_metadatas.is_empty() {
                     render_pass.set_bind_group(0, self.camera_metadatas.bind_group(), &[]);
                 } else {
                     render_pass.set_bind_group(
                         0,
+                        // TODO: hardcoded :(
                         self.texture_bind_group_metadatas[8][8].bind_group(),
                         &[],
-                    ); // TODO: hardcoded :(
+                    );
                     render_pass.set_bind_group(1, self.camera_metadatas.bind_group(), &[]);
                 }
                 if self.vertex_buffer.is_some() {
