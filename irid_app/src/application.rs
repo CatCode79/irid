@@ -20,11 +20,13 @@ use crate::Listener;
 pub enum ApplicationError {
     #[error("the OS cannot perform the requested operation")]
     WindowOsError {
-        #[from] source: winit::error::OsError,
+        #[from]
+        source: winit::error::OsError,
     },
     #[error("the Renderer cannot be built")]
     RendererError {
-        #[from] source: RendererError,
+        #[from]
+        source: RendererError,
     },
 }
 
@@ -46,10 +48,11 @@ pub struct ApplicationBuilder<'a, L: Listener, B: WindowBuilder, P: AsRef<Path>>
     clear_color: Option<wgpu::Color>,
 }
 
-impl<'a, L, B, P> ApplicationBuilder<'a, L, B, P> where
+impl<'a, L, B, P> ApplicationBuilder<'a, L, B, P>
+where
     L: Listener,
     B: WindowBuilder,
-    P : AsRef<std::path::Path>
+    P: AsRef<std::path::Path>,
 {
     //- Constructors -------------------------------------------------------------------------------
 
@@ -62,7 +65,7 @@ impl<'a, L, B, P> ApplicationBuilder<'a, L, B, P> where
             texture_path: None,
             vertices: None,
             indices: None,
-            clear_color: None
+            clear_color: None,
         }
     }
 
@@ -160,10 +163,11 @@ pub struct Application<'a, L: Listener, B: WindowBuilder, P: AsRef<Path>> {
     clear_color: Option<wgpu::Color>,
 }
 
-impl<'a, L, B, P> Application<'a, L, B, P> where
+impl<'a, L, B, P> Application<'a, L, B, P>
+where
     L: Listener,
     B: WindowBuilder + Clone,
-    P: AsRef<Path> + Clone + Debug
+    P: AsRef<Path> + Clone + Debug,
 {
     /// Starts the
     /// [event loop](https://docs.rs/winit/0.25.0/winit/event_loop/struct.EventLoop.html).
@@ -179,20 +183,35 @@ impl<'a, L, B, P> Application<'a, L, B, P> where
     /// method instead but all those static variables are a bore to handle.
     ///
     /// To remember that the resize is not managed perfectly with run_return.
-    pub fn start(self) -> Result<(), ApplicationError> where <B as irid_app_interface::WindowBuilder>::BuildOutput: irid_app_interface::Window {
+    pub fn start(self) -> Result<(), ApplicationError>
+    where
+        <B as irid_app_interface::WindowBuilder>::BuildOutput: irid_app_interface::Window,
+    {
         let mut event_loop = winit::event_loop::EventLoop::new();
-        let window = self.window_builder.clone().build(&event_loop)?;  // TODO: remove the clone, used to avoid partial move
+        let window = self.window_builder.clone().build(&event_loop)?; // TODO: remove the clone, used to avoid partial move
 
-        let mut renderer_builder =
-            RendererBuilder::<<B as WindowBuilder>::BuildOutput, P, DiffuseImageSize, DiffuseTexture>::new(&window);
+        let mut renderer_builder = RendererBuilder::<
+            <B as WindowBuilder>::BuildOutput,
+            P,
+            DiffuseImageSize,
+            DiffuseTexture,
+        >::new(&window);
         if self.clear_color.is_some() {
-            renderer_builder = renderer_builder.with_clear_color(self.clear_color.unwrap());  // TODO: no, we have to have the with_clear_color only on RenderBuilder and not also in ApplicationBuilder, so we can ride with this unwrap
+            renderer_builder = renderer_builder.with_clear_color(self.clear_color.unwrap());
+            // TODO: no, we have to have the with_clear_color only on RenderBuilder and not also in ApplicationBuilder, so we can ride with this unwrap
         }
         if self.shader_paths.is_some() {
-            renderer_builder = renderer_builder.with_shader_path(self.shader_paths.as_ref().map(|v| v.as_slice()[0].clone()).unwrap());  // TODO: remove unwrap and clone
+            renderer_builder = renderer_builder.with_shader_path(
+                self.shader_paths
+                    .as_ref()
+                    .map(|v| v.as_slice()[0].clone())
+                    .unwrap(),
+            ); // TODO: remove unwrap and clone
         }
         if self.texture_path.is_some() {
-            renderer_builder = renderer_builder.with_texture_path(self.texture_path.as_ref().unwrap().clone());  // TODO: remove the clone
+            renderer_builder =
+                renderer_builder.with_texture_path(self.texture_path.as_ref().unwrap().clone());
+            // TODO: remove the clone
         }
         if self.vertices.is_some() {
             renderer_builder = renderer_builder.with_vertices(self.vertices.unwrap());
@@ -210,168 +229,177 @@ impl<'a, L, B, P> Application<'a, L, B, P> where
         event_loop.run_return(move |event, _, control_flow| match event {
             winit::event::Event::NewEvents(start_cause) => {
                 self.on_new_events(start_cause);
-            },
+            }
 
             winit::event::Event::WindowEvent {
                 event: window_event,
                 window_id,
-            } => if window_id == window.id() {  // TODO: multi-monitor support
-                match window_event {
-                    winit::event::WindowEvent::Resized(physical_size) => {
-                        self.on_window_resize(&mut renderer, physical_size);
-                    },
+            } => {
+                if window_id == window.id() {
+                    // TODO: multi-monitor support
+                    match window_event {
+                        winit::event::WindowEvent::Resized(physical_size) => {
+                            self.on_window_resize(&mut renderer, physical_size);
+                        }
 
-                    winit::event::WindowEvent::Moved(physical_position) => {
-                        self.on_window_move(physical_position);
-                    },
+                        winit::event::WindowEvent::Moved(physical_position) => {
+                            self.on_window_move(physical_position);
+                        }
 
-                    winit::event::WindowEvent::CloseRequested => {
-                        self.on_window_close(control_flow);
-                    },
+                        winit::event::WindowEvent::CloseRequested => {
+                            self.on_window_close(control_flow);
+                        }
 
-                    winit::event::WindowEvent::Destroyed => {
-                        self.on_window_destroy();
-                    },
+                        winit::event::WindowEvent::Destroyed => {
+                            self.on_window_destroy();
+                        }
 
-                    winit::event::WindowEvent::DroppedFile(path) => {
-                        self.on_window_drop_file(path);
-                    },
+                        winit::event::WindowEvent::DroppedFile(path) => {
+                            self.on_window_drop_file(path);
+                        }
 
-                    winit::event::WindowEvent::HoveredFile(path) => {
-                        self.on_window_hover_file(path);
-                    },
+                        winit::event::WindowEvent::HoveredFile(path) => {
+                            self.on_window_hover_file(path);
+                        }
 
-                    winit::event::WindowEvent::HoveredFileCancelled => {
-                        self.on_window_hover_file_cancelled();
-                    },
+                        winit::event::WindowEvent::HoveredFileCancelled => {
+                            self.on_window_hover_file_cancelled();
+                        }
 
-                    winit::event::WindowEvent::ReceivedCharacter(c) => {
-                        self.on_window_receive_character(c);
-                    },
+                        winit::event::WindowEvent::ReceivedCharacter(c) => {
+                            self.on_window_receive_character(c);
+                        }
 
-                    winit::event::WindowEvent::Focused(gained_focus) => {
-                        self.on_window_focus(gained_focus);
-                    },
+                        winit::event::WindowEvent::Focused(gained_focus) => {
+                            self.on_window_focus(gained_focus);
+                        }
 
-                    winit::event::WindowEvent::KeyboardInput {
-                        device_id,
-                        input,
-                        is_synthetic,
-                    } => if !is_synthetic && input.virtual_keycode.is_some() {
-                        self.on_window_keyboard_input(
-                            control_flow,
+                        winit::event::WindowEvent::KeyboardInput {
                             device_id,
-                            &mut renderer,
-                            &input);
-                    },
+                            input,
+                            is_synthetic,
+                        } => {
+                            if !is_synthetic && input.virtual_keycode.is_some() {
+                                self.on_window_keyboard_input(
+                                    control_flow,
+                                    device_id,
+                                    &mut renderer,
+                                    &input,
+                                );
+                            }
+                        }
 
-                    winit::event::WindowEvent::ModifiersChanged(state) => {
-                        self.on_window_modifiers_change(state);
-                    },
+                        winit::event::WindowEvent::ModifiersChanged(state) => {
+                            self.on_window_modifiers_change(state);
+                        }
 
-                    winit::event::WindowEvent::CursorMoved {
-                        device_id,
-                        position ,
-                        ..
-                    } => {
-                        self.on_window_cursor_move(device_id, position);
-                    },
+                        winit::event::WindowEvent::CursorMoved {
+                            device_id,
+                            position,
+                            ..
+                        } => {
+                            self.on_window_cursor_move(device_id, position);
+                        }
 
-                    winit::event::WindowEvent::CursorEntered { device_id } => {
-                        self.on_window_cursor_enter(device_id);
-                    },
+                        winit::event::WindowEvent::CursorEntered { device_id } => {
+                            self.on_window_cursor_enter(device_id);
+                        }
 
-                    winit::event::WindowEvent::CursorLeft { device_id } => {
-                        self.on_window_cursor_left(device_id);
-                    },
+                        winit::event::WindowEvent::CursorLeft { device_id } => {
+                            self.on_window_cursor_left(device_id);
+                        }
 
-                    winit::event::WindowEvent::MouseWheel {
-                        device_id,
-                        delta,
-                        phase,
-                        ..
-                    } => {
-                        self.on_window_mouse_wheel(device_id, delta, phase);
-                    },
+                        winit::event::WindowEvent::MouseWheel {
+                            device_id,
+                            delta,
+                            phase,
+                            ..
+                        } => {
+                            self.on_window_mouse_wheel(device_id, delta, phase);
+                        }
 
-                    winit::event::WindowEvent::MouseInput {
-                        device_id,
-                        state,
-                        button,
-                        ..
-                    } => {
-                        self.on_window_mouse_input(device_id, state, button);
-                    },
+                        winit::event::WindowEvent::MouseInput {
+                            device_id,
+                            state,
+                            button,
+                            ..
+                        } => {
+                            self.on_window_mouse_input(device_id, state, button);
+                        }
 
-                    winit::event::WindowEvent::TouchpadPressure {
-                        device_id,
-                        pressure,
-                        stage
-                    } => {
-                        self.on_window_touchpad_pressure(device_id, pressure, stage);
-                    },
+                        winit::event::WindowEvent::TouchpadPressure {
+                            device_id,
+                            pressure,
+                            stage,
+                        } => {
+                            self.on_window_touchpad_pressure(device_id, pressure, stage);
+                        }
 
-                    winit::event::WindowEvent::AxisMotion {
-                        device_id,
-                        axis,
-                        value
-                    } => {
-                        self.on_window_axis_motion(device_id, axis, value);
-                    },
+                        winit::event::WindowEvent::AxisMotion {
+                            device_id,
+                            axis,
+                            value,
+                        } => {
+                            self.on_window_axis_motion(device_id, axis, value);
+                        }
 
-                    winit::event::WindowEvent::Touch(touch) => {
-                        self.on_window_touch(touch);
-                    },
+                        winit::event::WindowEvent::Touch(touch) => {
+                            self.on_window_touch(touch);
+                        }
 
-                    // The window's scale factor has changed.
-                    winit::event::WindowEvent::ScaleFactorChanged {
-                        scale_factor,
-                        new_inner_size
-                    } => {
-                        self.on_window_scale_change(
-                            &mut renderer,
+                        // The window's scale factor has changed.
+                        winit::event::WindowEvent::ScaleFactorChanged {
                             scale_factor,
-                            new_inner_size
-                        );
-                    },
+                            new_inner_size,
+                        } => {
+                            self.on_window_scale_change(
+                                &mut renderer,
+                                scale_factor,
+                                new_inner_size,
+                            );
+                        }
 
-                    winit::event::WindowEvent::ThemeChanged(theme) => {
-                        self.on_window_theme_change(theme);
-                    },
+                        winit::event::WindowEvent::ThemeChanged(theme) => {
+                            self.on_window_theme_change(theme);
+                        }
+                    }
                 }
-            },
+            }
 
-            winit::event::Event::DeviceEvent { device_id: _device_id, event: ref _device_event } => {
+            winit::event::Event::DeviceEvent {
+                device_id: _device_id,
+                event: ref _device_event,
+            } => {
                 // TODO: Currently we don't have to manage it
-            },
+            }
 
             winit::event::Event::UserEvent(event) => {
                 self.on_user_event(&event);
-            },
+            }
 
             winit::event::Event::Suspended => {
                 self.on_suspend();
-            },
+            }
 
             winit::event::Event::Resumed => {
                 self.on_resume();
-            },
+            }
 
             winit::event::Event::MainEventsCleared => {
                 self.on_redraw(&mut renderer, control_flow);
-            },
+            }
 
             winit::event::Event::RedrawRequested(window_id) => {
                 self.on_redraw_request(&window_id);
-            },
+            }
 
             winit::event::Event::RedrawEventsCleared => {
                 self.on_redraw_clear();
-            },
+            }
 
             winit::event::Event::LoopDestroyed => {
                 self.on_destroy();
-            },
+            }
         });
 
         Ok(())
@@ -400,24 +428,26 @@ impl<'a, L, B, P> Application<'a, L, B, P> where
     fn on_redraw(
         &self,
         renderer: &mut Renderer,
-        control_flow: &mut winit::event_loop::ControlFlow
+        control_flow: &mut winit::event_loop::ControlFlow,
     ) {
         let use_default_behaviour = self.listener.on_redraw();
         if use_default_behaviour {
             match renderer.redraw() {
-                Ok(_) => {},
+                Ok(_) => {}
                 Err(error) => match error {
                     // These errors should be resolved by the next frame
-                    wgpu::SurfaceError::Timeout | wgpu::SurfaceError::Outdated =>
-                        eprintln!("{:?}", error),  // TODO: better error messages?
+                    wgpu::SurfaceError::Timeout | wgpu::SurfaceError::Outdated => {
+                        eprintln!("{:?}", error)
+                    } // TODO: better error messages?
 
                     // Recreate the swap chain if lost
                     wgpu::SurfaceError::Lost => renderer.refresh_current_size(),
 
                     // The system is out of memory, we should probably quit
-                    wgpu::SurfaceError::OutOfMemory =>
-                        *control_flow = winit::event_loop::ControlFlow::Exit,
-                }
+                    wgpu::SurfaceError::OutOfMemory => {
+                        *control_flow = winit::event_loop::ControlFlow::Exit
+                    }
+                },
             }
         }
     }
@@ -439,7 +469,7 @@ impl<'a, L, B, P> Application<'a, L, B, P> where
     fn on_window_resize(
         &self,
         renderer: &mut Renderer,
-        physical_size: winit::dpi::PhysicalSize<u32>
+        physical_size: winit::dpi::PhysicalSize<u32>,
     ) {
         let use_default_behaviour = self.listener.on_window_resize(physical_size);
         if use_default_behaviour {
@@ -495,7 +525,7 @@ impl<'a, L, B, P> Application<'a, L, B, P> where
         control_flow: &mut winit::event_loop::ControlFlow,
         device_id: winit::event::DeviceId,
         renderer: &mut Renderer,
-        input: &winit::event::KeyboardInput
+        input: &winit::event::KeyboardInput,
     ) {
         // First call a generic method to manage the key events
         let use_default_behaviour = self.listener.on_window_keyboard_input(
@@ -507,13 +537,16 @@ impl<'a, L, B, P> Application<'a, L, B, P> where
         // Then check the input's type for default behaviours
         if use_default_behaviour {
             // Check the camera controller
-            renderer.process_camera_events(input);  // TODO Enhance this system
+            renderer.process_camera_events(input); // TODO Enhance this system
 
             if let winit::event::KeyboardInput {
-                    state: winit::event::ElementState::Pressed,
-                    virtual_keycode: Some(winit::event::VirtualKeyCode::Escape),
-                    ..
-                } = input { *control_flow = winit::event_loop::ControlFlow::Exit }
+                state: winit::event::ElementState::Pressed,
+                virtual_keycode: Some(winit::event::VirtualKeyCode::Escape),
+                ..
+            } = input
+            {
+                *control_flow = winit::event_loop::ControlFlow::Exit
+            }
         }
     }
 
@@ -524,7 +557,7 @@ impl<'a, L, B, P> Application<'a, L, B, P> where
     fn on_window_cursor_move(
         &self,
         device_id: winit::event::DeviceId,
-        position: winit::dpi::PhysicalPosition<f64>
+        position: winit::dpi::PhysicalPosition<f64>,
     ) {
         let _use_default_behaviour = self.listener.on_window_cursor_move(device_id, position);
     }
@@ -541,7 +574,7 @@ impl<'a, L, B, P> Application<'a, L, B, P> where
         &self,
         device_id: winit::event::DeviceId,
         delta: winit::event::MouseScrollDelta,
-        phase: winit::event::TouchPhase
+        phase: winit::event::TouchPhase,
     ) {
         let _use_default_behaviour = self.listener.on_window_mouse_wheel(device_id, delta, phase);
     }
@@ -550,30 +583,25 @@ impl<'a, L, B, P> Application<'a, L, B, P> where
         &self,
         device_id: winit::event::DeviceId,
         state: winit::event::ElementState,
-        button: winit::event::MouseButton
+        button: winit::event::MouseButton,
     ) {
-        let _use_default_behaviour = self.listener.on_window_mouse_input(device_id, state, button);
+        let _use_default_behaviour = self
+            .listener
+            .on_window_mouse_input(device_id, state, button);
     }
 
     fn on_window_touchpad_pressure(
         &self,
         device_id: winit::event::DeviceId,
         pressure: f32,
-        stage: i64
+        stage: i64,
     ) {
-        let _use_default_behaviour = self.listener.on_window_touchpad_pressure(
-            device_id,
-            pressure,
-            stage
-        );
+        let _use_default_behaviour = self
+            .listener
+            .on_window_touchpad_pressure(device_id, pressure, stage);
     }
 
-    fn on_window_axis_motion(
-        &self,
-        device_id: winit::event::DeviceId,
-        axis: u32,
-        value: f64
-    ) {
+    fn on_window_axis_motion(&self, device_id: winit::event::DeviceId, axis: u32, value: f64) {
         let _use_default_behaviour = self.listener.on_window_axis_motion(device_id, axis, value);
     }
 
@@ -585,12 +613,11 @@ impl<'a, L, B, P> Application<'a, L, B, P> where
         &self,
         renderer: &mut Renderer,
         scale_factor: f64,
-        new_inner_size: &mut winit::dpi::PhysicalSize<u32>// TODO Probably I have to pass it without & (also below)
+        new_inner_size: &mut winit::dpi::PhysicalSize<u32>, // TODO Probably I have to pass it without & (also below)
     ) {
-        let use_default_behaviour = self.listener.on_window_scale_change(
-            scale_factor,
-            new_inner_size
-        );
+        let use_default_behaviour = self
+            .listener
+            .on_window_scale_change(scale_factor, new_inner_size);
 
         if use_default_behaviour {
             renderer.resize(*new_inner_size);

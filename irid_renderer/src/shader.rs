@@ -1,6 +1,6 @@
 //= USES ===========================================================================================
 
-use crate::{device::Device};
+use crate::device::Device;
 
 //= SHADER MODULE BUILDER ==========================================================================
 
@@ -45,7 +45,7 @@ impl<'a> ShaderModuleBuilder<'a> {
     /// Build the shader module.
     pub fn build(self, device: &Device) -> wgpu::ShaderModule {
         device.create_shader_module(&wgpu::ShaderModuleDescriptor {
-            label: Some(self.label.unwrap()),  // TODO: to check the None
+            label: Some(self.label.unwrap()), // TODO: to check the None
             source: self.source,
         })
     }
@@ -91,9 +91,11 @@ impl<'a> VertexStateBuilder<'a> {
     /// There must be a function that returns void with this name in the shader.
     pub fn with_entry_point(&mut self, entry_point: &'a str) -> &mut Self {
         self.entry_point = if entry_point.is_empty() {
-            log::warn!("An empty entry_point string was passed as argument for VertexStateBuilder, \
+            log::warn!(
+                "An empty entry_point string was passed as argument for VertexStateBuilder, \
             the default value of {} will be set instead",
-                VertexStateBuilder::DEFAULT_ENTRY_POINT);
+                VertexStateBuilder::DEFAULT_ENTRY_POINT
+            );
             Some(VertexStateBuilder::DEFAULT_ENTRY_POINT)
         } else {
             Some(entry_point)
@@ -113,7 +115,9 @@ impl<'a> VertexStateBuilder<'a> {
     pub fn build(self) -> wgpu::VertexState<'a> {
         wgpu::VertexState {
             module: self.module,
-            entry_point: self.entry_point.unwrap_or(VertexStateBuilder::DEFAULT_ENTRY_POINT),
+            entry_point: self
+                .entry_point
+                .unwrap_or(VertexStateBuilder::DEFAULT_ENTRY_POINT),
             buffers: self.buffers.unwrap_or(&[]),
         }
     }
@@ -159,9 +163,11 @@ impl<'a> FragmentStateBuilder<'a> {
     /// There must be a function that returns void with this name in the shader.
     pub fn with_entry_point(mut self, entry_point: &'a str) -> Self {
         self.entry_point = if entry_point.is_empty() {
-            log::warn!("An empty entry_point string was passed as argument for FragmentStateBuilder, \
+            log::warn!(
+                "An empty entry_point string was passed as argument for FragmentStateBuilder, \
             the default value of {} will be set instead",
-                FragmentStateBuilder::DEFAULT_ENTRY_POINT);
+                FragmentStateBuilder::DEFAULT_ENTRY_POINT
+            );
             Some(FragmentStateBuilder::DEFAULT_ENTRY_POINT)
         } else {
             Some(entry_point)
@@ -181,8 +187,10 @@ impl<'a> FragmentStateBuilder<'a> {
     pub fn build(self) -> wgpu::FragmentState<'a> {
         wgpu::FragmentState {
             module: self.module,
-            entry_point: self.entry_point.unwrap_or(FragmentStateBuilder::DEFAULT_ENTRY_POINT),
-            targets: self.targets.unwrap(),  // TODO: manage unwrap
+            entry_point: self
+                .entry_point
+                .unwrap_or(FragmentStateBuilder::DEFAULT_ENTRY_POINT),
+            targets: self.targets.unwrap(), // TODO: manage unwrap
         }
     }
 }

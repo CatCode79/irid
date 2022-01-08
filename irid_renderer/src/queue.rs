@@ -4,9 +4,9 @@ use std::future::Future;
 
 use irid_assets::{ImageSize, Texture};
 
-use crate::{Camera, CameraMetadatas};
 use crate::texture_metadatas::TextureImageMetadatas;
 use crate::utils::log2;
+use crate::{Camera, CameraMetadatas};
 
 //= QUEUE ==========================================================================================
 
@@ -21,9 +21,7 @@ impl Queue {
 
     ///
     pub fn new(wgpu_queue: wgpu::Queue) -> Self {
-        Self {
-            wgpu_queue,
-        }
+        Self { wgpu_queue }
     }
 
     //- Wrapped Methods ----------------------------------------------------------------------------
@@ -40,7 +38,7 @@ impl Queue {
         self.wgpu_queue.write_buffer(
             camera_metadatas.buffer(),
             0,
-            bytemuck::cast_slice(&[camera_uniform])
+            bytemuck::cast_slice(&[camera_uniform]),
         );
     }
 
@@ -52,16 +50,16 @@ impl Queue {
     pub fn write_texture<T: Texture<S>, S: ImageSize>(
         &self,
         texture_image_metadatas: &[Vec<TextureImageMetadatas>],
-        texture: T
+        texture: T,
     ) {
         let metadatas = &texture_image_metadatas  // TODO: better add a ref to metas inside irid Texture structs
             [log2(texture.size().width() as i32) as usize]
             [log2(texture.size().height() as i32) as usize];
         self.wgpu_queue.write_texture(
             metadatas.create_image_copy(),
-            texture.as_rgba8_bytes().unwrap(),  // TODO: try to remove the Option at the root
+            texture.as_rgba8_bytes().unwrap(), // TODO: try to remove the Option at the root
             *metadatas.image_data_layout(),
-            *metadatas.image_size()
+            *metadatas.image_size(),
         );
     }
 

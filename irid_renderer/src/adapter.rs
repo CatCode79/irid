@@ -29,17 +29,17 @@ impl Adapter {
     /// If no adapters are found that suffice all the "hard" options, Err is returned.
     pub(crate) async fn new(
         wgpu_instance: &wgpu::Instance,
-        wgpu_surface: &wgpu::Surface
+        wgpu_surface: &wgpu::Surface,
     ) -> Result<Self, AdapterError> {
         let wgpu_adapter = {
             // About force_fallback_adapter: https://github.com/gfx-rs/wgpu/issues/2063
-            wgpu_instance.request_adapter(
-                &wgpu::RequestAdapterOptions {
-                    power_preference: wgpu::PowerPreference::HighPerformance,  // TODO: maybe better to give power of choice to the user, probably creating an AdapterBuilder
+            wgpu_instance
+                .request_adapter(&wgpu::RequestAdapterOptions {
+                    power_preference: wgpu::PowerPreference::HighPerformance, // TODO: maybe better to give power of choice to the user, probably creating an AdapterBuilder
                     force_fallback_adapter: false,
                     compatible_surface: Some(wgpu_surface),
-                }
-            ).await
+                })
+                .await
         };
 
         if wgpu_adapter.is_some() {
@@ -72,9 +72,10 @@ impl Adapter {
     pub fn request_device(
         &self,
         desc: &wgpu::DeviceDescriptor,
-        trace_path: Option<&std::path::Path>
-    ) -> impl std::future::Future<Output =
-    Result<(wgpu::Device, wgpu::Queue), wgpu::RequestDeviceError>> + Send {
+        trace_path: Option<&std::path::Path>,
+    ) -> impl std::future::Future<
+        Output = Result<(wgpu::Device, wgpu::Queue), wgpu::RequestDeviceError>,
+    > + Send {
         self.wgpu_adapter.request_device(desc, trace_path)
     }
 

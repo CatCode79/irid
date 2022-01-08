@@ -4,7 +4,7 @@ use thiserror::Error;
 
 use irid_app_interface::Window;
 
-use crate::{adapter::Adapter, AdapterError, device::Device};
+use crate::{adapter::Adapter, device::Device, AdapterError};
 
 //= ERRORS =========================================================================================
 
@@ -15,7 +15,8 @@ pub enum SurfaceError {
     NoPreferredFormat(wgpu::AdapterInfo),
     #[error("An adapter compatible with the given surface could not be obtained")]
     AdapterNotObtained {
-        #[from] source: AdapterError,
+        #[from]
+        source: AdapterError,
     },
 }
 
@@ -37,7 +38,7 @@ impl Surface {
     pub fn new<W: Window>(
         backends: wgpu::Backends,
         window: &W,
-        size: winit::dpi::PhysicalSize<u32>
+        size: winit::dpi::PhysicalSize<u32>,
     ) -> Result<(Self, Adapter), SurfaceError> {
         // Context for all other wgpu objects
         let wgpu_instance = wgpu::Instance::new(backends);
@@ -57,9 +58,9 @@ impl Surface {
 
         // Most images are stored using sRGB so we need to reflect that here.
         //let preferred_format = wgpu::TextureFormat::Rgba8UnormSrgb;  // TODO: to be made also user-choosable
-        let preferred_format= wgpu_surface.get_preferred_format(
-            adapter.expose_wrapped_adapter()
-        ).ok_or_else(|| SurfaceError::NoPreferredFormat(adapter.get_info()))?;
+        let preferred_format = wgpu_surface
+            .get_preferred_format(adapter.expose_wrapped_adapter())
+            .ok_or_else(|| SurfaceError::NoPreferredFormat(adapter.get_info()))?;
 
         let configuration = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
@@ -69,7 +70,7 @@ impl Surface {
             // Fifo is "vsync on". Immediate is "vsync off".
             // Mailbox is a hybrid between the two (gpu doesn't block if running faster
             // than the display, but screen tearing doesn't happen)
-            present_mode: wgpu::PresentMode::Fifo,  // TODO user choosable
+            present_mode: wgpu::PresentMode::Fifo, // TODO user choosable
         };
 
         let surface = Self {
@@ -93,14 +94,16 @@ impl Surface {
 
     /// Initializes Surface for presentation.
     pub fn configure(&self, device: &Device) {
-        self.wgpu_surface.configure(device.expose_wrapped_device(), &self.configuration);
+        self.wgpu_surface
+            .configure(device.expose_wrapped_device(), &self.configuration);
     }
 
     /// Updates the Surface for presentation.
     pub fn update(&mut self, device: &Device, size: winit::dpi::PhysicalSize<u32>) {
         self.configuration.width = size.width;
         self.configuration.height = size.height;
-        self.wgpu_surface.configure(device.expose_wrapped_device(), &self.configuration);
+        self.wgpu_surface
+            .configure(device.expose_wrapped_device(), &self.configuration);
     }
 
     /// Returns the next texture to be presented by the Surface for drawing.
@@ -109,7 +112,6 @@ impl Surface {
         self.wgpu_surface.get_current_texture()
     }
 }
-
 
 //= FUNCTIONS ======================================================================================
 

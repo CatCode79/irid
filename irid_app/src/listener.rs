@@ -24,10 +24,14 @@ pub trait Listener {
     }
 
     /// Emitted when the application has been suspended.
-    fn on_suspend(&self) -> bool { true }
+    fn on_suspend(&self) -> bool {
+        true
+    }
 
     /// Emitted when the application has been resumed.
-    fn on_resume(&self) -> bool { true }
+    fn on_resume(&self) -> bool {
+        true
+    }
 
     /// Emitted when all of the event loop's input events have been processed and redraw
     /// processing is about to begin.
@@ -75,7 +79,9 @@ pub trait Listener {
     ///
     /// This is irreversible - if this event is emitted, it is guaranteed to be the last event that
     /// gets emitted. You generally want to treat this as an "do on quit" event.
-    fn on_destroy(&self) -> bool { true }
+    fn on_destroy(&self) -> bool {
+        true
+    }
 
     //- Window Events ------------------------------------------------------------------------------
 
@@ -83,7 +89,9 @@ pub trait Listener {
     ///
     /// * `new_size` - Contains the client area's new dimensions.
     #[allow(unused_variables)]
-    fn on_window_resize(&self, new_size: winit::dpi::PhysicalSize<u32>) -> bool { true }
+    fn on_window_resize(&self, new_size: winit::dpi::PhysicalSize<u32>) -> bool {
+        true
+    }
 
     /// The position of the window has changed.
     ///
@@ -132,7 +140,7 @@ pub trait Listener {
 
     /// The window received a unicode character.
     #[allow(unused_variables)]
-    fn on_window_receive_character(&self, c: char) -> bool  {
+    fn on_window_receive_character(&self, c: char) -> bool {
         true
     }
 
@@ -150,7 +158,7 @@ pub trait Listener {
         &self,
         device_id: winit::event::DeviceId,
         state: winit::event::ElementState,
-        virtual_keycode: winit::event::VirtualKeyCode
+        virtual_keycode: winit::event::VirtualKeyCode,
     ) -> bool {
         true
     }
@@ -175,26 +183,20 @@ pub trait Listener {
     fn on_window_cursor_move(
         &self,
         device_id: winit::event::DeviceId,
-        position: winit::dpi::PhysicalPosition<f64>
+        position: winit::dpi::PhysicalPosition<f64>,
     ) -> bool {
         true
     }
 
     /// The cursor has entered the window.
     #[allow(unused_variables)]
-    fn on_window_cursor_enter(
-        &self,
-        device_id: winit::event::DeviceId
-    ) -> bool {
+    fn on_window_cursor_enter(&self, device_id: winit::event::DeviceId) -> bool {
         true
     }
 
     /// The cursor has left the window.
     #[allow(unused_variables)]
-    fn on_window_cursor_left(
-        &self,
-        device_id: winit::event::DeviceId
-    ) -> bool {
+    fn on_window_cursor_left(&self, device_id: winit::event::DeviceId) -> bool {
         true
     }
 
@@ -204,7 +206,7 @@ pub trait Listener {
         &self,
         device_id: winit::event::DeviceId,
         delta: winit::event::MouseScrollDelta,
-        phase: winit::event::TouchPhase
+        phase: winit::event::TouchPhase,
     ) -> bool {
         true
     }
@@ -215,7 +217,7 @@ pub trait Listener {
         &self,
         device_id: winit::event::DeviceId,
         state: winit::event::ElementState,
-        button: winit::event::MouseButton
+        button: winit::event::MouseButton,
     ) -> bool {
         true
     }
@@ -231,7 +233,7 @@ pub trait Listener {
         &self,
         device_id: winit::event::DeviceId,
         pressure: f32,
-        stage: i64
+        stage: i64,
     ) -> bool {
         true
     }
@@ -242,17 +244,14 @@ pub trait Listener {
         &self,
         device_id: winit::event::DeviceId,
         axis: winit::event::AxisId,
-        value: f64
+        value: f64,
     ) -> bool {
         true
     }
 
     /// Touch event has been received.
     #[allow(unused_variables)]
-    fn on_window_touch(
-        &self,
-        touch: winit::event::Touch
-    ) -> bool {
+    fn on_window_touch(&self, touch: winit::event::Touch) -> bool {
         true
     }
 
@@ -271,7 +270,7 @@ pub trait Listener {
     fn on_window_scale_change(
         &self,
         scale_factor: f64,
-        new_inner_size: &mut winit::dpi::PhysicalSize<u32>
+        new_inner_size: &mut winit::dpi::PhysicalSize<u32>,
     ) -> bool {
         true
     }

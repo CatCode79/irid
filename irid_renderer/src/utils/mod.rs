@@ -1,4 +1,6 @@
-const fn num_bits<T>() -> usize { std::mem::size_of::<T>() * 8 }
+const fn num_bits<T>() -> usize {
+    std::mem::size_of::<T>() * 8
+}
 
 ///
 // TODO: There is an log_2 experimental function in the nightly, waiting for it...

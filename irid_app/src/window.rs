@@ -117,7 +117,7 @@ impl WindowBuilder for IridWindowBuilder {
 
     fn build(
         self,
-        event_loop: &winit::event_loop::EventLoop<()>
+        event_loop: &winit::event_loop::EventLoop<()>,
     ) -> Result<Self::BuildOutput, OsError> {
         // TODO: it could be considered questionable to give a different behavior than usual, probably remove this part
         /*

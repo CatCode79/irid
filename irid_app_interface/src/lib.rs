@@ -104,7 +104,7 @@ pub trait WindowBuilder {
     /// Possible causes of error include denied permission, incompatible system, and lack of memory.
     fn build(
         self,
-        event_loop: &winit::event_loop::EventLoop<()>
+        event_loop: &winit::event_loop::EventLoop<()>,
     ) -> Result<Self::BuildOutput, winit::error::OsError>;
 }
 
@@ -126,7 +126,7 @@ pub trait Window {
     ///
     /// [`WindowBuilder::new().build(event_loop)`]: crate::window::WindowBuilder::build
     fn new(
-        event_loop: &winit::event_loop::EventLoop<()>
+        event_loop: &winit::event_loop::EventLoop<()>,
     ) -> Result<Self::Output, winit::error::OsError>;
 
     /// Returns an identifier unique to the window.
@@ -182,7 +182,9 @@ pub trait Window {
     /// - **Android / Wayland:** Always returns [`NotSupportedError`].
     ///
     /// [safe area]: https://developer.apple.com/documentation/uikit/uiview/2891103-safeareainsets?language=objc
-    fn inner_position(&self) -> Result<winit::dpi::PhysicalPosition<i32>, winit::error::NotSupportedError>;
+    fn inner_position(
+        &self,
+    ) -> Result<winit::dpi::PhysicalPosition<i32>, winit::error::NotSupportedError>;
 
     /// Returns the position of the top-left hand corner of the window relative to the
     ///  top-left hand corner of the desktop.
@@ -199,7 +201,9 @@ pub trait Window {
     /// - **iOS:** Can only be called on the main thread. Returns the top left coordinates of the
     ///   window in the screen space coordinate system.
     /// - **Android / Wayland:** Always returns [`NotSupportedError`].
-    fn outer_position(&self) -> Result<winit::dpi::PhysicalPosition<i32>, winit::error::NotSupportedError>;
+    fn outer_position(
+        &self,
+    ) -> Result<winit::dpi::PhysicalPosition<i32>, winit::error::NotSupportedError>;
 
     /// Modifies the position of the window.
     ///
@@ -506,7 +510,10 @@ pub trait Window {
     /// ## Platform-specific
     ///
     /// - **iOS / Android / Wayland:** Always returns an [`ExternalError::NotSupported`].
-    fn set_cursor_position<P: Into<winit::dpi::Position>>(&self, position: P) -> Result<(), winit::error::ExternalError>;
+    fn set_cursor_position<P: Into<winit::dpi::Position>>(
+        &self,
+        position: P,
+    ) -> Result<(), winit::error::ExternalError>;
 
     /// Grabs the cursor, preventing it from leaving the window.
     ///

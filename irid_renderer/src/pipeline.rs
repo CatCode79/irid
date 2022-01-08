@@ -1,7 +1,7 @@
 //= USES ===========================================================================================
 
-use crate::Device;
 use crate::texture_metadatas::TextureDepthMetadatas;
+use crate::Device;
 
 //= RENDERER PIPELINE BUILDER ======================================================================
 
@@ -23,13 +23,13 @@ impl<'a> RenderPipelineBuilder<'a> {
 
     pub(crate) fn new(vertex: wgpu::VertexState<'a>) -> Self {
         Self {
-            label: None,  // TODO: add the default_labels feature
+            label: None, // TODO: add the default_labels feature
             layout: None,
             vertex,
             primitive: None,
             depth_stencil: None,
             multisample: None,
-            fragment: None
+            fragment: None,
         }
     }
 
@@ -96,9 +96,9 @@ impl<'a> RenderPipelineBuilder<'a> {
 
     ///
     pub fn build(self, device: &Device) -> RenderPipeline {
-        let depth_stencil = self.depth_stencil.or_else(
-            RenderPipelineBuilder::create_default_depth_stencil
-        );
+        let depth_stencil = self
+            .depth_stencil
+            .or_else(RenderPipelineBuilder::create_default_depth_stencil);
 
         let wgpu_render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: self.label,
@@ -139,7 +139,7 @@ impl RenderPipeline {
 ///
 #[derive(Clone, Debug, Default)]
 pub struct PipelineLayoutBuilder<'a> {
-    pipeline_layout_desc: wgpu::PipelineLayoutDescriptor<'a>
+    pipeline_layout_desc: wgpu::PipelineLayoutDescriptor<'a>,
 }
 
 impl<'a> PipelineLayoutBuilder<'a> {
@@ -171,7 +171,7 @@ impl<'a> PipelineLayoutBuilder<'a> {
     ///
     pub fn with_bind_group_layouts(
         mut self,
-        bind_group_layouts: &'a [&wgpu::BindGroupLayout]
+        bind_group_layouts: &'a [&wgpu::BindGroupLayout],
     ) -> Self {
         self.pipeline_layout_desc.bind_group_layouts = bind_group_layouts;
         self
@@ -180,7 +180,7 @@ impl<'a> PipelineLayoutBuilder<'a> {
     ///
     pub fn with_push_constant_ranges(
         mut self,
-        push_constant_ranges: &'a [wgpu::PushConstantRange]
+        push_constant_ranges: &'a [wgpu::PushConstantRange],
     ) -> Self {
         self.pipeline_layout_desc.push_constant_ranges = push_constant_ranges;
         self

@@ -14,13 +14,11 @@ pub trait Image<S: ImageSize> {
     type Output;
 
     /// Open and decode a file to read, format will be guessed from path.
-    fn load<P: AsRef<std::path::Path>>(
-        filepath: P
-    ) -> image::ImageResult<Self::Output>;
+    fn load<P: AsRef<std::path::Path>>(filepath: P) -> image::ImageResult<Self::Output>;
 
     /// Open and decode a file to read, format will be guessed from content.
     fn load_with_guessed_format<P: AsRef<std::path::Path>>(
-        filepath: P
+        filepath: P,
     ) -> image::ImageResult<Self::Output>;
 
     /// Returns a value that implements the [ImageSize](ImageSize) trait.
@@ -44,10 +42,10 @@ impl<S: ImageSize + Copy> DiffuseImage<S> {
 
     fn handle_new<P: AsRef<std::path::Path>>(
         filepath: P,
-        guess_the_format:bool
+        guess_the_format: bool,
     ) -> image::ImageResult<Self> {
         let file_reader = if guess_the_format {
-            image::io::Reader::open(filepath)?.with_guessed_format()?  // TODO: use anyhow context instead, also below
+            image::io::Reader::open(filepath)?.with_guessed_format()? // TODO: use anyhow context instead, also below
         } else {
             image::io::Reader::open(filepath)?
         };
@@ -59,10 +57,7 @@ impl<S: ImageSize + Copy> DiffuseImage<S> {
             image.dimensions().into()
         };
 
-        Ok(Self {
-            image,
-            size,
-        })
+        Ok(Self { image, size })
     }
 }
 
@@ -78,9 +73,7 @@ impl<S: ImageSize + Copy> Image<S> for DiffuseImage<S> {
     /// If you want to inspect the content for a better guess on the format,
     /// which does not depend on file extensions, see
     /// [new_with_guessed_format](DiffuseImage::new_with_guessed_format).
-    fn load<P: AsRef<std::path::Path>>(
-        filepath: P
-    ) -> image::ImageResult<Self> {
+    fn load<P: AsRef<std::path::Path>>(filepath: P) -> image::ImageResult<Self> {
         DiffuseImage::handle_new(filepath, false)
     }
 
@@ -101,7 +94,7 @@ impl<S: ImageSize + Copy> Image<S> for DiffuseImage<S> {
     /// **When an error occurs, the reader may not have been properly reset and it is potentially
     /// hazardous to continue with more IO operations**.
     fn load_with_guessed_format<P: AsRef<std::path::Path>>(
-        filepath: P
+        filepath: P,
     ) -> image::ImageResult<Self> {
         DiffuseImage::handle_new(filepath, true)
     }
@@ -119,8 +112,8 @@ impl<S: ImageSize + Copy> Image<S> for DiffuseImage<S> {
     fn as_rgba8_bytes(&self) -> Option<&[u8]> {
         use image::EncodableLayout;
         match self.image.as_rgba8() {
-            None => { None }
-            Some(rgba8) => { Some(rgba8.as_bytes()) }
+            None => None,
+            Some(rgba8) => Some(rgba8.as_bytes()),
         }
     }
 }
@@ -159,7 +152,7 @@ impl ImageSize for DiffuseImageSize {
 
     fn new(width: u32, height: u32) -> Self {
         Self {
-            width: NonZeroU32::new(width).unwrap(),  // TODO: we have to create try_new constructor here, to check the non-zeroity
+            width: NonZeroU32::new(width).unwrap(), // TODO: we have to create try_new constructor here, to check the non-zeroity
             height: NonZeroU32::new(height).unwrap(),
         }
     }
