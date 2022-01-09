@@ -6,7 +6,11 @@ use crate::device::Device;
 
 /// This is the default vertex state entry point name that will be used in which case
 /// one will not be passed.
-pub const DEFAULT_VERTEX_STATE_ENTRY_POINT: &'static str = "vs_main";
+pub const DEFAULT_VERTEX_ENTRY_POINT: &'static str = "vs_main";
+
+/// This is the default fragment state entry point name that will be used in which case
+/// one will not be passed.
+pub const DEFAULT_FRAGMENT_ENTRY_POINT: &'static str = "fs_main";
 
 //= SHADER MODULE BUILDER ==========================================================================
 
@@ -54,146 +58,5 @@ impl<'a> ShaderModuleBuilder<'a> {
             label: Some(self.label.unwrap()), // TODO: remove unwrap
             source: self.source,
         })
-    }
-}
-
-//= VERTEX STATE BUILDER ===========================================================================
-
-/// [VertexState](wgpu::VertexState)'s Builder.
-#[derive(Clone, Debug)]
-pub struct VertexStateBuilder<'a> {
-    module: &'a wgpu::ShaderModule,
-    entry_point: Option<&'a str>,
-    buffers: Option<&'a [wgpu::VertexBufferLayout<'a>]>,
-}
-
-impl<'a> VertexStateBuilder<'a> {
-    //- Constants ----------------------------------------------------------------------------------
-
-
-    //- Constructors -------------------------------------------------------------------------------
-
-    /// Create a new VertexStateBuilder with a [ShaderModule](wgpu::ShaderModule).
-    pub fn new(module: &'a wgpu::ShaderModule) -> Self {
-        VertexStateBuilder {
-            module,
-            entry_point: None,
-            buffers: None,
-        }
-    }
-
-    //- Setters ------------------------------------------------------------------------------------
-
-    /// The compiled shader module for this vertex stage.
-    pub fn with_module(&mut self, module: &'a wgpu::ShaderModule) -> &mut Self {
-        self.module = module;
-        self
-    }
-
-    /// The name of the vertex entry point in the compiled shader.
-    /// There must be a function that returns void with this name in the shader.
-    pub fn with_entry_point(&mut self, entry_point: &'a str) -> &mut Self {
-        self.entry_point = if entry_point.is_empty() {
-            log::warn!(
-                "An empty entry_point string was passed as argument for VertexStateBuilder, \
-            the default value of {} will be set instead",
-                DEFAULT_VERTEX_STATE_ENTRY_POINT
-            );
-            Some(DEFAULT_VERTEX_STATE_ENTRY_POINT)
-        } else {
-            Some(entry_point)
-        };
-        self
-    }
-
-    /// The format of any vertex buffers used with this pipeline.
-    pub fn with_buffers(mut self, buffers: &'a [wgpu::VertexBufferLayout]) -> Self {
-        self.buffers = Some(buffers);
-        self
-    }
-
-    //- Build --------------------------------------------------------------------------------------
-
-    /// Build a new Vertex State.
-    pub fn build(self) -> wgpu::VertexState<'a> {
-        wgpu::VertexState {
-            module: self.module,
-            entry_point: self
-                .entry_point
-                .unwrap_or(DEFAULT_VERTEX_STATE_ENTRY_POINT),
-            buffers: self.buffers.unwrap_or(&[]),
-        }
-    }
-}
-
-//= FRAGMENT STATE BUILDER =========================================================================
-
-/// [FragmentState](wgpu::FragmentState)'s Builder.
-#[derive(Clone, Debug)]
-pub struct FragmentStateBuilder<'a> {
-    module: &'a wgpu::ShaderModule,
-    entry_point: Option<&'a str>,
-    targets: Option<&'a [wgpu::ColorTargetState]>,
-}
-
-impl<'a> FragmentStateBuilder<'a> {
-    //- Constants ----------------------------------------------------------------------------------
-
-    /// This is the default fragment state entry point name that will be used in which case
-    /// one will not be passed.
-    pub const DEFAULT_ENTRY_POINT: &'static str = "fs_main";
-
-    //- Constructors -------------------------------------------------------------------------------
-
-    /// Create a new FragmentStateBuilder with a [ShaderModule](wgpu::ShaderModule).
-    pub fn new(module: &'a wgpu::ShaderModule) -> Self {
-        Self {
-            module,
-            entry_point: None,
-            targets: None,
-        }
-    }
-
-    //- Setters ------------------------------------------------------------------------------------
-
-    /// The compiled shader module for this fragment stage.
-    pub fn with_module(mut self, module: &'a wgpu::ShaderModule) -> Self {
-        self.module = module;
-        self
-    }
-
-    /// The name of the fragment entry point in the compiled shader.
-    /// There must be a function that returns void with this name in the shader.
-    pub fn with_entry_point(mut self, entry_point: &'a str) -> Self {
-        self.entry_point = if entry_point.is_empty() {
-            log::warn!(
-                "An empty entry_point string was passed as argument for FragmentStateBuilder, \
-            the default value of {} will be set instead",
-                FragmentStateBuilder::DEFAULT_ENTRY_POINT
-            );
-            Some(FragmentStateBuilder::DEFAULT_ENTRY_POINT)
-        } else {
-            Some(entry_point)
-        };
-        self
-    }
-
-    /// The color state of the render targets.
-    pub fn with_targets(mut self, targets: &'a [wgpu::ColorTargetState]) -> Self {
-        self.targets = Some(targets);
-        self
-    }
-
-    //- Build --------------------------------------------------------------------------------------
-
-    /// Build a new Fragment State.
-    pub fn build(self) -> wgpu::FragmentState<'a> {
-        wgpu::FragmentState {
-            module: self.module,
-            entry_point: self
-                .entry_point
-                .unwrap_or(FragmentStateBuilder::DEFAULT_ENTRY_POINT),
-            targets: self.targets.unwrap(), // TODO: remove unwrap
-        }
     }
 }

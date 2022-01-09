@@ -13,9 +13,7 @@ use crate::texture_metadatas::{
     TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas,
 };
 use crate::utils::log2;
-use crate::{Adapter, Camera, CameraController, CameraMetadatas, DEFAULT_VERTEX_STATE_ENTRY_POINT,
-            Device, FragmentStateBuilder, Instance, PipelineLayoutBuilder, Queue, RenderPipeline,
-            RenderPipelineBuilder, ShaderModuleBuilder, Surface};
+use crate::{Adapter, Camera, CameraController, CameraMetadatas, DEFAULT_FRAGMENT_ENTRY_POINT, DEFAULT_VERTEX_ENTRY_POINT, Device, Instance, PipelineLayoutBuilder, Queue, RenderPipeline, RenderPipelineBuilder, ShaderModuleBuilder, Surface};
 
 //= ERRORS =========================================================================================
 
@@ -194,24 +192,24 @@ where
 
             let shader_module = ShaderModuleBuilder::new(source).build(&device);
 
-            let buffers = [V::desc()];  // TODO: no good...
-            //let buffers = [V::desc(), InstanceRaw::desc()]; // TODO: raw instances must be optional
+            let vertex_buffers = [V::desc()];  // TODO: no good...
+            //let vertex_buffers = [V::desc(), InstanceRaw::desc()]; // TODO: raw instances must be optional
 
             let vertex_state = if self.vertices.is_some() {
                 wgpu::VertexState {
                     module: &shader_module,
-                    entry_point: DEFAULT_VERTEX_STATE_ENTRY_POINT,
-                    buffers: &buffers,
+                    entry_point: DEFAULT_VERTEX_ENTRY_POINT,
+                    buffers: &vertex_buffers,
                 }
             } else {
                 wgpu::VertexState {
                     module: &shader_module,
-                    entry_point: DEFAULT_VERTEX_STATE_ENTRY_POINT,
+                    entry_point: DEFAULT_VERTEX_ENTRY_POINT,
                     buffers: &[]
                 }
             };
 
-            let target_states = [wgpu::ColorTargetState {
+            let color_targets = [wgpu::ColorTargetState {
                 format: surface.preferred_format(), //.unwrap_or(wgpu::TextureFormat::Rgba16Float),
                 blend: Some(wgpu::BlendState {
                     color: wgpu::BlendComponent::REPLACE,
@@ -220,9 +218,11 @@ where
                 write_mask: wgpu::ColorWrites::ALL,
             }];
 
-            let fragment = FragmentStateBuilder::new(&shader_module)
-                .with_targets(&target_states)
-                .build();
+            let fragment_states = wgpu::FragmentState {
+                module: &shader_module,
+                entry_point: DEFAULT_FRAGMENT_ENTRY_POINT,
+                targets: &color_targets
+            };
 
             let pipeline_layout = if texture_bind_group_metadatas.is_empty() {
                 let camera_bgl = camera_metadatas.bind_group_layout();
@@ -240,7 +240,7 @@ where
 
             Some(
                 RenderPipelineBuilder::new(vertex_state)
-                    .with_fragment(fragment)
+                    .with_fragment(fragment_states)
                     .with_layout(&pipeline_layout)
                     .build(&device),
             )
