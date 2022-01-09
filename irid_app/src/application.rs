@@ -1,10 +1,10 @@
 //= USES ===========================================================================================
 
+use bytemuck::Pod;
 use std::{
     fmt::Debug,
     path::{Path, PathBuf},
 };
-use bytemuck::Pod;
 
 use thiserror::Error;
 
@@ -36,7 +36,14 @@ pub enum ApplicationError {
 
 /// Build a new [Application] with wanted values.
 #[derive(Debug, Clone)]
-pub struct ApplicationBuilder<'a, L: Listener, B: WindowBuilder, P: AsRef<Path>, V: Vertex, I: Index> {
+pub struct ApplicationBuilder<
+    'a,
+    L: Listener,
+    B: WindowBuilder,
+    P: AsRef<Path>,
+    V: Vertex,
+    I: Index,
+> {
     listener: L,
     window_builder: Option<B>,
 

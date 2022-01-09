@@ -81,7 +81,11 @@ impl<'a> Device {
     }
 
     /// Creates a indices Buffer with data to initialize it.
-    pub fn create_indices_buffer_init<I: Index + Pod>(&self, label_text: &str, indices: &[I]) -> wgpu::Buffer {
+    pub fn create_indices_buffer_init<I: Index + Pod>(
+        &self,
+        label_text: &str,
+        indices: &[I],
+    ) -> wgpu::Buffer {
         use wgpu::util::DeviceExt;
         self.wgpu_device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {

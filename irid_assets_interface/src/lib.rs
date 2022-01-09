@@ -1,4 +1,5 @@
 //= USES ===========================================================================================
+
 use std::convert::TryFrom;
 
 //= VERTEX TRAIT ===================================================================================
@@ -28,8 +29,8 @@ pub trait Vertex {
 
 /// Opinable Super Trait to identify u16 and u32
 // TODO: probably i can do better and simpler than that!
-pub trait Index: Default + PartialEq + From<u8> + TryFrom<u64> { }
+pub trait Index: Default + PartialEq + From<u8> + TryFrom<u64> {}
 
 // Nothing to implement, since u16 and u32 already supports the other traits.
-impl Index for u16 { }
-impl Index for u32 { }
+impl Index for u16 {}
+impl Index for u32 {}

@@ -1,8 +1,8 @@
 //= USES ===========================================================================================
 
 use std::{fmt::Debug, fs::read_to_string, marker::PhantomData, path::Path};
-use bytemuck::Pod;
 
+use bytemuck::Pod;
 use thiserror::Error;
 
 use irid_app_interface::Window;
@@ -13,7 +13,11 @@ use crate::texture_metadatas::{
     TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas,
 };
 use crate::utils::log2;
-use crate::{Adapter, Camera, CameraController, CameraMetadatas, DEFAULT_FRAGMENT_ENTRY_POINT, DEFAULT_VERTEX_ENTRY_POINT, Device, Instance, PipelineLayoutBuilder, Queue, RenderPipeline, RenderPipelineBuilder, ShaderModuleBuilder, Surface};
+use crate::{
+    Adapter, Camera, CameraController, CameraMetadatas, Device, Instance, PipelineLayoutBuilder,
+    Queue, RenderPipeline, RenderPipelineBuilder, ShaderModuleBuilder, Surface,
+    DEFAULT_FRAGMENT_ENTRY_POINT, DEFAULT_VERTEX_ENTRY_POINT,
+};
 
 //= ERRORS =========================================================================================
 
@@ -192,8 +196,10 @@ where
 
             let shader_module = ShaderModuleBuilder::new(source).build(&device);
 
-            let vertex_buffers = [V::desc()];  // TODO: no good...
-            //let vertex_buffers = [V::desc(), InstanceRaw::desc()]; // TODO: raw instances must be optional
+            // TODO: no good...
+            let vertex_buffers = [V::desc()];
+            // TODO: raw instances must be optional
+            //let vertex_buffers = [V::desc(), InstanceRaw::desc()];
 
             let vertex_state = if self.vertices.is_some() {
                 wgpu::VertexState {
@@ -205,7 +211,7 @@ where
                 wgpu::VertexState {
                     module: &shader_module,
                     entry_point: DEFAULT_VERTEX_ENTRY_POINT,
-                    buffers: &[]
+                    buffers: &[],
                 }
             };
 
@@ -221,7 +227,7 @@ where
             let fragment_states = wgpu::FragmentState {
                 module: &shader_module,
                 entry_point: DEFAULT_FRAGMENT_ENTRY_POINT,
-                targets: &color_targets
+                targets: &color_targets,
             };
 
             let pipeline_layout = if texture_bind_group_metadatas.is_empty() {
@@ -279,8 +285,9 @@ where
 
         let (instances, instances_buffer) = if self.vertices.is_some() {
             let instances = RendererBuilder::<'a, W, P, V, I, S, T>::create_instances();
-            let instances_buffer =
-                RendererBuilder::<'a, W, P, V, I, S, T>::create_instances_buffer(&device, &instances);
+            let instances_buffer = RendererBuilder::<'a, W, P, V, I, S, T>::create_instances_buffer(
+                &device, &instances,
+            );
             (Some(instances), Some(instances_buffer))
         } else {
             (None, None)

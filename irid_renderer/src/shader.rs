@@ -6,11 +6,11 @@ use crate::device::Device;
 
 /// This is the default vertex state entry point name that will be used in which case
 /// one will not be passed.
-pub const DEFAULT_VERTEX_ENTRY_POINT: &'static str = "vs_main";
+pub const DEFAULT_VERTEX_ENTRY_POINT: &str = "vs_main";
 
 /// This is the default fragment state entry point name that will be used in which case
 /// one will not be passed.
-pub const DEFAULT_FRAGMENT_ENTRY_POINT: &'static str = "fs_main";
+pub const DEFAULT_FRAGMENT_ENTRY_POINT: &str = "fs_main";
 
 //= SHADER MODULE BUILDER ==========================================================================
 
