@@ -1,7 +1,7 @@
 //= USES ===========================================================================================
 
 use bytemuck::Pod;
-use irid_assets_interface::Vertex;
+use irid_assets_interface::{Index, Vertex};
 
 use crate::{Adapter, Queue};
 
@@ -81,7 +81,7 @@ impl<'a> Device {
     }
 
     /// Creates a indices Buffer with data to initialize it.
-    pub fn create_indices_buffer_init(&self, label_text: &str, indices: &[u32]) -> wgpu::Buffer {
+    pub fn create_indices_buffer_init<I: Index + Pod>(&self, label_text: &str, indices: &[I]) -> wgpu::Buffer {
         use wgpu::util::DeviceExt;
         self.wgpu_device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {

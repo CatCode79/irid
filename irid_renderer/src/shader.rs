@@ -2,6 +2,12 @@
 
 use crate::device::Device;
 
+//= CONSTS =========================================================================================
+
+/// This is the default vertex state entry point name that will be used in which case
+/// one will not be passed.
+pub const DEFAULT_VERTEX_STATE_ENTRY_POINT: &'static str = "vs_main";
+
 //= SHADER MODULE BUILDER ==========================================================================
 
 /// [ShaderModule](wgpu::ShaderModule)'s Builder.
@@ -64,9 +70,6 @@ pub struct VertexStateBuilder<'a> {
 impl<'a> VertexStateBuilder<'a> {
     //- Constants ----------------------------------------------------------------------------------
 
-    /// This is the default vertex state entry point name that will be used in which case
-    /// one will not be passed.
-    pub const DEFAULT_ENTRY_POINT: &'static str = "vs_main";
 
     //- Constructors -------------------------------------------------------------------------------
 
@@ -94,9 +97,9 @@ impl<'a> VertexStateBuilder<'a> {
             log::warn!(
                 "An empty entry_point string was passed as argument for VertexStateBuilder, \
             the default value of {} will be set instead",
-                VertexStateBuilder::DEFAULT_ENTRY_POINT
+                DEFAULT_VERTEX_STATE_ENTRY_POINT
             );
-            Some(VertexStateBuilder::DEFAULT_ENTRY_POINT)
+            Some(DEFAULT_VERTEX_STATE_ENTRY_POINT)
         } else {
             Some(entry_point)
         };
@@ -117,7 +120,7 @@ impl<'a> VertexStateBuilder<'a> {
             module: self.module,
             entry_point: self
                 .entry_point
-                .unwrap_or(VertexStateBuilder::DEFAULT_ENTRY_POINT),
+                .unwrap_or(DEFAULT_VERTEX_STATE_ENTRY_POINT),
             buffers: self.buffers.unwrap_or(&[]),
         }
     }

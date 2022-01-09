@@ -7,17 +7,15 @@ use thiserror::Error;
 
 use irid_app_interface::Window;
 use irid_assets::{ImageSize, Texture};
-use irid_assets_interface::Vertex;
+use irid_assets_interface::{Index, Vertex};
 
 use crate::texture_metadatas::{
     TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas,
 };
 use crate::utils::log2;
-use crate::{
-    Adapter, Camera, CameraController, CameraMetadatas, Device, FragmentStateBuilder, Instance,
-    PipelineLayoutBuilder, Queue, RenderPipeline, RenderPipelineBuilder, ShaderModuleBuilder,
-    Surface, VertexStateBuilder,
-};
+use crate::{Adapter, Camera, CameraController, CameraMetadatas, DEFAULT_VERTEX_STATE_ENTRY_POINT,
+            Device, FragmentStateBuilder, Instance, PipelineLayoutBuilder, Queue, RenderPipeline,
+            RenderPipelineBuilder, ShaderModuleBuilder, Surface};
 
 //= ERRORS =========================================================================================
 
@@ -58,6 +56,7 @@ pub struct RendererBuilder<
     W: Window,
     P: AsRef<Path>,
     V: Vertex,
+    I: Index,
     S: ImageSize,
     T: Texture<S>,
 > {
@@ -68,17 +67,18 @@ pub struct RendererBuilder<
     texture_path: Option<P>,
     // TODO: Probably better to encapsulate the [ModelVertex] logic or use an Into
     vertices: Option<&'a [V]>,
-    indices: Option<&'a [u32]>,
+    indices: Option<&'a [I]>,
 
     generic_size: PhantomData<S>,
     generic_texture: PhantomData<T>,
 }
 
-impl<'a, W, P, V, S, T> RendererBuilder<'a, W, P, V, S, T>
+impl<'a, W, P, V, I, S, T> RendererBuilder<'a, W, P, V, I, S, T>
 where
     W: Window,
     P: AsRef<Path> + Debug,
     V: Vertex + Pod,
+    I: Index + Pod,
     S: ImageSize,
     T: Texture<S>,
 {
@@ -132,7 +132,7 @@ where
     }
 
     ///
-    pub fn with_indices<II: Into<Option<&'a [u32]>>>(mut self, indices: II) -> Self {
+    pub fn with_indices<II: Into<Option<&'a [I]>>>(mut self, indices: II) -> Self {
         self.indices = indices.into();
         self
     }
@@ -194,9 +194,24 @@ where
 
             let shader_module = ShaderModuleBuilder::new(source).build(&device);
 
-            // TODO: raw instances must be optional
-            /*let buffers = [ModelVertex::desc(), InstanceRaw::desc()];*/
-            let targets = [wgpu::ColorTargetState {
+            let buffers = [V::desc()];  // TODO: no good...
+            //let buffers = [V::desc(), InstanceRaw::desc()]; // TODO: raw instances must be optional
+
+            let vertex_state = if self.vertices.is_some() {
+                wgpu::VertexState {
+                    module: &shader_module,
+                    entry_point: DEFAULT_VERTEX_STATE_ENTRY_POINT,
+                    buffers: &buffers,
+                }
+            } else {
+                wgpu::VertexState {
+                    module: &shader_module,
+                    entry_point: DEFAULT_VERTEX_STATE_ENTRY_POINT,
+                    buffers: &[]
+                }
+            };
+
+            let target_states = [wgpu::ColorTargetState {
                 format: surface.preferred_format(), //.unwrap_or(wgpu::TextureFormat::Rgba16Float),
                 blend: Some(wgpu::BlendState {
                     color: wgpu::BlendComponent::REPLACE,
@@ -205,12 +220,8 @@ where
                 write_mask: wgpu::ColorWrites::ALL,
             }];
 
-            let vertex = VertexStateBuilder::new(&shader_module)
-                //.with_buffers(&buffers)
-                .build();
-
             let fragment = FragmentStateBuilder::new(&shader_module)
-                .with_targets(&targets)
+                .with_targets(&target_states)
                 .build();
 
             let pipeline_layout = if texture_bind_group_metadatas.is_empty() {
@@ -228,7 +239,7 @@ where
             };
 
             Some(
-                RenderPipelineBuilder::new(vertex)
+                RenderPipelineBuilder::new(vertex_state)
                     .with_fragment(fragment)
                     .with_layout(&pipeline_layout)
                     .build(&device),
@@ -257,6 +268,7 @@ where
         let index_buffer = self
             .indices
             .map(|i| device.create_indices_buffer_init("Index Buffer", i));
+
         let num_indices = if self.indices.is_some() {
             self.indices.unwrap().len() as u32
         } else {
@@ -266,9 +278,9 @@ where
         //- Instances ------------------------------------------------------------------------------
 
         let (instances, instances_buffer) = if self.vertices.is_some() {
-            let instances = RendererBuilder::<'a, W, P, V, S, T>::create_instances();
+            let instances = RendererBuilder::<'a, W, P, V, I, S, T>::create_instances();
             let instances_buffer =
-                RendererBuilder::<'a, W, P, V, S, T>::create_instances_buffer(&device, &instances);
+                RendererBuilder::<'a, W, P, V, I, S, T>::create_instances_buffer(&device, &instances);
             (Some(instances), Some(instances_buffer))
         } else {
             (None, None)
