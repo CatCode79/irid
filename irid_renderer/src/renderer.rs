@@ -1,11 +1,13 @@
 //= USES ===========================================================================================
 
 use std::{fmt::Debug, fs::read_to_string, marker::PhantomData, path::Path};
+use bytemuck::Pod;
 
 use thiserror::Error;
 
 use irid_app_interface::Window;
-use irid_assets::{DiffuseImageSize, DiffuseTexture, ImageSize, ModelVertex, Texture};
+use irid_assets::{ImageSize, Texture};
+use irid_assets_interface::Vertex;
 
 use crate::texture_metadatas::{
     TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas,
@@ -55,8 +57,9 @@ pub struct RendererBuilder<
     'a,
     W: Window,
     P: AsRef<Path>,
-    S: ImageSize = DiffuseImageSize,
-    T: Texture<S> = DiffuseTexture,
+    V: Vertex,
+    S: ImageSize,
+    T: Texture<S>,
 > {
     window: &'a W,
 
@@ -64,17 +67,18 @@ pub struct RendererBuilder<
     shader_path: Option<P>,
     texture_path: Option<P>,
     // TODO: Probably better to encapsulate the [ModelVertex] logic or use an Into
-    vertices: Option<&'a [ModelVertex]>,
+    vertices: Option<&'a [V]>,
     indices: Option<&'a [u32]>,
 
     generic_size: PhantomData<S>,
     generic_texture: PhantomData<T>,
 }
 
-impl<'a, W, P, S, T> RendererBuilder<'a, W, P, S, T>
+impl<'a, W, P, V, S, T> RendererBuilder<'a, W, P, V, S, T>
 where
     W: Window,
     P: AsRef<Path> + Debug,
+    V: Vertex + Pod,
     S: ImageSize,
     T: Texture<S>,
 {
@@ -122,13 +126,13 @@ where
     }
 
     ///
-    pub fn with_vertices<VE: Into<Option<&'a [ModelVertex]>>>(mut self, vertices: VE) -> Self {
+    pub fn with_vertices<IV: Into<Option<&'a [V]>>>(mut self, vertices: IV) -> Self {
         self.vertices = vertices.into();
         self
     }
 
     ///
-    pub fn with_indices<IN: Into<Option<&'a [u32]>>>(mut self, indices: IN) -> Self {
+    pub fn with_indices<II: Into<Option<&'a [u32]>>>(mut self, indices: II) -> Self {
         self.indices = indices.into();
         self
     }
@@ -262,9 +266,9 @@ where
         //- Instances ------------------------------------------------------------------------------
 
         let (instances, instances_buffer) = if self.vertices.is_some() {
-            let instances = RendererBuilder::<'a, W, P, S, T>::create_instances();
+            let instances = RendererBuilder::<'a, W, P, V, S, T>::create_instances();
             let instances_buffer =
-                RendererBuilder::<'a, W, P, S, T>::create_instances_buffer(&device, &instances);
+                RendererBuilder::<'a, W, P, V, S, T>::create_instances_buffer(&device, &instances);
             (Some(instances), Some(instances_buffer))
         } else {
             (None, None)

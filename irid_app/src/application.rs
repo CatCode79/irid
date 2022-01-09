@@ -4,11 +4,13 @@ use std::{
     fmt::Debug,
     path::{Path, PathBuf},
 };
+use bytemuck::Pod;
 
 use thiserror::Error;
 
 use irid_app_interface::{Window, WindowBuilder};
-use irid_assets::{DiffuseImageSize, DiffuseTexture, ModelVertex};
+use irid_assets::{DiffuseImageSize, DiffuseTexture};
+use irid_assets_interface::Vertex;
 use irid_renderer::{Renderer, RendererBuilder, RendererError};
 
 use crate::Listener;
@@ -34,25 +36,26 @@ pub enum ApplicationError {
 
 /// Build a new [Application] with wanted values.
 #[derive(Debug, Clone)]
-pub struct ApplicationBuilder<'a, L: Listener, B: WindowBuilder, P: AsRef<Path>> {
+pub struct ApplicationBuilder<'a, L: Listener, B: WindowBuilder, P: AsRef<Path>, V: Vertex> {
     listener: L,
     window_builder: Option<B>,
 
     // Renderer stuff
     shader_paths: Option<Vec<P>>,
     texture_path: Option<P>,
-    vertices: Option<&'a [ModelVertex]>,
+    vertices: Option<&'a [V]>,
     indices: Option<&'a [u32]>,
 
     // Renderer specific options
     clear_color: Option<wgpu::Color>,
 }
 
-impl<'a, L, B, P> ApplicationBuilder<'a, L, B, P>
+impl<'a, L, B, P, V> ApplicationBuilder<'a, L, B, P, V>
 where
     L: Listener,
     B: WindowBuilder,
     P: AsRef<std::path::Path>,
+    V: Vertex,
 {
     //- Constructors -------------------------------------------------------------------------------
 
@@ -110,7 +113,7 @@ where
     }
 
     ///
-    pub fn with_vertices(mut self, vertices: &'a [ModelVertex]) -> Self {
+    pub fn with_vertices(mut self, vertices: &'a [V]) -> Self {
         self.vertices = Some(vertices);
         self
     }
@@ -131,7 +134,7 @@ where
     //- Build --------------------------------------------------------------------------------------
 
     /// Build a new [Application] with given values.
-    pub fn build(self) -> Application<'a, L, B, P> {
+    pub fn build(self) -> Application<'a, L, B, P, V> {
         Application {
             listener: self.listener,
             window_builder: self.window_builder.unwrap_or_else(B::new),
@@ -148,25 +151,26 @@ where
 
 /// Manages the whole game setup and logic.
 #[derive(Debug)]
-pub struct Application<'a, L: Listener, B: WindowBuilder, P: AsRef<Path>> {
+pub struct Application<'a, L: Listener, B: WindowBuilder, P: AsRef<Path>, V: Vertex> {
     listener: L,
     window_builder: B,
 
     // Renderer stuffs
     shader_paths: Option<Vec<P>>,
     texture_path: Option<P>,
-    vertices: Option<&'a [ModelVertex]>,
+    vertices: Option<&'a [V]>,
     indices: Option<&'a [u32]>,
 
     // Renderer specific options
     clear_color: Option<wgpu::Color>,
 }
 
-impl<'a, L, B, P> Application<'a, L, B, P>
+impl<'a, L, B, P, V> Application<'a, L, B, P, V>
 where
     L: Listener,
     B: WindowBuilder + Clone,
     P: AsRef<Path> + Clone + Debug,
+    V: Vertex + Pod,
 {
     /// Starts the
     /// [event loop](https://docs.rs/winit/0.25.0/winit/event_loop/struct.EventLoop.html).
@@ -193,6 +197,7 @@ where
         let mut renderer_builder = RendererBuilder::<
             <B as WindowBuilder>::BuildOutput,
             P,
+            V,
             DiffuseImageSize,
             DiffuseTexture,
         >::new(&window);

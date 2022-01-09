@@ -1,6 +1,7 @@
 //= USES ===========================================================================================
 
 use std::mem;
+use irid_assets_interface::Vertex;
 
 //= MODEL VERTEX ===================================================================================
 
@@ -13,26 +14,26 @@ pub struct ModelVertex {
     normal: [f32; 3],
 }
 
-impl<'a> ModelVertex {
-    pub fn new() -> Self {
+impl<'a> Vertex for ModelVertex {
+    fn new() -> Self {
         Self::default()
     }
 
-    pub fn position(&mut self, position: [f32; 3]) {
+    fn position(&mut self, position: [f32; 3]) {
         self.position = position;
     }
 
-    pub fn colors(&mut self, _: [f32; 3]) {}
+    fn colors(&mut self, _: [f32; 3]) {}
 
-    pub fn tex_coords(&mut self, tex_coords: [f32; 2]) {
+    fn tex_coords(&mut self, tex_coords: [f32; 2]) {
         self.tex_coords = tex_coords;
     }
 
-    pub fn normal(&mut self, normal: [f32; 3]) {
+    fn normal(&mut self, normal: [f32; 3]) {
         self.normal = normal
     }
 
-    pub fn desc() -> wgpu::VertexBufferLayout<'a> {
+    fn desc() -> wgpu::VertexBufferLayout<'static> {
         wgpu::VertexBufferLayout {
             array_stride: mem::size_of::<ModelVertex>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Vertex,
@@ -70,24 +71,24 @@ pub struct ColorVertex {
     pub colors: [f32; 3],
 }
 
-impl<'a> ColorVertex {
-    pub fn new() -> Self {
+impl<'a> Vertex for ColorVertex {
+    fn new() -> Self {
         Self::default()
     }
 
-    pub fn position(&mut self, position: [f32; 3]) {
+    fn position(&mut self, position: [f32; 3]) {
         self.position = position;
     }
 
-    pub fn colors(&mut self, colors: [f32; 3]) {
+    fn colors(&mut self, colors: [f32; 3]) {
         self.colors = colors
     }
 
-    pub fn tex_coords(&mut self, _: [f32; 2]) {}
+    fn tex_coords(&mut self, _: [f32; 2]) {}
 
-    pub fn normal(&mut self, _: [f32; 3]) {}
+    fn normal(&mut self, _: [f32; 3]) {}
 
-    pub fn desc() -> wgpu::VertexBufferLayout<'a> {
+    fn desc() -> wgpu::VertexBufferLayout<'static> {
         wgpu::VertexBufferLayout {
             array_stride: mem::size_of::<ColorVertex>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Vertex,
@@ -119,24 +120,24 @@ pub struct TextCoordsVertex {
     pub tex_coords: [f32; 2],
 }
 
-impl<'a> TextCoordsVertex {
-    pub fn new() -> Self {
+impl<'a> Vertex for TextCoordsVertex {
+    fn new() -> Self {
         Self::default()
     }
 
-    pub fn position(&mut self, position: [f32; 3]) {
+    fn position(&mut self, position: [f32; 3]) {
         self.position = position;
     }
 
-    pub fn colors(&mut self, _: [f32; 3]) {}
+    fn colors(&mut self, _: [f32; 3]) {}
 
-    pub fn tex_coords(&mut self, tex_coords: [f32; 2]) {
+    fn tex_coords(&mut self, tex_coords: [f32; 2]) {
         self.tex_coords = tex_coords;
     }
 
-    pub fn normal(&mut self, _: [f32; 3]) {}
+    fn normal(&mut self, _: [f32; 3]) {}
 
-    pub fn desc() -> wgpu::VertexBufferLayout<'a> {
+    fn desc() -> wgpu::VertexBufferLayout<'static> {
         wgpu::VertexBufferLayout {
             array_stride: mem::size_of::<TextCoordsVertex>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Vertex,

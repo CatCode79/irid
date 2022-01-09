@@ -6,4 +6,4 @@ pub use irid_renderer::*;
 
 //= TYPE ALIASES ===================================================================================
 
-pub type ApplicationBuilder<'a, L, P> = irid_app::ApplicationBuilder<'a, L, IridWindowBuilder, P>;
+pub type ApplicationBuilder<'a, L, P, V> = irid_app::ApplicationBuilder<'a, L, IridWindowBuilder, P, V>;
