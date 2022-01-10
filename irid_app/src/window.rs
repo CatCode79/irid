@@ -311,7 +311,7 @@ impl Window for IridWindow {
 
     /*
     #[inline]
-    fn available_monitors(&self) -> Box<(dyn Iterator<Item=winit::monitor::MonitorHandle> +'static)> {
+    fn available_monitors(&self) -> Box<(dyn Iterator<Item=winit::monitor::MonitorHandle> + 'static)> {
         self.winit_window.window.available_monitors()
             .into_iter()
             .map(|inner| MonitorHandle { inner })

@@ -31,23 +31,13 @@ impl Adapter {
     /// If no adapters are found that suffice all the "hard" options, Err is returned.
     pub(crate) fn new(
         wgpu_instance: &wgpu::Instance,
-        wgpu_surface: &wgpu::Surface,
+        adapter_options: wgpu::RequestAdapterOptions,
     ) -> Result<Self, AdapterError> {
-        let wgpu_adapter = async {
-            // About force_fallback_adapter: https://github.com/gfx-rs/wgpu/issues/2063
-            wgpu_instance
-                .request_adapter(&wgpu::RequestAdapterOptions {
-                    power_preference: wgpu::PowerPreference::HighPerformance,
-                    force_fallback_adapter: false,
-                    compatible_surface: Some(wgpu_surface),
-                })
-                .await
-        }.block_on();
+        let wgpu_adapter =
+            async { wgpu_instance.request_adapter(&adapter_options).await }.block_on();
 
-        if wgpu_adapter.is_some() {
-            Ok(Self {
-                wgpu_adapter: wgpu_adapter.unwrap(),
-            })
+        if let Some(wgpu_adapter) = wgpu_adapter {
+            Ok(Self { wgpu_adapter })
         } else {
             Err(AdapterError::NotObtained)
         }

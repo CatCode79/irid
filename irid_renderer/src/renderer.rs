@@ -64,6 +64,10 @@ pub struct RendererBuilder<
 > {
     window: &'a W,
 
+    backends: wgpu::Backends,
+    power_preference: wgpu::PowerPreference,
+    force_fallback_adapter: bool,
+
     clear_color: Option<wgpu::Color>,
     shader_path: Option<P>,
     texture_path: Option<P>,
@@ -90,6 +94,13 @@ where
     pub fn new(window: &'a W) -> Self {
         Self {
             window,
+
+            // First tier support backends
+            backends: wgpu::Backends::VULKAN | wgpu::Backends::DX12 | wgpu::Backends::METAL,
+
+            power_preference: wgpu::PowerPreference::HighPerformance,
+            force_fallback_adapter: false,
+
             clear_color: None,
             shader_path: None,
             texture_path: None,
@@ -105,6 +116,24 @@ where
     ///
     pub fn with_window(mut self, window: &'a W) -> Self {
         self.window = window;
+        self
+    }
+
+    ///
+    pub fn with_backends(mut self, backends: wgpu::Backends) -> Self {
+        self.backends = backends;
+        self
+    }
+
+    ///
+    pub fn with_power_preference(mut self, power_preference: wgpu::PowerPreference) -> Self {
+        self.power_preference = power_preference;
+        self
+    }
+
+    ///
+    pub fn with_force_fallback_adapter(mut self, force_fallback_adapter: bool) -> Self {
+        self.force_fallback_adapter = force_fallback_adapter;
         self
     }
 
@@ -147,10 +176,14 @@ where
 
         let window_size = self.window.inner_size();
 
-        let backends = wgpu::Backends::VULKAN | wgpu::Backends::DX12;
-        let (surface, adapter) = Surface::new(backends, self.window, window_size)
-            // TODO: better pass `e` as argument to SurfaceAdapterRequest for chaining error descr?
-            .map_err(|_| RendererError::SurfaceAdapterRequest)?;
+        let (surface, adapter) = Surface::new(
+            self.backends,
+            self.window,
+            self.power_preference,
+            self.force_fallback_adapter,
+        )
+        // TODO: better pass `e` as argument to SurfaceAdapterRequest for chaining error descr?
+        .map_err(|_| RendererError::SurfaceAdapterRequest)?;
 
         let (device, queue) = Device::new(&adapter)?;
 

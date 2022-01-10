@@ -38,7 +38,8 @@ impl Surface {
     pub fn new<W: Window>(
         backends: wgpu::Backends,
         window: &W,
-        size: winit::dpi::PhysicalSize<u32>,
+        power_preference: wgpu::PowerPreference,
+        force_fallback_adapter: bool,
     ) -> Result<(Self, Adapter), SurfaceError> {
         // Context for all other wgpu objects
         let wgpu_instance = wgpu::Instance::new(backends);
@@ -50,11 +51,19 @@ impl Surface {
         #[cfg(debug_assertions)]
         enumerate_all_adapters(backends, &wgpu_instance);
 
-        let adapter = Adapter::new(&wgpu_instance, &wgpu_surface)
+        let adapter_options = wgpu::RequestAdapterOptions {
+            power_preference,
+            force_fallback_adapter,
+            compatible_surface: Some(&wgpu_surface),
+        };
+        let adapter = Adapter::new(&wgpu_instance, adapter_options)
             /*.or_else(|e| Err(SurfaceError::AdapterNotObtained))*/?;
 
         #[cfg(debug_assertions)]
-        println!("Picked Adapter: {}", pprint_adapter_info(adapter.expose_wrapped_adapter()));
+        println!(
+            "Picked Adapter: {}",
+            pprint_adapter_info(adapter.expose_wrapped_adapter())
+        );
 
         // Most images are stored using sRGB so we need to reflect that here.
         //let preferred_format = wgpu::TextureFormat::Rgba8UnormSrgb;
@@ -62,11 +71,13 @@ impl Surface {
             .get_preferred_format(adapter.expose_wrapped_adapter())
             .ok_or_else(|| SurfaceError::NoPreferredFormat(adapter.get_info()))?;
 
+        let window_size = window.inner_size();
+
         let configuration = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: preferred_format,
-            width: size.width,
-            height: size.height,
+            width: window_size.width,
+            height: window_size.height,
             // Fifo is "vsync on". Immediate is "vsync off".
             // Mailbox is a hybrid between the two (gpu doesn't block if running faster
             // than the display, but screen tearing doesn't happen)

@@ -1,8 +1,8 @@
 //= USES ===========================================================================================
 
 use bytemuck::Pod;
-use pollster::FutureExt;
 use irid_assets_interface::{Index, Vertex};
+use pollster::FutureExt;
 
 use crate::{Adapter, Queue};
 
@@ -43,7 +43,8 @@ impl<'a> Device {
                     None, // Trace path
                 )
                 .await
-        }.block_on()?;
+        }
+        .block_on()?;
 
         let device = Self {
             label_text,
