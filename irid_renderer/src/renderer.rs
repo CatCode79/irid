@@ -71,8 +71,12 @@ pub struct RendererBuilder<
     power_preference: wgpu::PowerPreference,
     force_fallback_adapter: bool,
 
-    // Surface preferred texture format
+    // Options for Swap Chain creation
     preferred_format: Option<wgpu::TextureFormat>,
+    // Fifo is "vsync on". Immediate is "vsync off".
+    // Mailbox is a hybrid between the two (gpu doesn't block if running faster
+    // than the display, but screen tearing doesn't happen)
+    present_mode: wgpu::PresentMode,
 
     // Options for the Device request
     features: wgpu::Features,
@@ -108,6 +112,7 @@ where
             power_preference: wgpu::PowerPreference::HighPerformance,
             force_fallback_adapter: false,
             preferred_format: None,
+            present_mode: wgpu::PresentMode::Fifo,
             features: wgpu::Features::empty(),
             limits: wgpu::Limits::downlevel_defaults(),
             clear_color: None,
@@ -152,6 +157,12 @@ where
         preferred_format: F,
     ) -> Self {
         self.preferred_format = preferred_format.into();
+        self
+    }
+
+    ///
+    pub fn with_present_mode(mut self, present_mode: wgpu::PresentMode) -> Self {
+        self.present_mode = present_mode;
         self
     }
 
@@ -212,6 +223,7 @@ where
             self.power_preference,
             self.force_fallback_adapter,
             self.preferred_format,
+            self.present_mode,
         )
         // TODO: better pass `e` as argument to SurfaceAdapterRequest for chaining error descr?
         .map_err(|_| RendererError::SurfaceAdapterRequest)?;
@@ -230,7 +242,7 @@ where
         //- Texture Metadatas ----------------------------------------------------------------------
 
         let texture_image_metadatas = if self.texture_path.is_some() {
-            self.create_texture_image_metadatas(&device, surface.preferred_format())
+            self.create_texture_image_metadatas(&device, surface.format())
         } else {
             vec![]
         };
@@ -281,7 +293,7 @@ where
             };
 
             let color_targets = [wgpu::ColorTargetState {
-                format: surface.preferred_format(), //.unwrap_or(wgpu::TextureFormat::Rgba16Float),
+                format: surface.format(),
                 blend: Some(wgpu::BlendState {
                     color: wgpu::BlendComponent::REPLACE,
                     alpha: wgpu::BlendComponent::REPLACE,

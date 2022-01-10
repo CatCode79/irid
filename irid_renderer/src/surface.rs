@@ -26,7 +26,7 @@ pub enum SurfaceError {
 /// may be presented.
 pub struct Surface {
     wgpu_surface: wgpu::Surface,
-    preferred_format: wgpu::TextureFormat,
+    format: wgpu::TextureFormat,
     configuration: wgpu::SurfaceConfiguration,
 }
 
@@ -41,6 +41,7 @@ impl Surface {
         power_preference: wgpu::PowerPreference,
         force_fallback_adapter: bool,
         preferred_format: Option<wgpu::TextureFormat>,
+        present_mode: wgpu::PresentMode,
     ) -> Result<(Self, Adapter), SurfaceError> {
         // Context for all other wgpu objects
         let wgpu_instance = wgpu::Instance::new(backends);
@@ -66,29 +67,26 @@ impl Surface {
             pprint_adapter_info(adapter.expose_wrapped_adapter())
         );
 
-        let preferred_format = preferred_format.unwrap_or({
+        let format = preferred_format.unwrap_or({
             wgpu_surface
                 .get_preferred_format(adapter.expose_wrapped_adapter())
                 // Most images are stored using sRGB so we need to reflect that here.
-                .unwrap_or(wgpu::TextureFormat::Rgba8UnormSrgb)
+                .unwrap_or(wgpu::TextureFormat::Rgba8UnormSrgb) // TODO: or wgpu::TextureFormat::Rgba16Float?
         });
 
         let window_size = window.inner_size();
 
         let configuration = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: preferred_format,
+            format,
             width: window_size.width,
             height: window_size.height,
-            // Fifo is "vsync on". Immediate is "vsync off".
-            // Mailbox is a hybrid between the two (gpu doesn't block if running faster
-            // than the display, but screen tearing doesn't happen)
-            present_mode: wgpu::PresentMode::Fifo,
+            present_mode,
         };
 
         let surface = Self {
             wgpu_surface,
-            preferred_format,
+            format,
             configuration,
         };
 
@@ -97,10 +95,9 @@ impl Surface {
 
     //- Getters ------------------------------------------------------------------------------------
 
-    /// Returns an optimal texture format to use for with the previously created Surface
-    /// and Adapter.
-    pub fn preferred_format(&self) -> wgpu::TextureFormat {
-        self.preferred_format
+    /// Returns the optimal texture format to use with this Surface.
+    pub fn format(&self) -> wgpu::TextureFormat {
+        self.format
     }
 
     // Swapchain -----------------------------------------------------------------------------------
