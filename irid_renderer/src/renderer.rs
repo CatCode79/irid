@@ -64,9 +64,16 @@ pub struct RendererBuilder<
 > {
     window: &'a W,
 
+    // First tier support backends for the Instance request
     backends: wgpu::Backends,
+
+    // Options for the Adapter request
     power_preference: wgpu::PowerPreference,
     force_fallback_adapter: bool,
+
+    // Options for the Device request
+    features: wgpu::Features,
+    limits: wgpu::Limits,
 
     clear_color: Option<wgpu::Color>,
     shader_path: Option<P>,
@@ -94,13 +101,11 @@ where
     pub fn new(window: &'a W) -> Self {
         Self {
             window,
-
-            // First tier support backends
             backends: wgpu::Backends::VULKAN | wgpu::Backends::DX12 | wgpu::Backends::METAL,
-
             power_preference: wgpu::PowerPreference::HighPerformance,
             force_fallback_adapter: false,
-
+            features: wgpu::Features::empty(),
+            limits: wgpu::Limits::downlevel_defaults(),
             clear_color: None,
             shader_path: None,
             texture_path: None,
@@ -134,6 +139,18 @@ where
     ///
     pub fn with_force_fallback_adapter(mut self, force_fallback_adapter: bool) -> Self {
         self.force_fallback_adapter = force_fallback_adapter;
+        self
+    }
+
+    ///
+    pub fn with_features(mut self, features: wgpu::Features) -> Self {
+        self.features = features;
+        self
+    }
+
+    ///
+    pub fn with_limits(mut self, limits: wgpu::Limits) -> Self {
+        self.limits = limits;
         self
     }
 
@@ -185,7 +202,8 @@ where
         // TODO: better pass `e` as argument to SurfaceAdapterRequest for chaining error descr?
         .map_err(|_| RendererError::SurfaceAdapterRequest)?;
 
-        let (device, queue) = Device::new(&adapter)?;
+        // TODO: better find a way to remove the limits.clone()
+        let (device, queue) = Device::new(&adapter, self.features, self.limits.clone())?;
 
         surface.configure(&device);
 
