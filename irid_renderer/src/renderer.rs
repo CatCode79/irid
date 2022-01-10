@@ -71,6 +71,9 @@ pub struct RendererBuilder<
     power_preference: wgpu::PowerPreference,
     force_fallback_adapter: bool,
 
+    // Surface preferred texture format
+    preferred_format: Option<wgpu::TextureFormat>,
+
     // Options for the Device request
     features: wgpu::Features,
     limits: wgpu::Limits,
@@ -104,6 +107,7 @@ where
             backends: wgpu::Backends::VULKAN | wgpu::Backends::DX12 | wgpu::Backends::METAL,
             power_preference: wgpu::PowerPreference::HighPerformance,
             force_fallback_adapter: false,
+            preferred_format: None,
             features: wgpu::Features::empty(),
             limits: wgpu::Limits::downlevel_defaults(),
             clear_color: None,
@@ -139,6 +143,15 @@ where
     ///
     pub fn with_force_fallback_adapter(mut self, force_fallback_adapter: bool) -> Self {
         self.force_fallback_adapter = force_fallback_adapter;
+        self
+    }
+
+    ///
+    pub fn with_preferred_format<F: Into<Option<wgpu::TextureFormat>>>(
+        mut self,
+        preferred_format: F,
+    ) -> Self {
+        self.preferred_format = preferred_format.into();
         self
     }
 
@@ -198,6 +211,7 @@ where
             self.window,
             self.power_preference,
             self.force_fallback_adapter,
+            self.preferred_format,
         )
         // TODO: better pass `e` as argument to SurfaceAdapterRequest for chaining error descr?
         .map_err(|_| RendererError::SurfaceAdapterRequest)?;

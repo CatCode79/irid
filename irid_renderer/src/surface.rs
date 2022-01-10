@@ -40,6 +40,7 @@ impl Surface {
         window: &W,
         power_preference: wgpu::PowerPreference,
         force_fallback_adapter: bool,
+        preferred_format: Option<wgpu::TextureFormat>,
     ) -> Result<(Self, Adapter), SurfaceError> {
         // Context for all other wgpu objects
         let wgpu_instance = wgpu::Instance::new(backends);
@@ -65,11 +66,12 @@ impl Surface {
             pprint_adapter_info(adapter.expose_wrapped_adapter())
         );
 
-        // Most images are stored using sRGB so we need to reflect that here.
-        //let preferred_format = wgpu::TextureFormat::Rgba8UnormSrgb;
-        let preferred_format = wgpu_surface
-            .get_preferred_format(adapter.expose_wrapped_adapter())
-            .ok_or_else(|| SurfaceError::NoPreferredFormat(adapter.get_info()))?;
+        let preferred_format = preferred_format.unwrap_or({
+            wgpu_surface
+                .get_preferred_format(adapter.expose_wrapped_adapter())
+                // Most images are stored using sRGB so we need to reflect that here.
+                .unwrap_or(wgpu::TextureFormat::Rgba8UnormSrgb)
+        });
 
         let window_size = window.inner_size();
 
