@@ -1,6 +1,7 @@
 //= USES ===========================================================================================
 
 use bytemuck::Pod;
+use pollster::FutureExt;
 use irid_assets_interface::{Index, Vertex};
 
 use crate::{Adapter, Queue};
@@ -25,13 +26,13 @@ impl<'a> Device {
     //- Constructors -------------------------------------------------------------------------------
 
     /// Create a new Device and Queue given ad adapter.
-    pub async fn new(adapter: &Adapter) -> Result<(Self, Queue), wgpu::RequestDeviceError> {
+    pub fn new(adapter: &Adapter) -> Result<(Self, Queue), wgpu::RequestDeviceError> {
         let label_text = format!(
             "Device Default Label [creation {:?}]",
             std::time::SystemTime::now()
         );
 
-        let (wgpu_device, wgpu_queue) = {
+        let (wgpu_device, wgpu_queue) = async {
             adapter
                 .request_device(
                     &wgpu::DeviceDescriptor {
@@ -42,7 +43,7 @@ impl<'a> Device {
                     None, // Trace path
                 )
                 .await
-        }?;
+        }.block_on()?;
 
         let device = Self {
             label_text,

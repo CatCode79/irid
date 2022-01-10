@@ -152,7 +152,7 @@ where
             // TODO: better pass `e` as argument to SurfaceAdapterRequest for chaining error descr?
             .map_err(|_| RendererError::SurfaceAdapterRequest)?;
 
-        let (device, queue) = pollster::block_on(Device::new(&adapter))?;
+        let (device, queue) = Device::new(&adapter)?;
 
         surface.configure(&device);
 

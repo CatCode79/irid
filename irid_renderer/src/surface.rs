@@ -50,7 +50,7 @@ impl Surface {
         #[cfg(debug_assertions)]
         enumerate_all_adapters(backends, &wgpu_instance);
 
-        let adapter = pollster::block_on(Adapter::new(&wgpu_instance, &wgpu_surface))
+        let adapter = Adapter::new(&wgpu_instance, &wgpu_surface)
             /*.or_else(|e| Err(SurfaceError::AdapterNotObtained))*/?;
 
         #[cfg(debug_assertions)]

@@ -1,5 +1,6 @@
 //= USES ===========================================================================================
 
+use pollster::FutureExt;
 use thiserror::Error;
 
 //= ERRORS =========================================================================================
@@ -17,6 +18,7 @@ pub enum AdapterError {
 ///
 /// Adapters can be used to open a connection to the corresponding [`Device`]
 /// on the host system by using [`Adapter::request_device`].
+#[derive(Debug)]
 pub struct Adapter {
     wgpu_adapter: wgpu::Adapter,
 }
@@ -27,11 +29,11 @@ impl Adapter {
     /// Retrieves an Adapter which matches the given surface.
     /// Some options are "soft", so treated as non-mandatory. Others are "hard".
     /// If no adapters are found that suffice all the "hard" options, Err is returned.
-    pub(crate) async fn new(
+    pub(crate) fn new(
         wgpu_instance: &wgpu::Instance,
         wgpu_surface: &wgpu::Surface,
     ) -> Result<Self, AdapterError> {
-        let wgpu_adapter = {
+        let wgpu_adapter = async {
             // About force_fallback_adapter: https://github.com/gfx-rs/wgpu/issues/2063
             wgpu_instance
                 .request_adapter(&wgpu::RequestAdapterOptions {
@@ -40,7 +42,7 @@ impl Adapter {
                     compatible_surface: Some(wgpu_surface),
                 })
                 .await
-        };
+        }.block_on();
 
         if wgpu_adapter.is_some() {
             Ok(Self {
