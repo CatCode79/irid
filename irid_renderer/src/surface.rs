@@ -54,7 +54,7 @@ impl Surface {
             /*.or_else(|e| Err(SurfaceError::AdapterNotObtained))*/?;
 
         #[cfg(debug_assertions)]
-        println!("Picked Adapter: {:?}", adapter.get_info());
+        println!("Picked Adapter: {}", pprint_adapter_info(adapter.expose_wrapped_adapter()));
 
         // Most images are stored using sRGB so we need to reflect that here.
         //let preferred_format = wgpu::TextureFormat::Rgba8UnormSrgb;
@@ -115,11 +115,32 @@ impl Surface {
 
 //= FUNCTIONS ======================================================================================
 
-/// Shows all the adapters information for debug.
+// Shows all the adapters information for debug.
 #[cfg(debug_assertions)]
 fn enumerate_all_adapters(backends: wgpu::Backends, instance: &wgpu::Instance) {
     instance.poll_all(true);
-    for adapter in instance.enumerate_adapters(backends) {
-        println!("Adapter found: {:?}", adapter.get_info());
+    let adapters = instance.enumerate_adapters(backends);
+
+    let mut found = false;
+    for (i, adapter) in adapters.enumerate() {
+        let info = pprint_adapter_info(&adapter);
+        if i == 0 {
+            println!("Adapter(s) found - {}", info);
+        } else {
+            println!("                 - {}", info);
+        }
+        found = true;
     }
+
+    if !found {
+        println!("No Adapter Found");
+    }
+}
+
+// Wgpu adapter info pretty printing.
+#[cfg(debug_assertions)]
+fn pprint_adapter_info(adapter: &wgpu::Adapter) -> String {
+    format!("{:?}", adapter.get_info())
+        .replace("AdapterInfo { name: ", "")
+        .replace(" }", "")
 }
