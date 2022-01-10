@@ -26,22 +26,29 @@ impl<'a> Device {
     //- Constructors -------------------------------------------------------------------------------
 
     /// Create a new Device and Queue given ad adapter.
-    pub fn new(adapter: &Adapter, features: wgpu::Features, limits: wgpu::Limits) -> Result<(Self, Queue), wgpu::RequestDeviceError> {
+    pub fn new(
+        adapter: &Adapter,
+        features: wgpu::Features,
+        limits: wgpu::Limits,
+    ) -> Result<(Self, Queue), wgpu::RequestDeviceError> {
         let label_text = format!(
             "Device Default Label [creation {:?}]",
             std::time::SystemTime::now()
         );
 
         let (wgpu_device, wgpu_queue) = async {
-            adapter.request_device(
-                &wgpu::DeviceDescriptor {
-                    label: Some(label_text.as_str()),
-                    features,
-                    limits,
-                },
-                None, // Trace path
-            ).await
-        }.block_on()?;
+            adapter
+                .request_device(
+                    &wgpu::DeviceDescriptor {
+                        label: Some(label_text.as_str()),
+                        features,
+                        limits,
+                    },
+                    None, // Trace path
+                )
+                .await
+        }
+        .block_on()?;
 
         let device = Self {
             label_text,
