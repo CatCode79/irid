@@ -35,7 +35,7 @@ pub enum ApplicationError {
 //= APPLICATION BUILDER ============================================================================
 
 /// Build a new [Application] with wanted values.
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug, Default)]
 pub struct ApplicationBuilder<
     'a,
     L: Listener,
@@ -158,7 +158,7 @@ where
 //= APPLICATION ====================================================================================
 
 /// Manages the whole game setup and logic.
-#[derive(Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Application<'a, L: Listener, B: WindowBuilder, P: AsRef<Path>, V: Vertex, I: Index> {
     listener: L,
     window_builder: B,

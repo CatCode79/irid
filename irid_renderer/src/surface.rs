@@ -24,6 +24,7 @@ pub enum SurfaceError {
 
 /// A Surface represents a platform-specific surface (e.g. a window) onto which rendered images
 /// may be presented.
+#[derive(Debug)]
 pub struct Surface {
     wgpu_surface: wgpu::Surface,
     format: wgpu::TextureFormat,

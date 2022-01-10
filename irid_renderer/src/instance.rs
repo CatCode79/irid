@@ -2,6 +2,7 @@
 
 /// Instances allows us to draw the same object multiple times with different properties
 /// (position, orientation, size, color, etcetera).
+#[derive(Debug)]
 pub struct Instance {
     pub position: cgmath::Vector3<f32>,
     pub rotation: cgmath::Quaternion<f32>,
@@ -12,7 +13,7 @@ impl Instance {
     pub fn to_raw(&self) -> InstanceRaw {
         InstanceRaw {
             model: (cgmath::Matrix4::from_translation(self.position)
-                * cgmath::Matrix4::from(self.rotation))
+                  * cgmath::Matrix4::from(self.rotation))
             .into(),
         }
     }
@@ -24,7 +25,7 @@ impl Instance {
 /// We keep these separate so that we can update the Instance as much as we want without needing
 /// to mess with quaternions. We only need to update the raw data before we draw.
 #[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct InstanceRaw {
     model: [[f32; 4]; 4],
 }

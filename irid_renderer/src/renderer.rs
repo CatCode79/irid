@@ -493,6 +493,7 @@ where
 //= RENDERER OBJECT ================================================================================
 
 ///
+#[derive(Debug)]
 pub struct Renderer {
     window_size: winit::dpi::PhysicalSize<u32>,
     clear_color: wgpu::Color,

@@ -32,7 +32,7 @@ pub trait Image<S: ImageSize> {
 
 /// A Diffuse Image
 #[derive(Clone, Debug)]
-pub struct DiffuseImage<S: ImageSize + Copy> {
+pub struct DiffuseImage<S: ImageSize> {
     image: image::DynamicImage,
     size: S,
 }

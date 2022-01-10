@@ -129,9 +129,17 @@ impl WindowBuilder for IridWindowBuilder {
 
 //= IRID WINDOW ====================================================================================
 
+#[derive(Debug)]
 pub struct IridWindow {
     winit_window: winit::window::Window,
     delayed_visibility: Option<bool>,
+}
+
+impl Default for IridWindow {
+    /// It may panic because of [IridWindowBuilder::build] causes.
+    fn default() -> Self {
+        IridWindowBuilder::default().build(&winit::event_loop::EventLoop::new()).unwrap()
+    }
 }
 
 impl Window for IridWindow {

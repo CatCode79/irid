@@ -120,6 +120,7 @@ impl<'a> RenderPipelineBuilder<'a> {
 /// Wrapper to the wgpu handle's rendering graphics pipeline.
 ///
 /// See [`wgpu::RenderPipeline`](wgpu::RenderPipeline).
+#[derive(Debug)]
 pub struct RenderPipeline {
     wgpu_render_pipeline: wgpu::RenderPipeline,
 }

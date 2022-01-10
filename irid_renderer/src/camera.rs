@@ -134,6 +134,7 @@ impl CameraUniform {
 //= CAMERA METADATAS ===============================================================================
 
 ///
+#[derive(Debug)]
 pub struct CameraMetadatas {
     uniform: CameraUniform,
     buffer: wgpu::Buffer,
@@ -166,6 +167,7 @@ impl CameraMetadatas {
 //= CAMERA CONTROLLER ==============================================================================
 
 ///
+#[derive(Debug)]
 pub struct CameraController {
     speed: f32,
     is_up_pressed: bool,
