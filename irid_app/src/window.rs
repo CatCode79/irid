@@ -138,7 +138,9 @@ pub struct IridWindow {
 impl Default for IridWindow {
     /// It may panic because of [IridWindowBuilder::build] causes.
     fn default() -> Self {
-        IridWindowBuilder::default().build(&winit::event_loop::EventLoop::new()).unwrap()
+        IridWindowBuilder::default()
+            .build(&winit::event_loop::EventLoop::new())
+            .unwrap()
     }
 }
 
