@@ -1,53 +1,18 @@
 //= USES ===========================================================================================
 
-use thiserror::Error;
+use irid_assets_interface::{Image, ImageSize, Texture, TextureError};
 
-use crate::{DiffuseImage, DiffuseImageSize, Image, ImageSize};
-
-//= ERRORS =========================================================================================
-
-#[non_exhaustive]
-#[derive(Debug, Error)]
-pub enum TextureError {
-    #[error("can’t identify any monitor as a primary one")]
-    ImageError {
-        #[from]
-        source: image::error::ImageError,
-    },
-}
-
-//= TEXTURE INTERFACE ==============================================================================
-
-///
-// TODO: create (maybe) a super trait with GenericImage
-pub trait Texture<S: ImageSize> {
-    type Output: Texture<S>;
-    type Img;
-
-    ///
-    fn load<P: AsRef<std::path::Path>>(filepath: P) -> Result<Self::Output, TextureError>;
-
-    ///
-    fn load_with_guessed_format<P: AsRef<std::path::Path>>(
-        filepath: P,
-    ) -> Result<Self::Output, TextureError>;
-
-    ///
-    fn as_rgba8_bytes(&self) -> Option<&[u8]>;
-
-    ///
-    fn size(&self) -> S;
-}
+use crate::DiffuseImage;
 
 //= DIFFUSE TEXTURE ================================================================================
 
 ///
 #[derive(Clone, Debug)]
-pub struct DiffuseTexture<S: ImageSize + Copy = DiffuseImageSize> {
+pub struct DiffuseTexture<S: ImageSize + Copy> {
     image: DiffuseImage<S>,
 }
 
-impl<S: ImageSize + Copy> Texture<S> for DiffuseTexture<S> {
+impl<S> Texture<S> for DiffuseTexture<S> where S: ImageSize + Copy {
     //- Associated Types ---------------------------------------------------------------------------
 
     type Output = Self;

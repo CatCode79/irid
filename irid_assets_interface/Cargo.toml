@@ -10,4 +10,6 @@ license = "MIT OR Apache-2.0"
 publish = false
 
 [dependencies]
+image = "0.23"
+thiserror = "1.0"
 wgpu = "0.11"

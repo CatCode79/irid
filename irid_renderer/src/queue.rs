@@ -2,7 +2,7 @@
 
 use std::future::Future;
 
-use irid_assets::{ImageSize, Texture};
+use irid_assets_interface::{ImageSize, Texture};
 
 use crate::texture_metadatas::TextureImageMetadatas;
 use crate::utils::log2;

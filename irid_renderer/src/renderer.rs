@@ -1,13 +1,18 @@
 //= USES ===========================================================================================
 
-use std::{fmt::Debug, fs::read_to_string, marker::PhantomData, path::Path};
+use std::{
+    fmt::Debug,
+    fs::read_to_string,
+    marker::PhantomData,
+    path::Path
+};
+use std::path::PathBuf;
 
 use bytemuck::Pod;
 use thiserror::Error;
 
 use irid_app_interface::Window;
-use irid_assets::{ImageSize, Texture};
-use irid_assets_interface::{Index, Vertex};
+use irid_assets_interface::{ImageSize, Texture, Index, Vertex};
 
 use crate::texture_metadatas::{
     TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas,
@@ -42,12 +47,6 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
     0.0,
     NUM_INSTANCES_PER_ROW as f32 * 0.5,
 );
-
-//= TRAIT FOR DEFAULT PATH TYPE ====================================================================
-
-pub trait RendererPathType {
-    type P: AsRef<std::path::Path>;
-}
 
 //= RENDERER BUILDER ===============================================================================
 
@@ -89,6 +88,7 @@ pub struct RendererBuilder<
     vertices: Option<&'a [V]>,
     indices: Option<&'a [I]>,
 
+    // These phantoms serve as hand-it-over for the Renderer struct
     generic_size: PhantomData<S>,
     generic_texture: PhantomData<T>,
 }
@@ -376,7 +376,7 @@ where
             window_size,
             clear_color: self.clear_color.unwrap_or(wgpu::Color::WHITE),
             surface,
-            adapter,
+            _adapter: adapter,
             device,
             queue,
 
@@ -498,8 +498,7 @@ pub struct Renderer {
     window_size: winit::dpi::PhysicalSize<u32>,
     clear_color: wgpu::Color,
     surface: Surface,
-    #[allow(dead_code)]
-    adapter: Adapter,
+    _adapter: Adapter,
     device: Device,
     queue: Queue,
 
@@ -571,8 +570,7 @@ impl Renderer {
     ///
     pub fn redraw(&mut self) -> Result<(), wgpu::SurfaceError> {
         self.camera_controller.update_camera(&mut self.camera);
-        self.queue
-            .write_camera_buffer(&self.camera, &self.camera_metadatas);
+        self.queue.write_camera_buffer(&self.camera, &self.camera_metadatas);
 
         let frame = self.surface.get_current_texture()?;
         let texture = &frame.texture;
@@ -605,6 +603,7 @@ impl Renderer {
                 let rp = self.renderer_pipeline.as_ref().unwrap();
                 // TODO: remove this expose call creating an RenderPass wrapper
                 render_pass.set_pipeline(rp.expose_wrapped_render_pipeline());
+
                 if self.texture_bind_group_metadatas.is_empty() {
                     render_pass.set_bind_group(0, self.camera_metadatas.bind_group(), &[]);
                 } else {
@@ -616,14 +615,17 @@ impl Renderer {
                     );
                     render_pass.set_bind_group(1, self.camera_metadatas.bind_group(), &[]);
                 }
+
                 if self.vertex_buffer.is_some() {
                     render_pass
                         .set_vertex_buffer(0, self.vertex_buffer.as_ref().unwrap().slice(..));
                 }
+
                 if self.instances_buffer.is_some() {
                     render_pass
                         .set_vertex_buffer(1, self.instances_buffer.as_ref().unwrap().slice(..));
                 }
+
                 if self.index_buffer.is_some() {
                     render_pass.set_index_buffer(
                         self.index_buffer.as_ref().unwrap().slice(..),
@@ -635,6 +637,7 @@ impl Renderer {
                         0..self.instances.as_ref().unwrap().len() as _,
                     );
                 } else {
+                    // TODO: uhm, sound like a bug. Probably too tied with lw_03_example and vertices
                     render_pass.draw(0..3, 0..1);
                 }
             }

@@ -1,11 +1,11 @@
 //= USES ===========================================================================================
 
-use bytemuck::Pod;
 use std::{
     fmt::Debug,
     path::{Path, PathBuf},
 };
 
+use bytemuck::Pod;
 use thiserror::Error;
 
 use irid_app_interface::{Window, WindowBuilder};
@@ -209,7 +209,7 @@ where
             V,
             I,
             DiffuseImageSize,
-            DiffuseTexture,
+            DiffuseTexture<DiffuseImageSize>,
         >::new(&window);
         if self.clear_color.is_some() {
             // TODO: we have to have with_clear_color method only on RenderBuilder
