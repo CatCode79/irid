@@ -107,7 +107,7 @@ impl<'a> RenderPipelineBuilder<'a> {
             depth_stencil,
             multisample: self.multisample.unwrap_or_default(),
             fragment: self.fragment,
-            multiview: None
+            multiview: None,
         });
 
         RenderPipeline {

@@ -14,9 +14,9 @@ use crate::texture_metadatas::{
 };
 use crate::utils::log2;
 use crate::{
-    Adapter, PerspectiveCamera, CameraController, CameraMetadatas, Device, Instance, PipelineLayoutBuilder,
-    Queue, RenderPipeline, RenderPipelineBuilder, ShaderModuleBuilder, Surface,
-    DEFAULT_FRAGMENT_ENTRY_POINT, DEFAULT_VERTEX_ENTRY_POINT,
+    Adapter, CameraController, CameraMetadatas, Device, Instance, PerspectiveCamera,
+    PipelineLayoutBuilder, Queue, RenderPipeline, RenderPipelineBuilder, ShaderModuleBuilder,
+    Surface, DEFAULT_FRAGMENT_ENTRY_POINT, DEFAULT_VERTEX_ENTRY_POINT,
 };
 
 //= ERRORS =========================================================================================

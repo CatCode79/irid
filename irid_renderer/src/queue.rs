@@ -6,7 +6,7 @@ use irid_assets_interface::{ImageSize, Texture};
 
 use crate::texture_metadatas::TextureImageMetadatas;
 use crate::utils::log2;
-use crate::{PerspectiveCamera, CameraMetadatas};
+use crate::{CameraMetadatas, PerspectiveCamera};
 
 //= QUEUE ==========================================================================================
 
@@ -32,7 +32,11 @@ impl Queue {
     /// As such, the write is not immediately submitted, and instead enqueued
     /// internally to happen at the start of the next `submit()` call.
     // TODO: to refact after the camera refact, need to pass only one arg
-    pub(crate) fn write_camera_buffer(&self, camera: &PerspectiveCamera, camera_metadatas: &CameraMetadatas) {
+    pub(crate) fn write_camera_buffer(
+        &self,
+        camera: &PerspectiveCamera,
+        camera_metadatas: &CameraMetadatas,
+    ) {
         let mut camera_uniform = *camera_metadatas.uniform();
         camera_uniform.update_view_proj(camera);
         self.wgpu_queue.write_buffer(
