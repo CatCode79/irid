@@ -2,6 +2,8 @@
 
 use crate::Device;
 
+use irid_renderer_interface::Camera;
+
 //= CONSTS =========================================================================================
 
 /// The coordinate system in Wgpu is based on DirectX, and Metal's coordinate systems.
@@ -23,7 +25,7 @@ const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
 
 ///
 #[derive(Debug, Clone)]
-pub struct Camera {
+pub struct PerspectiveCamera {
     eye: cgmath::Point3<f32>,
     target: cgmath::Point3<f32>,
     up: cgmath::Vector3<f32>,
@@ -33,9 +35,11 @@ pub struct Camera {
     zfar: f32,
 }
 
-impl Camera {
+impl Camera for PerspectiveCamera {
+    //- Constructors -------------------------------------------------------------------------------
+
     /// Create a new camera given the window's width and height
-    pub fn new(width: f32, height: f32) -> Self {
+    fn new(width: f32, height: f32) -> Self {
         Self {
             // position the camera one unit up and 2 units back
             // +z is out of the screen
@@ -50,9 +54,11 @@ impl Camera {
             zfar: 100.0,
         }
     }
+}
 
+impl PerspectiveCamera {
     ///
-    pub fn build_view_projection_matrix(&self) -> cgmath::Matrix4<f32> {
+    fn build_view_projection_matrix(&self) -> cgmath::Matrix4<f32> {
         // The view matrix moves the world to be at the position and rotation of the camera.
         // It's essentially an inverse of whatever the transform matrix of the camera would be.
         let view = cgmath::Matrix4::look_at_rh(self.eye, self.target, self.up);
@@ -65,7 +71,7 @@ impl Camera {
     }
 
     /// Create a new CameraMetadatas from this camera.
-    pub fn create_metadatas(&self, device: &Device) -> CameraMetadatas {
+    pub(crate) fn create_metadatas(&self, device: &Device) -> CameraMetadatas {
         let mut uniform = CameraUniform::new();
         uniform.update_view_proj(self);
 
@@ -112,7 +118,7 @@ impl Camera {
 ///
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct CameraUniform {
+pub(crate) struct CameraUniform {
     // We can't use cgmath with bytemuck directly so we'll have
     // to convert the Matrix4 into a 4x4 f32 array
     view_proj: [[f32; 4]; 4],
@@ -126,7 +132,7 @@ impl CameraUniform {
         }
     }
 
-    pub(crate) fn update_view_proj(&mut self, camera: &Camera) {
+    pub(crate) fn update_view_proj(&mut self, camera: &PerspectiveCamera) {
         self.view_proj = camera.build_view_projection_matrix().into();
     }
 }
@@ -135,7 +141,7 @@ impl CameraUniform {
 
 ///
 #[derive(Debug)]
-pub struct CameraMetadatas {
+pub(crate) struct CameraMetadatas {
     uniform: CameraUniform,
     buffer: wgpu::Buffer,
     bind_group_layout: wgpu::BindGroupLayout,
@@ -167,8 +173,8 @@ impl CameraMetadatas {
 //= CAMERA CONTROLLER ==============================================================================
 
 ///
-#[derive(Debug)]
-pub struct CameraController {
+#[derive(Clone, Debug)]
+pub(crate) struct CameraController {
     speed: f32,
     is_up_pressed: bool,
     is_down_pressed: bool,
@@ -236,7 +242,7 @@ impl CameraController {
     }
 
     ///
-    pub fn update_camera(&self, camera: &mut Camera) {
+    pub fn update_camera(&self, camera: &mut PerspectiveCamera) {
         use cgmath::InnerSpace;
 
         let forward = camera.target - camera.eye;

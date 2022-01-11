@@ -8,4 +8,5 @@ members = [
     "irid_assets",
     "irid_assets_interface",
     "irid_renderer",
+    "irid_renderer_interface",
 ]

@@ -7,13 +7,14 @@ use thiserror::Error;
 
 use irid_app_interface::Window;
 use irid_assets_interface::{ImageSize, Index, Texture, Vertex};
+use irid_renderer_interface::Camera;
 
 use crate::texture_metadatas::{
     TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas,
 };
 use crate::utils::log2;
 use crate::{
-    Adapter, Camera, CameraController, CameraMetadatas, Device, Instance, PipelineLayoutBuilder,
+    Adapter, PerspectiveCamera, CameraController, CameraMetadatas, Device, Instance, PipelineLayoutBuilder,
     Queue, RenderPipeline, RenderPipelineBuilder, ShaderModuleBuilder, Surface,
     DEFAULT_FRAGMENT_ENTRY_POINT, DEFAULT_VERTEX_ENTRY_POINT,
 };
@@ -231,7 +232,7 @@ where
 
         //- Camera ---------------------------------------------------------------------------------
 
-        let camera = Camera::new(window_size.width as f32, window_size.height as f32);
+        let camera = PerspectiveCamera::new(window_size.width as f32, window_size.height as f32);
         let camera_metadatas = camera.create_metadatas(&device);
         let camera_controller = CameraController::new(0.2);
 
@@ -499,7 +500,7 @@ pub struct Renderer {
     device: Device,
     queue: Queue,
 
-    camera: Camera,
+    camera: PerspectiveCamera,
     camera_metadatas: CameraMetadatas,
     camera_controller: CameraController,
 
