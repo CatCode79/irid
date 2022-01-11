@@ -1,18 +1,12 @@
 //= USES ===========================================================================================
 
-use std::{
-    fmt::Debug,
-    fs::read_to_string,
-    marker::PhantomData,
-    path::Path
-};
-use std::path::PathBuf;
+use std::{fmt::Debug, fs::read_to_string, marker::PhantomData, path::Path};
 
 use bytemuck::Pod;
 use thiserror::Error;
 
 use irid_app_interface::Window;
-use irid_assets_interface::{ImageSize, Texture, Index, Vertex};
+use irid_assets_interface::{ImageSize, Index, Texture, Vertex};
 
 use crate::texture_metadatas::{
     TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas,
@@ -570,7 +564,8 @@ impl Renderer {
     ///
     pub fn redraw(&mut self) -> Result<(), wgpu::SurfaceError> {
         self.camera_controller.update_camera(&mut self.camera);
-        self.queue.write_camera_buffer(&self.camera, &self.camera_metadatas);
+        self.queue
+            .write_camera_buffer(&self.camera, &self.camera_metadatas);
 
         let frame = self.surface.get_current_texture()?;
         let texture = &frame.texture;

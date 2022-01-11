@@ -12,7 +12,10 @@ pub struct DiffuseTexture<S: ImageSize + Copy> {
     image: DiffuseImage<S>,
 }
 
-impl<S> Texture<S> for DiffuseTexture<S> where S: ImageSize + Copy {
+impl<S> Texture<S> for DiffuseTexture<S>
+where
+    S: ImageSize + Copy,
+{
     //- Associated Types ---------------------------------------------------------------------------
 
     type Output = Self;

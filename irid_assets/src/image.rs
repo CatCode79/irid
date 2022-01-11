@@ -13,7 +13,10 @@ pub struct DiffuseImage<S: ImageSize> {
     size: S,
 }
 
-impl<S> DiffuseImage<S> where S: ImageSize + Copy {
+impl<S> DiffuseImage<S>
+where
+    S: ImageSize + Copy,
+{
     //- Constructor Handler ------------------------------------------------------------------------
 
     fn handle_new<P: AsRef<std::path::Path>>(
