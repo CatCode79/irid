@@ -10,4 +10,4 @@ license = "MIT OR Apache-2.0"
 publish = false
 
 [dependencies]
-winit = "0.25"
+winit = "0.26"
