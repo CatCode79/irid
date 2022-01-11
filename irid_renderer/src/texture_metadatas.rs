@@ -136,14 +136,7 @@ impl TextureBindGroupMetadatas {
                 wgpu::BindGroupLayoutEntry {
                     binding: 1,
                     visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Sampler {
-                        // This is only for TextureSampleType::Depth
-                        comparison: false,
-                        // This should be true if the sample_type of the texture is:
-                        //     TextureSampleType::Float { filterable: true }
-                        // Otherwise you'll get an error.
-                        filtering: true,
-                    },
+                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
                     count: None,
                 },
             ],

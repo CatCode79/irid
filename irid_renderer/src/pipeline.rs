@@ -107,6 +107,7 @@ impl<'a> RenderPipelineBuilder<'a> {
             depth_stencil,
             multisample: self.multisample.unwrap_or_default(),
             fragment: self.fragment,
+            multiview: None
         });
 
         RenderPipeline {
@@ -213,8 +214,8 @@ impl PrimitiveStateBuilder {
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
                 cull_mode: Some(wgpu::Face::Back),
-                // Requires Features::DEPTH_CLAMPING
-                clamp_depth: false,
+                // Requires Features::DEPTH_CLIP_CONTROL
+                unclipped_depth: false,
                 // Setting this to anything other than Fill requires Features::NON_FILL_POLYGON_MODE
                 polygon_mode: wgpu::PolygonMode::Fill,
                 // Requires Features::CONSERVATIVE_RASTERIZATION
@@ -256,8 +257,8 @@ impl PrimitiveStateBuilder {
     }
 
     ///
-    pub fn with_clamp_depth(mut self, clamp_depth: bool) -> Self {
-        self.primitive_state.clamp_depth = clamp_depth;
+    pub fn with_unclipped_depth(mut self, unclipped_depth: bool) -> Self {
+        self.primitive_state.unclipped_depth = unclipped_depth;
         self
     }
 

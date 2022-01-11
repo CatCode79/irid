@@ -1,6 +1,6 @@
 [package]
 name = "irid_assets_interface"
-version = "0.0.11"
+version = "0.0.12"
 authors = ["https://github.com/irid-game-framework/irid/graphs/contributors"]
 edition = "2018"
 rust-version = "1.48"
@@ -12,4 +12,4 @@ publish = false
 [dependencies]
 image = "0.23"
 thiserror = "1.0"
-wgpu = "0.11"
+wgpu = "0.12"
