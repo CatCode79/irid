@@ -49,7 +49,8 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 pub struct RendererBuilder<
     'a,
     W: Window,
-    P: AsRef<Path>,
+    PS: AsRef<Path>,
+    PT: AsRef<Path>,
     V: Vertex,
     I: Index,
     S: ImageSize,
@@ -76,8 +77,8 @@ pub struct RendererBuilder<
     limits: wgpu::Limits,
 
     clear_color: Option<wgpu::Color>,
-    shader_path: Option<P>,
-    texture_path: Option<P>,
+    shader_path: Option<PS>,
+    texture_path: Option<PT>,
     // TODO: Probably better to encapsulate the [ModelVertex] logic or use an Into
     vertices: Option<&'a [V]>,
     indices: Option<&'a [I]>,
@@ -87,10 +88,11 @@ pub struct RendererBuilder<
     generic_texture: PhantomData<T>,
 }
 
-impl<'a, W, P, V, I, S, T> RendererBuilder<'a, W, P, V, I, S, T>
+impl<'a, W, PS, PT, V, I, S, T> RendererBuilder<'a, W, PS, PT, V, I, S, T>
 where
     W: Window,
-    P: AsRef<Path> + Debug,
+    PS: AsRef<Path> + Debug,
+    PT: AsRef<Path> + Debug,
     V: Vertex + Pod,
     I: Index + Pod,
     S: ImageSize,
@@ -180,13 +182,13 @@ where
     }
 
     ///
-    pub fn with_shader_path(mut self, shader_path: P) -> Self {
+    pub fn with_shader_path(mut self, shader_path: PS) -> Self {
         self.shader_path = Some(shader_path);
         self
     }
 
     ///
-    pub fn with_texture_path(mut self, texture_path: P) -> Self {
+    pub fn with_texture_path(mut self, texture_path: PT) -> Self {
         self.texture_path = Some(texture_path);
         self
     }
@@ -355,10 +357,11 @@ where
         //- Instances ------------------------------------------------------------------------------
 
         let (instances, instances_buffer) = if self.vertices.is_some() {
-            let instances = RendererBuilder::<'a, W, P, V, I, S, T>::create_instances();
-            let instances_buffer = RendererBuilder::<'a, W, P, V, I, S, T>::create_instances_buffer(
-                &device, &instances,
-            );
+            let instances = RendererBuilder::<'a, W, PS, PT, V, I, S, T>::create_instances();
+            let instances_buffer =
+                RendererBuilder::<'a, W, PS, PT, V, I, S, T>::create_instances_buffer(
+                    &device, &instances,
+                );
             (Some(instances), Some(instances_buffer))
         } else {
             (None, None)

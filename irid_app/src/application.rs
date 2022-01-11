@@ -40,7 +40,8 @@ pub struct ApplicationBuilder<
     'a,
     L: Listener,
     B: WindowBuilder,
-    P: AsRef<Path>,
+    PS: AsRef<Path>,
+    PT: AsRef<Path>,
     V: Vertex,
     I: Index,
 > {
@@ -48,8 +49,8 @@ pub struct ApplicationBuilder<
     window_builder: Option<B>,
 
     // Renderer stuff
-    shader_paths: Option<Vec<P>>,
-    texture_path: Option<P>,
+    shader_paths: Option<Vec<PS>>,
+    texture_path: Option<PT>,
     vertices: Option<&'a [V]>,
     indices: Option<&'a [I]>,
 
@@ -57,11 +58,12 @@ pub struct ApplicationBuilder<
     clear_color: Option<wgpu::Color>,
 }
 
-impl<'a, L, B, P, V, I> ApplicationBuilder<'a, L, B, P, V, I>
+impl<'a, L, B, PS, PT, V, I> ApplicationBuilder<'a, L, B, PS, PT, V, I>
 where
     L: Listener,
     B: WindowBuilder,
-    P: AsRef<std::path::Path>,
+    PS: AsRef<std::path::Path>,
+    PT: AsRef<std::path::Path>,
     V: Vertex,
     I: Index,
 {
@@ -109,13 +111,13 @@ where
     */
 
     ///
-    pub fn with_shader_paths(mut self, shader_paths: Vec<P>) -> Self {
+    pub fn with_shader_paths(mut self, shader_paths: Vec<PS>) -> Self {
         self.shader_paths = Some(shader_paths);
         self
     }
 
     ///
-    pub fn with_texture_path(mut self, texture_path: P) -> Self {
+    pub fn with_texture_path(mut self, texture_path: PT) -> Self {
         self.texture_path = Some(texture_path);
         self
     }
@@ -142,7 +144,7 @@ where
     //- Build --------------------------------------------------------------------------------------
 
     /// Build a new [Application] with given values.
-    pub fn build(self) -> Application<'a, L, B, P, V, I> {
+    pub fn build(self) -> Application<'a, L, B, PS, PT, V, I> {
         Application {
             listener: self.listener,
             window_builder: self.window_builder.unwrap_or_else(B::new),
@@ -159,13 +161,21 @@ where
 
 /// Manages the whole game setup and logic.
 #[derive(Clone, Debug, Default)]
-pub struct Application<'a, L: Listener, B: WindowBuilder, P: AsRef<Path>, V: Vertex, I: Index> {
+pub struct Application<
+    'a,
+    L: Listener,
+    B: WindowBuilder,
+    PS: AsRef<Path>,
+    PT: AsRef<Path>,
+    V: Vertex,
+    I: Index,
+> {
     listener: L,
     window_builder: B,
 
     // Renderer stuffs
-    shader_paths: Option<Vec<P>>,
-    texture_path: Option<P>,
+    shader_paths: Option<Vec<PS>>,
+    texture_path: Option<PT>,
     vertices: Option<&'a [V]>,
     indices: Option<&'a [I]>,
 
@@ -173,11 +183,12 @@ pub struct Application<'a, L: Listener, B: WindowBuilder, P: AsRef<Path>, V: Ver
     clear_color: Option<wgpu::Color>,
 }
 
-impl<'a, L, B, P, V, I> Application<'a, L, B, P, V, I>
+impl<'a, L, B, PS, PT, V, I> Application<'a, L, B, PS, PT, V, I>
 where
     L: Listener,
     B: WindowBuilder + Clone,
-    P: AsRef<Path> + Clone + Debug,
+    PS: AsRef<Path> + Clone + Debug,
+    PT: AsRef<Path> + Clone + Debug,
     V: Vertex + Pod,
     I: Index + Pod,
 {
@@ -205,7 +216,8 @@ where
 
         let mut renderer_builder = RendererBuilder::<
             <B as WindowBuilder>::BuildOutput,
-            P,
+            PS,
+            PT,
             V,
             I,
             DiffuseImageSize,
