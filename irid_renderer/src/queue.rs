@@ -3,10 +3,13 @@
 use std::future::Future;
 
 use irid_assets_interface::{ImageSize, Texture};
+use irid_renderer_interface::Camera;
 
-use crate::texture_metadatas::TextureImageMetadatas;
-use crate::utils::log2;
-use crate::{CameraMetadatas, PerspectiveCamera};
+use crate::{
+    camera_bind::CameraBindGroup,
+    texture_metadatas::TextureImageMetadatas,
+    utils::log2,
+};
 
 //= QUEUE ==========================================================================================
 
@@ -32,10 +35,10 @@ impl Queue {
     /// As such, the write is not immediately submitted, and instead enqueued
     /// internally to happen at the start of the next `submit()` call.
     // TODO: to refact after the camera refact, need to pass only one arg
-    pub(crate) fn write_camera_buffer(
+    pub(crate) fn write_camera_buffer<C: Camera>(
         &self,
-        camera: &PerspectiveCamera,
-        camera_metadatas: &CameraMetadatas,
+        camera: &C,
+        camera_metadatas: &CameraBindGroup,
     ) {
         let mut camera_uniform = *camera_metadatas.uniform();
         camera_uniform.update_view_proj(camera);

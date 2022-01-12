@@ -3,7 +3,7 @@ const fn num_bits<T>() -> usize {
 }
 
 ///
-// TODO: There is a log_2 experimental function in the nightly, waiting for it...
+// TODO: There is a log_2 experimental function on nightly. Waiting for it...
 //  https://github.com/rust-lang/rust/issues/70887
 pub fn log2(x: i32) -> u32 {
     assert!(x > 0);

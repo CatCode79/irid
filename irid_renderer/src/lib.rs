@@ -27,7 +27,8 @@ pub(crate) mod queue;
 pub(crate) mod renderer;
 pub(crate) mod shader;
 pub(crate) mod surface;
-pub(crate) mod utils;
 
 // Used only internally
+mod camera_bind;
 mod texture_metadatas;
+mod utils;

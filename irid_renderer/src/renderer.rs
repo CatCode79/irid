@@ -14,10 +14,11 @@ use crate::texture_metadatas::{
 };
 use crate::utils::log2;
 use crate::{
-    Adapter, CameraController, CameraMetadatas, Device, Instance, PerspectiveCamera,
+    Adapter, CameraController, Device, Instance,
     PipelineLayoutBuilder, Queue, RenderPipeline, RenderPipelineBuilder, ShaderModuleBuilder,
     Surface, DEFAULT_FRAGMENT_ENTRY_POINT, DEFAULT_VERTEX_ENTRY_POINT,
 };
+use crate::camera_bind::CameraBindGroup;
 
 //= ERRORS =========================================================================================
 
@@ -50,6 +51,7 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 pub struct RendererBuilder<
     'a,
     W: Window,
+    C: Camera,
     PS: AsRef<Path>,
     PT: AsRef<Path>,
     V: Vertex,
@@ -77,21 +79,23 @@ pub struct RendererBuilder<
     features: wgpu::Features,
     limits: wgpu::Limits,
 
-    clear_color: Option<wgpu::Color>,
+    camera: Option<C>,
     shader_path: Option<PS>,
     texture_path: Option<PT>,
     // TODO: Probably better to encapsulate the [ModelVertex] logic or use an Into
     vertices: Option<&'a [V]>,
     indices: Option<&'a [I]>,
+    clear_color: Option<wgpu::Color>,
 
     // These phantoms serve as hand-it-over for the Renderer struct
     generic_size: PhantomData<S>,
     generic_texture: PhantomData<T>,
 }
 
-impl<'a, W, PS, PT, V, I, S, T> RendererBuilder<'a, W, PS, PT, V, I, S, T>
+impl<'a, W, C, PS, PT, V, I, S, T> RendererBuilder<'a, W, C, PS, PT, V, I, S, T>
 where
     W: Window,
+    C: Camera,
     PS: AsRef<Path> + Debug,
     PT: AsRef<Path> + Debug,
     V: Vertex + Pod,
@@ -112,11 +116,12 @@ where
             present_mode: wgpu::PresentMode::Fifo,
             features: wgpu::Features::empty(),
             limits: wgpu::Limits::downlevel_defaults(),
-            clear_color: None,
+            camera: None,
             shader_path: None,
             texture_path: None,
             vertices: None,
             indices: None,
+            clear_color: None,
             generic_size: Default::default(),
             generic_texture: Default::default(),
         }
@@ -175,10 +180,9 @@ where
         self
     }
 
-    /// Color used by a [render pass color attachment](wgpu::RenderPassColorAttachment)
-    /// to perform a [clear operation](wgpu::LoadOp).
-    pub fn with_clear_color(mut self, clear_color: wgpu::Color) -> Self {
-        self.clear_color = clear_color.into();
+    ///
+    pub fn with_camera<IC: Into<Option<C>>>(mut self, camera: IC) -> Self {
+        self.camera = camera.into();
         self
     }
 
@@ -206,10 +210,17 @@ where
         self
     }
 
+    /// Color used by a [render pass color attachment](wgpu::RenderPassColorAttachment)
+    /// to perform a [clear operation](wgpu::LoadOp).
+    pub fn with_clear_color(mut self, clear_color: wgpu::Color) -> Self {
+        self.clear_color = clear_color.into();
+        self
+    }
+
     //- Build --------------------------------------------------------------------------------------
 
     ///
-    pub fn build(self) -> Result<Renderer, RendererError> {
+    pub fn build(self) -> Result<Renderer<C>, RendererError> {
         //- Surface, Device, Queue -----------------------------------------------------------------
 
         let window_size = self.window.inner_size();
@@ -232,20 +243,27 @@ where
 
         //- Camera ---------------------------------------------------------------------------------
 
-        let camera = PerspectiveCamera::new(window_size.width as f32, window_size.height as f32);
-        let camera_metadatas = camera.create_metadatas(&device);
+        let camera = if self.camera.is_some() {
+            C::new(window_size.width as f32, window_size.height as f32)
+        } else {
+            self.camera.unwrap()
+        };
+
+        let camera_metadatas = CameraBindGroup::new(&camera, &device);
         let camera_controller = CameraController::new(0.2);
 
         //- Texture Metadatas ----------------------------------------------------------------------
 
         let texture_image_metadatas = if self.texture_path.is_some() {
-            self.create_texture_image_metadatas(&device, surface.format())
+            RendererBuilder::<'a, W, C, PS, PT, V, I, S, T>
+                ::create_texture_image_metadatas(&device, surface.format())
         } else {
             vec![]
         };
 
         let texture_bind_group_metadatas = if self.texture_path.is_some() {
-            self.create_texture_bind_group_metadatas(&device, &texture_image_metadatas)
+            RendererBuilder::<'a, W, C, PS, PT, V, I, S, T>
+                ::create_texture_bind_group_metadatas(&device, &texture_image_metadatas)
         } else {
             vec![]
         };
@@ -358,9 +376,9 @@ where
         //- Instances ------------------------------------------------------------------------------
 
         let (instances, instances_buffer) = if self.vertices.is_some() {
-            let instances = RendererBuilder::<'a, W, PS, PT, V, I, S, T>::create_instances();
+            let instances = RendererBuilder::<'a, W, C, PS, PT, V, I, S, T>::create_instances();
             let instances_buffer =
-                RendererBuilder::<'a, W, PS, PT, V, I, S, T>::create_instances_buffer(
+                RendererBuilder::<'a, W, C, PS, PT, V, I, S, T>::create_instances_buffer(
                     &device, &instances,
                 );
             (Some(instances), Some(instances_buffer))
@@ -399,7 +417,6 @@ where
     ///
     /// It can't cache zero sized textures.
     pub fn create_texture_image_metadatas(
-        &self,
         device: &Device,
         preferred_format: wgpu::TextureFormat,
     ) -> Vec<Vec<TextureImageMetadatas>> {
@@ -424,7 +441,6 @@ where
 
     ///
     pub fn create_texture_bind_group_metadatas(
-        &self,
         device: &Device,
         texture_image_metadatas: &[Vec<TextureImageMetadatas>],
     ) -> Vec<Vec<TextureBindGroupMetadatas>> {
@@ -492,7 +508,7 @@ where
 
 ///
 #[derive(Debug)]
-pub struct Renderer {
+pub struct Renderer<C: Camera> {
     window_size: winit::dpi::PhysicalSize<u32>,
     clear_color: wgpu::Color,
     surface: Surface,
@@ -500,8 +516,8 @@ pub struct Renderer {
     device: Device,
     queue: Queue,
 
-    camera: PerspectiveCamera,
-    camera_metadatas: CameraMetadatas,
+    camera: C,
+    camera_metadatas: CameraBindGroup,
     camera_controller: CameraController,
 
     #[allow(dead_code)]
@@ -518,7 +534,7 @@ pub struct Renderer {
     instances_buffer: Option<wgpu::Buffer>,
 }
 
-impl Renderer {
+impl<C: Camera> Renderer<C> {
     //- Surface (Re)size ---------------------------------------------------------------------------
 
     /// Getter for the windows's physical size attribute.

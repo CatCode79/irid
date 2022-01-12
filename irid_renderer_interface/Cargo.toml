@@ -10,4 +10,5 @@ license = "MIT OR Apache-2.0"
 publish = false
 
 [dependencies]
+cgmath = "0.18"
 wgpu = "0.12"

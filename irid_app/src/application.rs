@@ -11,7 +11,7 @@ use thiserror::Error;
 use irid_app_interface::{Window, WindowBuilder};
 use irid_assets::{DiffuseImageSize, DiffuseTexture};
 use irid_assets_interface::{Index, Vertex};
-use irid_renderer::{Renderer, RendererBuilder, RendererError};
+use irid_renderer::{PerspectiveCamera, Renderer, RendererBuilder, RendererError};
 
 use crate::Listener;
 
@@ -216,6 +216,7 @@ where
 
         let mut renderer_builder = RendererBuilder::<
             <B as WindowBuilder>::BuildOutput,
+            PerspectiveCamera,
             PS,
             PT,
             V,
@@ -456,7 +457,7 @@ where
     #[inline(always)]
     fn on_redraw(
         &self,
-        renderer: &mut Renderer,
+        renderer: &mut Renderer<PerspectiveCamera>,
         control_flow: &mut winit::event_loop::ControlFlow,
     ) {
         let use_default_behaviour = self.listener.on_redraw();
@@ -498,7 +499,7 @@ where
 
     fn on_window_resize(
         &self,
-        renderer: &mut Renderer,
+        renderer: &mut Renderer<PerspectiveCamera>,
         physical_size: winit::dpi::PhysicalSize<u32>,
     ) {
         let use_default_behaviour = self.listener.on_window_resize(physical_size);
@@ -552,7 +553,7 @@ where
         &self,
         control_flow: &mut winit::event_loop::ControlFlow,
         device_id: winit::event::DeviceId,
-        renderer: &mut Renderer,
+        renderer: &mut Renderer<PerspectiveCamera>,
         input: &winit::event::KeyboardInput,
     ) {
         // First call a generic method to manage the key events
@@ -639,7 +640,7 @@ where
 
     fn on_window_scale_change(
         &self,
-        renderer: &mut Renderer,
+        renderer: &mut Renderer<PerspectiveCamera>,
         scale_factor: f64,
         new_inner_size: &mut winit::dpi::PhysicalSize<u32>,
     ) {
