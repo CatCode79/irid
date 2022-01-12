@@ -9,16 +9,16 @@ use irid_app_interface::Window;
 use irid_assets_interface::{ImageSize, Index, Texture, Vertex};
 use irid_renderer_interface::Camera;
 
+use crate::camera_bind::CameraBindGroup;
 use crate::texture_metadatas::{
     TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas,
 };
 use crate::utils::log2;
 use crate::{
-    Adapter, CameraController, Device, Instance,
-    PipelineLayoutBuilder, Queue, RenderPipeline, RenderPipelineBuilder, ShaderModuleBuilder,
-    Surface, DEFAULT_FRAGMENT_ENTRY_POINT, DEFAULT_VERTEX_ENTRY_POINT,
+    Adapter, CameraController, Device, Instance, PipelineLayoutBuilder, Queue, RenderPipeline,
+    RenderPipelineBuilder, ShaderModuleBuilder, Surface, DEFAULT_FRAGMENT_ENTRY_POINT,
+    DEFAULT_VERTEX_ENTRY_POINT,
 };
-use crate::camera_bind::CameraBindGroup;
 
 //= ERRORS =========================================================================================
 
@@ -255,15 +255,19 @@ where
         //- Texture Metadatas ----------------------------------------------------------------------
 
         let texture_image_metadatas = if self.texture_path.is_some() {
-            RendererBuilder::<'a, W, C, PS, PT, V, I, S, T>
-                ::create_texture_image_metadatas(&device, surface.format())
+            RendererBuilder::<'a, W, C, PS, PT, V, I, S, T>::create_texture_image_metadatas(
+                &device,
+                surface.format(),
+            )
         } else {
             vec![]
         };
 
         let texture_bind_group_metadatas = if self.texture_path.is_some() {
-            RendererBuilder::<'a, W, C, PS, PT, V, I, S, T>
-                ::create_texture_bind_group_metadatas(&device, &texture_image_metadatas)
+            RendererBuilder::<'a, W, C, PS, PT, V, I, S, T>::create_texture_bind_group_metadatas(
+                &device,
+                &texture_image_metadatas,
+            )
         } else {
             vec![]
         };

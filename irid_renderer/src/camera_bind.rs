@@ -16,7 +16,6 @@ pub(crate) struct CameraBindGroup {
 }
 
 impl CameraBindGroup {
-
     //- Constructors -------------------------------------------------------------------------------
 
     /// Create a new CameraMetadatas from this camera.

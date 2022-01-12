@@ -5,11 +5,7 @@ use std::future::Future;
 use irid_assets_interface::{ImageSize, Texture};
 use irid_renderer_interface::Camera;
 
-use crate::{
-    camera_bind::CameraBindGroup,
-    texture_metadatas::TextureImageMetadatas,
-    utils::log2,
-};
+use crate::{camera_bind::CameraBindGroup, texture_metadatas::TextureImageMetadatas, utils::log2};
 
 //= QUEUE ==========================================================================================
 

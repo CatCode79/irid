@@ -1,6 +1,7 @@
 //= USES ===========================================================================================
 
 use cgmath::Point3;
+
 use irid_renderer_interface::Camera;
 
 //= CONSTS =========================================================================================
@@ -198,10 +199,14 @@ impl CameraController {
         if self.is_right_pressed {
             // Rescale the distance between the target and eye so that it doesn't change.
             // The eye therefore still lies on the circle made by the target and eye.
-            camera.set_eye(camera.target() - (forward + right * self.speed).normalize() * forward_mag);
+            camera.set_eye(
+                camera.target() - (forward + right * self.speed).normalize() * forward_mag,
+            );
         }
         if self.is_left_pressed {
-            camera.set_eye(camera.target() - (forward - right * self.speed).normalize() * forward_mag);
+            camera.set_eye(
+                camera.target() - (forward - right * self.speed).normalize() * forward_mag,
+            );
         }
     }
 }
