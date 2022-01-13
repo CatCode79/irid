@@ -244,9 +244,9 @@ where
         //- Camera ---------------------------------------------------------------------------------
 
         let camera = if self.camera.is_some() {
-            C::new(window_size.width as f32, window_size.height as f32)
-        } else {
             self.camera.unwrap()
+        } else {
+            C::new(window_size.width as f32, window_size.height as f32)
         };
 
         let camera_metadatas = CameraBindGroup::new(&camera, &device);
@@ -426,19 +426,19 @@ where
     ) -> Vec<Vec<TextureImageMetadatas>> {
         // Better to check not the current limits but the default ones
         // so as to obtain consistent behavior on all devices.
-        let qty = log2(wgpu::Limits::default().max_texture_dimension_2d as i32) as usize;
+        let qty = log2(wgpu::Limits::downlevel_defaults().max_texture_dimension_2d as i32) as usize;
         let mut vec_w = Vec::<Vec<TextureImageMetadatas>>::with_capacity(qty);
-        for (width, w_element) in vec_w.iter_mut().enumerate() {
+        for width in 0..qty {
             let mut vec_h = Vec::<TextureImageMetadatas>::with_capacity(qty);
-            for (height, h_element) in vec_h.iter_mut().enumerate() {
-                *h_element = TextureImageMetadatas::new(
+            for height in 0..qty {
+                vec_h.push(TextureImageMetadatas::new(
                     device,
                     preferred_format,
                     2_u32.pow(width as u32),
                     2_u32.pow(height as u32),
-                );
+                ));
             }
-            *w_element = vec_h;
+            vec_w.push(vec_h);
         }
         vec_w
     }
@@ -450,15 +450,15 @@ where
     ) -> Vec<Vec<TextureBindGroupMetadatas>> {
         let qty = texture_image_metadatas.len();
         let mut vec_w = Vec::<Vec<TextureBindGroupMetadatas>>::with_capacity(qty);
-        for (width, w_element) in vec_w.iter_mut().enumerate() {
+        for width in 0..qty {
             let mut vec_h = Vec::<TextureBindGroupMetadatas>::with_capacity(qty);
-            for (height, h_element) in vec_h.iter_mut().enumerate() {
-                *h_element = TextureBindGroupMetadatas::new(
+            for height in 0..qty {
+                vec_h.push(TextureBindGroupMetadatas::new(
                     device,
                     texture_image_metadatas[width][height].texture(),
-                );
+                ));
             }
-            *w_element = vec_h;
+            vec_w.push(vec_h);
         }
         vec_w
     }
