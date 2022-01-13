@@ -448,12 +448,12 @@ where
     ) -> Vec<Vec<TextureBindGroupMetadatas>> {
         let qty = texture_image_metadatas.len();
         let mut vec_w = Vec::<Vec<TextureBindGroupMetadatas>>::with_capacity(qty);
-        for width in 0..qty {
+        for vec_width_metadatas in texture_image_metadatas.iter() {
             let mut vec_h = Vec::<TextureBindGroupMetadatas>::with_capacity(qty);
-            for height in 0..qty {
+            for metadata_element in vec_width_metadatas.iter() {
                 vec_h.push(TextureBindGroupMetadatas::new(
                     device,
-                    texture_image_metadatas[width][height].texture(),
+                    metadata_element.texture(),
                 ));
             }
             vec_w.push(vec_h);
