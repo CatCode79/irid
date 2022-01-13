@@ -70,10 +70,12 @@ impl Surface {
 
         let format = preferred_format.unwrap_or({
             wgpu::TextureFormat::Rgba8UnormSrgb
-            /*wgpu_surface
+            /*
+            wgpu_surface
                 .get_preferred_format(adapter.expose_wrapped_adapter())
                 // Most images are stored using sRGB so we need to reflect that here.
-                .unwrap_or(wgpu::TextureFormat::Rgba8UnormSrgb)*/ // TODO: or wgpu::TextureFormat::Rgba16Float?
+                .unwrap_or(wgpu::TextureFormat::Rgba8UnormSrgb)
+            */
         });
 
         let window_size = window.inner_size();
