@@ -178,8 +178,6 @@ pub struct Application<
     texture_path: Option<PT>,
     vertices: Option<&'a [V]>,
     indices: Option<&'a [I]>,
-
-    // Renderer specific options
     clear_color: Option<wgpu::Color>,
 }
 

@@ -424,8 +424,6 @@ where
         device: &Device,
         preferred_format: wgpu::TextureFormat,
     ) -> Vec<Vec<TextureImageMetadatas>> {
-        // Better to check not the current limits but the default ones
-        // so as to obtain consistent behavior on all devices.
         let qty = log2(wgpu::Limits::downlevel_defaults().max_texture_dimension_2d as i32) as usize;
         let mut vec_w = Vec::<Vec<TextureImageMetadatas>>::with_capacity(qty);
         for width in 0..qty {
