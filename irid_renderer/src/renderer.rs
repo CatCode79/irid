@@ -358,6 +358,7 @@ where
             queue.write_texture(
                 &texture_image_metadatas,
                 T::load(self.texture_path.unwrap()).unwrap(),
+                surface.format(),
             );
         }
 
@@ -528,7 +529,7 @@ pub struct Renderer<C: Camera> {
     texture_depth_metadatas: TextureDepthMetadatas,
 
     renderer_pipeline: Option<RenderPipeline>,
-    // TODO: maybe this is better to move inside the render_pass or pipeline object (also the fields below)
+    // TODO: maybe these fields below are better to move inside the render_pass or pipeline object
     vertex_buffer: Option<wgpu::Buffer>,
     index_buffer: Option<wgpu::Buffer>,
     num_indices: u32,

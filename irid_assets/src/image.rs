@@ -2,7 +2,9 @@
 
 use std::num::NonZeroU32;
 
-use irid_assets_interface::{Image, ImageSize};
+use image::RgbaImage;
+
+use irid_assets_interface::{BgraImage, Image, ImageSize};
 
 //= DIFFUSE IMAGE ==================================================================================
 
@@ -87,13 +89,12 @@ impl<S: ImageSize + Copy> Image<S> for DiffuseImage<S> {
 
     //- Color Data Conversions ---------------------------------------------------------------------
 
-    /// Get the bytes from the image as 8bit RGBA.
-    fn as_rgba8_bytes(&self) -> Option<&[u8]> {
-        use image::EncodableLayout;
-        match self.image.as_rgba8() {
-            None => None,
-            Some(rgba8) => Some(rgba8.as_bytes()),
-        }
+    fn as_rgba8(&self) -> Option<&RgbaImage> {
+        self.image.as_rgba8()
+    }
+
+    fn as_bgra8(&self) -> Option<&BgraImage> {
+        self.image.as_bgra8()
     }
 }
 

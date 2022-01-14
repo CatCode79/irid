@@ -2,6 +2,7 @@
 
 use std::convert::TryFrom;
 
+use image::{Bgra, ImageBuffer, RgbaImage};
 use thiserror::Error;
 
 //= ERRORS =========================================================================================
@@ -15,6 +16,10 @@ pub enum TextureError {
         source: image::error::ImageError,
     },
 }
+
+//= TYPES ==========================================================================================
+
+pub type BgraImage = ImageBuffer<Bgra<u8>, Vec<u8>>;
 
 //= IMAGE TRAIT ====================================================================================
 
@@ -38,8 +43,11 @@ pub trait Image<S: ImageSize> {
     /// Returns a value that implements the [ImageSize](ImageSize) trait.
     fn size(&self) -> S;
 
-    /// Get the bytes from the image as 8bit RGBA.
-    fn as_rgba8_bytes(&self) -> Option<&[u8]>;
+    /// Return a reference to an 8bit RGBA image.
+    fn as_rgba8(&self) -> Option<&RgbaImage>;
+
+    /// Return a reference to an 8bit BGRA image
+    fn as_bgra8(&self) -> Option<&BgraImage>;
 }
 
 //= IMAGE SIZE TRAIT ===============================================================================
@@ -80,7 +88,7 @@ pub trait Texture<S: ImageSize> {
     ) -> Result<Self::Output, TextureError>;
 
     ///
-    fn as_rgba8_bytes(&self) -> Option<&[u8]>;
+    fn image_bytes(&self, format: wgpu::TextureFormat) -> &[u8];
 
     ///
     fn size(&self) -> S;
