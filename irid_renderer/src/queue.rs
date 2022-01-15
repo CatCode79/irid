@@ -3,7 +3,7 @@
 use std::future::Future;
 use thiserror::Error;
 
-use irid_assets_interface::{ImageSize, Texture, TextureError};
+use irid_assets_interface::{Image, ImageSize, Texture, TextureError};
 use irid_renderer_interface::Camera;
 
 use crate::{camera_bind::CameraBindGroup, texture_metadatas::TextureImageMetadatas, utils::log2};
@@ -72,10 +72,9 @@ impl Queue {
         let metadatas = &texture_image_metadatas[log2(texture.size().width() as i32) as usize]
             [log2(texture.size().height() as i32) as usize];
 
-        let image = texture.image();
         Ok(self.wgpu_queue.write_texture(
             metadatas.create_image_copy(),
-            image.as_rgba8_bytes().unwrap(),
+            texture.image().as_rgba8_bytes().unwrap(),
             *metadatas.image_data_layout(),
             *metadatas.image_size(),
         ))

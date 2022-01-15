@@ -68,7 +68,7 @@ pub trait ImageSize: From<(u32, u32)> + From<[u32; 2]> {
 ///
 pub trait Texture<S: ImageSize> {
     type Output: Texture<S>;
-    type Img;
+    type Img: Image<S>;
 
     ///
     fn load<P: AsRef<std::path::Path>>(filepath: P) -> Result<Self::Output, TextureError>;
@@ -110,8 +110,8 @@ pub trait Vertex {
 
 //= INDEX TRAIT ====================================================================================
 
-/// Opinable Super Trait to identify u16 and u32
-// TODO: probably i can do better and simpler than that!
+/// Super Trait to identify u16 and u32
+// TODO: possibly we can do and/or simpler than that
 pub trait Index: Default + PartialEq + From<u8> + TryFrom<u64> {}
 
 // Nothing to implement, since u16 and u32 already supports the other traits.
