@@ -6,7 +6,7 @@ use bytemuck::Pod;
 use thiserror::Error;
 
 use irid_app_interface::Window;
-use irid_assets_interface::{ImageSize, Index, Texture, Vertex};
+use irid_assets_interface::{Index, Texture, Vertex};
 use irid_renderer_interface::Camera;
 
 use crate::camera_bind::CameraBindGroup;
@@ -66,8 +66,7 @@ pub struct RendererBuilder<
     PT: AsRef<Path>,
     V: Vertex,
     I: Index,
-    S: ImageSize,
-    T: Texture<S>,
+    T: Texture,
 > {
     window: &'a W,
 
@@ -97,12 +96,10 @@ pub struct RendererBuilder<
     indices: Option<&'a [I]>,
     clear_color: Option<wgpu::Color>,
 
-    // These phantoms serve as hand-it-over for the Renderer struct
-    generic_size: PhantomData<S>,
     generic_texture: PhantomData<T>,
 }
 
-impl<'a, W, C, PS, PT, V, I, S, T> RendererBuilder<'a, W, C, PS, PT, V, I, S, T>
+impl<'a, W, C, PS, PT, V, I, T> RendererBuilder<'a, W, C, PS, PT, V, I, T>
 where
     W: Window,
     C: Camera,
@@ -110,8 +107,7 @@ where
     PT: AsRef<Path> + Debug,
     V: Vertex + Pod,
     I: Index + Pod,
-    S: ImageSize,
-    T: Texture<S>,
+    T: Texture,
 {
     //- Constructors -------------------------------------------------------------------------------
 
@@ -132,7 +128,6 @@ where
             vertices: None,
             indices: None,
             clear_color: None,
-            generic_size: Default::default(),
             generic_texture: Default::default(),
         }
     }
@@ -170,7 +165,9 @@ where
         /*mut*/ self,
         _preferred_format: F,
     ) -> Self {
-        unimplemented!("Search for wgpu::TextureFormat::Rgba8UnormSrgb on surface.rs file for more info");
+        unimplemented!(
+            "Search for wgpu::TextureFormat::Rgba8UnormSrgb on surface.rs file for more info"
+        );
         //self.preferred_format = preferred_format.into();
         //self
     }
@@ -268,7 +265,7 @@ where
         //- Texture Metadatas ----------------------------------------------------------------------
 
         let texture_image_metadatas = if self.texture_path.is_some() {
-            RendererBuilder::<'a, W, C, PS, PT, V, I, S, T>::create_texture_image_metadatas(
+            RendererBuilder::<'a, W, C, PS, PT, V, I, T>::create_texture_image_metadatas(
                 &device,
                 surface.format(),
             )
@@ -277,7 +274,7 @@ where
         };
 
         let texture_bind_group_metadatas = if self.texture_path.is_some() {
-            RendererBuilder::<'a, W, C, PS, PT, V, I, S, T>::create_texture_bind_group_metadatas(
+            RendererBuilder::<'a, W, C, PS, PT, V, I, T>::create_texture_bind_group_metadatas(
                 &device,
                 &texture_image_metadatas,
             )
@@ -393,9 +390,9 @@ where
         //- Instances ------------------------------------------------------------------------------
 
         let (instances, instances_buffer) = if self.vertices.is_some() {
-            let instances = RendererBuilder::<'a, W, C, PS, PT, V, I, S, T>::create_instances();
+            let instances = RendererBuilder::<'a, W, C, PS, PT, V, I, T>::create_instances();
             let instances_buffer =
-                RendererBuilder::<'a, W, C, PS, PT, V, I, S, T>::create_instances_buffer(
+                RendererBuilder::<'a, W, C, PS, PT, V, I, T>::create_instances_buffer(
                     &device, &instances,
                 );
             (Some(instances), Some(instances_buffer))

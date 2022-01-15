@@ -4,18 +4,6 @@ use std::convert::TryFrom;
 
 use thiserror::Error;
 
-//= ERRORS =========================================================================================
-
-#[non_exhaustive]
-#[derive(Debug, Error)] // TODO: impossible to add Clone because of image::error::ImageError
-pub enum TextureError {
-    #[error("Cannot load the image")]
-    CannotLoad {
-        #[from]
-        source: image::error::ImageError,
-    },
-}
-
 //= IMAGE TRAIT ====================================================================================
 
 /// Trait that describes the generic behavior of an image object.
@@ -23,9 +11,11 @@ pub enum TextureError {
 /// # Known Implementations:
 ///
 /// - [irid_assets::DiffuseImage](irid_assets::DiffuseImage)
-pub trait Image<S: ImageSize> {
-    /// **Associated type** regarding the implementation of this trait.
-    type Output;
+pub trait Image {
+    /// **Associated type** regarding the construction.
+    type Output: Image;
+    /// **Associated type** regarding the image size.
+    type Size: ImageSize;
 
     /// Open and decode a file to read, format will be guessed from path.
     fn load<P: AsRef<std::path::Path>>(filepath: P) -> image::ImageResult<Self::Output>;
@@ -36,9 +26,9 @@ pub trait Image<S: ImageSize> {
     ) -> image::ImageResult<Self::Output>;
 
     /// Returns a value that implements the [ImageSize](ImageSize) trait.
-    fn size(&self) -> S;
+    fn size(&self) -> Self::Size;
 
-    /// Return the bytes from the image as a 8bit RGBA format.
+    /// Return bytes from the image as 8bit-Rgba format.
     fn as_rgba8_bytes(&self) -> Option<&[u8]>;
 }
 
@@ -63,12 +53,28 @@ pub trait ImageSize: From<(u32, u32)> + From<[u32; 2]> {
     fn as_tuple(&self) -> (u32, u32);
 }
 
+//= TEXTURE ERRORS =================================================================================
+
+#[non_exhaustive]
+#[derive(Debug, Error)] // TODO: impossible to add Clone because of image::error::ImageError
+pub enum TextureError {
+    #[error("Cannot load the image")]
+    CannotLoad {
+        #[from]
+        source: image::error::ImageError,
+    },
+}
+
 //= TEXTURE TRAIT ==================================================================================
 
 ///
-pub trait Texture<S: ImageSize> {
-    type Output: Texture<S>;
-    type Img: Image<S>;
+pub trait Texture {
+    ///
+    type Output: Texture;
+    ///
+    type Img: Image;
+    ///
+    type Size: ImageSize;
 
     ///
     fn load<P: AsRef<std::path::Path>>(filepath: P) -> Result<Self::Output, TextureError>;
@@ -85,7 +91,7 @@ pub trait Texture<S: ImageSize> {
     fn image(&self) -> &Self::Img;
 
     ///
-    fn size(&self) -> S;
+    fn size(&self) -> Self::Size;
 }
 
 //= VERTEX TRAIT ===================================================================================

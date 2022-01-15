@@ -60,7 +60,7 @@ impl Queue {
     /// This method is intended to have low performance costs.
     /// As such, the write is not immediately submitted, and instead enqueued
     /// internally to happen at the start of the next `submit()` call.
-    pub fn write_texture<T: Texture<S>, S: ImageSize>(
+    pub fn write_texture<T: Texture>(
         &self,
         texture_image_metadatas: &[Vec<TextureImageMetadatas>],
         texture: T,

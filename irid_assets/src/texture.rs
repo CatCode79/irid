@@ -1,26 +1,24 @@
 //= USES ===========================================================================================
 
-use irid_assets_interface::{Image, ImageSize, Texture, TextureError};
+use irid_assets_interface::{Image, Texture, TextureError};
 
-use crate::DiffuseImage;
+use crate::{DiffuseImage, DiffuseImageSize};
 
 //= DIFFUSE TEXTURE ================================================================================
 
 ///
 #[derive(Clone, Debug)]
-pub struct DiffuseTexture<S: ImageSize + Copy> {
+pub struct DiffuseTexture {
     path: std::path::PathBuf,
-    image: DiffuseImage<S>,
+    image: DiffuseImage,
 }
 
-impl<S> Texture<S> for DiffuseTexture<S>
-where
-    S: ImageSize + Copy,
-{
+impl Texture for DiffuseTexture {
     //- Associated Types ---------------------------------------------------------------------------
 
     type Output = Self;
-    type Img = DiffuseImage<S>;
+    type Img = DiffuseImage;
+    type Size = DiffuseImageSize;
 
     //- Constructors -------------------------------------------------------------------------------
 
@@ -51,7 +49,7 @@ where
         &self.image
     }
 
-    fn size(&self) -> S {
+    fn size(&self) -> Self::Size {
         self.image.size()
     }
 }

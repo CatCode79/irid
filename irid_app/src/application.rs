@@ -9,7 +9,7 @@ use bytemuck::Pod;
 use thiserror::Error;
 
 use irid_app_interface::{Window, WindowBuilder};
-use irid_assets::{DiffuseImageSize, DiffuseTexture};
+use irid_assets::DiffuseTexture;
 use irid_assets_interface::{Index, Vertex};
 use irid_renderer::{PerspectiveCamera, Renderer, RendererBuilder, RendererError};
 
@@ -219,8 +219,7 @@ where
             PT,
             V,
             I,
-            DiffuseImageSize,
-            DiffuseTexture<DiffuseImageSize>,
+            DiffuseTexture,
         >::new(&window);
         if self.clear_color.is_some() {
             // TODO: we have to have with_clear_color method only on RenderBuilder

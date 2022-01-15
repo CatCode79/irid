@@ -8,15 +8,12 @@ use irid_assets_interface::{Image, ImageSize};
 
 /// A Diffuse Image
 #[derive(Clone, Debug)]
-pub struct DiffuseImage<S: ImageSize> {
+pub struct DiffuseImage {
     image: image::DynamicImage,
-    size: S,
+    size: DiffuseImageSize,
 }
 
-impl<S> DiffuseImage<S>
-where
-    S: ImageSize + Copy,
-{
+impl DiffuseImage {
     //- Constructor Handler ------------------------------------------------------------------------
 
     fn handle_new<P: AsRef<std::path::Path>>(
@@ -40,10 +37,11 @@ where
     }
 }
 
-impl<S: ImageSize + Copy> Image<S> for DiffuseImage<S> {
+impl Image for DiffuseImage {
     //- Associated Types ---------------------------------------------------------------------------
 
     type Output = Self;
+    type Size = DiffuseImageSize;
 
     //- Constructors -------------------------------------------------------------------------------
 
@@ -81,7 +79,7 @@ impl<S: ImageSize + Copy> Image<S> for DiffuseImage<S> {
     //- Getters ------------------------------------------------------------------------------------
 
     /// The width and height of this image.
-    fn size(&self) -> S {
+    fn size(&self) -> Self::Size {
         self.size
     }
 
@@ -108,7 +106,6 @@ impl ImageSize for DiffuseImageSize {
     //- Constructors -------------------------------------------------------------------------------
 
     fn new(width: u32, height: u32) -> Self {
-        // TODO: create try_new constructor here, to check the non-zero-ity
         Self {
             width: NonZeroU32::new(width).unwrap(),
             height: NonZeroU32::new(height).unwrap(),
