@@ -11,7 +11,7 @@ use crate::{camera_bind::CameraBindGroup, texture_metadatas::TextureImageMetadat
 //= ERRORS =========================================================================================
 
 #[non_exhaustive]
-#[derive(Debug, Error)] // TODO: impossible to Clone because of TextureError
+#[derive(Clone, Debug, Error)]
 pub enum QueueError {
     #[error("Impossible to enqueue None bytes, as rgba, from texture {{0}}")]
     RgbaTextureNoneBytes { path: std::path::PathBuf },
