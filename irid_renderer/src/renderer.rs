@@ -42,7 +42,7 @@ pub enum RendererError {
     WriteTexture {
         #[from]
         source: crate::QueueError,
-    }
+    },
 }
 
 //= CONSTS =========================================================================================

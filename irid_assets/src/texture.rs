@@ -9,6 +9,7 @@ use crate::DiffuseImage;
 ///
 #[derive(Clone, Debug)]
 pub struct DiffuseTexture<S: ImageSize + Copy> {
+    path: std::path::PathBuf,
     image: DiffuseImage<S>,
 }
 
@@ -26,6 +27,7 @@ where
     ///
     fn load<P: AsRef<std::path::Path>>(filepath: P) -> Result<Self, TextureError> {
         Ok(Self {
+            path: filepath.as_ref().to_path_buf(),
             image: Self::Img::load(filepath)?,
         })
     }
@@ -34,11 +36,16 @@ where
         filepath: P,
     ) -> Result<Self, TextureError> {
         Ok(Self {
+            path: filepath.as_ref().to_path_buf(),
             image: Self::Img::load_with_guessed_format(filepath)?,
         })
     }
 
     //- Getters ------------------------------------------------------------------------------------
+
+    fn path(&self) -> &std::path::PathBuf {
+        &self.path
+    }
 
     fn image(&self) -> &Self::Img {
         &self.image

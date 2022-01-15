@@ -7,7 +7,7 @@ use thiserror::Error;
 //= ERRORS =========================================================================================
 
 #[non_exhaustive]
-#[derive(Debug, Error)]  // TODO: impossible to add Clone because of image::error::ImageError
+#[derive(Debug, Error)] // TODO: impossible to add Clone because of image::error::ImageError
 pub enum TextureError {
     #[error("Cannot load the image")]
     CannotLoad {
@@ -77,6 +77,9 @@ pub trait Texture<S: ImageSize> {
     fn load_with_guessed_format<P: AsRef<std::path::Path>>(
         filepath: P,
     ) -> Result<Self::Output, TextureError>;
+
+    ///
+    fn path(&self) -> &std::path::PathBuf;
 
     ///
     fn image(&self) -> &Self::Img;
