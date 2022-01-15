@@ -1,8 +1,5 @@
 //= USES ===========================================================================================
 
-use image::EncodableLayout;
-use wgpu::TextureFormat;
-
 use irid_assets_interface::{Image, ImageSize, Texture, TextureError};
 
 use crate::DiffuseImage;
@@ -41,18 +38,10 @@ where
         })
     }
 
-    // Rgba8UnormSrgb is the format most supported by the gpus.
-    // TODO: need to return Result and remove unwrap()
-    fn image_bytes(&self, format: wgpu::TextureFormat) -> &[u8] {
-        match format {
-            TextureFormat::Rgba8Unorm => self.image.as_rgba8().unwrap().as_bytes(),
-            TextureFormat::Rgba8UnormSrgb => self.image.as_rgba8().unwrap().as_bytes(),
-            TextureFormat::Bgra8Unorm => self.image.as_bgra8().unwrap().as_bytes(),
-            TextureFormat::Bgra8UnormSrgb => self.image.as_bgra8().unwrap().as_bytes(),
-            _ => {
-                panic!("TextureFormat {:?} not yet supported", format)
-            }
-        }
+    //- Getters ------------------------------------------------------------------------------------
+
+    fn image(&self) -> &Self::Img {
+        &self.image
     }
 
     fn size(&self) -> S {

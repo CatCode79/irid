@@ -247,7 +247,13 @@ where
         if self.indices.is_some() {
             renderer_builder = renderer_builder.with_indices(self.indices.unwrap());
         }
-        let mut renderer = renderer_builder.build()?;
+        let mut renderer = match renderer_builder.build() {
+            Ok(renderer) => Ok(renderer),
+            Err(err) => {
+                log::error!("{:?}", err);
+                Err(err)
+            }
+        }?;
 
         // Now is a good time to make the window visible: after the renderer has been initialized,
         // in this way we avoid a slight visible/invisible toggling effect of the window

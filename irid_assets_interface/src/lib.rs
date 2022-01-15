@@ -2,24 +2,19 @@
 
 use std::convert::TryFrom;
 
-use image::{Bgra, ImageBuffer, RgbaImage};
 use thiserror::Error;
 
 //= ERRORS =========================================================================================
 
 #[non_exhaustive]
-#[derive(Debug, Error)]
+#[derive(Debug, Error)]  // TODO: impossible to add Clone because of image::error::ImageError
 pub enum TextureError {
-    #[error("can’t identify any monitor as a primary one")]
-    ImageError {
+    #[error("Cannot load the image")]
+    CannotLoad {
         #[from]
         source: image::error::ImageError,
     },
 }
-
-//= TYPES ==========================================================================================
-
-pub type BgraImage = ImageBuffer<Bgra<u8>, Vec<u8>>;
 
 //= IMAGE TRAIT ====================================================================================
 
@@ -43,11 +38,8 @@ pub trait Image<S: ImageSize> {
     /// Returns a value that implements the [ImageSize](ImageSize) trait.
     fn size(&self) -> S;
 
-    /// Return a reference to an 8bit RGBA image.
-    fn as_rgba8(&self) -> Option<&RgbaImage>;
-
-    /// Return a reference to an 8bit BGRA image
-    fn as_bgra8(&self) -> Option<&BgraImage>;
+    /// Return the bytes from the image as a 8bit RGBA format.
+    fn as_rgba8_bytes(&self) -> Option<&[u8]>;
 }
 
 //= IMAGE SIZE TRAIT ===============================================================================
@@ -74,7 +66,6 @@ pub trait ImageSize: From<(u32, u32)> + From<[u32; 2]> {
 //= TEXTURE TRAIT ==================================================================================
 
 ///
-// TODO: create (maybe) a super trait with GenericImage
 pub trait Texture<S: ImageSize> {
     type Output: Texture<S>;
     type Img;
@@ -88,7 +79,7 @@ pub trait Texture<S: ImageSize> {
     ) -> Result<Self::Output, TextureError>;
 
     ///
-    fn image_bytes(&self, format: wgpu::TextureFormat) -> &[u8];
+    fn image(&self) -> &Self::Img;
 
     ///
     fn size(&self) -> S;

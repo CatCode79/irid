@@ -1,12 +1,24 @@
 //= USES ===========================================================================================
 
 use std::future::Future;
-use wgpu::TextureFormat;
+use thiserror::Error;
 
-use irid_assets_interface::{ImageSize, Texture};
+use irid_assets_interface::{ImageSize, Texture, TextureError};
 use irid_renderer_interface::Camera;
 
 use crate::{camera_bind::CameraBindGroup, texture_metadatas::TextureImageMetadatas, utils::log2};
+
+//= ERRORS =========================================================================================
+
+#[non_exhaustive]
+#[derive(Debug, Error)]  // TODO: impossible to Clone because of TextureError
+pub enum QueueError {
+    #[error("Impossible to enqueue the texture")]
+    WriteTexture {
+        #[from]
+        source: TextureError,
+    },
+}
 
 //= QUEUE ==========================================================================================
 
@@ -55,18 +67,18 @@ impl Queue {
         &self,
         texture_image_metadatas: &[Vec<TextureImageMetadatas>],
         texture: T,
-        format: TextureFormat,
-    ) {
+    ) -> Result<(), QueueError> {
         // TODO: better add a ref to metas inside irid Texture structs
         let metadatas = &texture_image_metadatas[log2(texture.size().width() as i32) as usize]
             [log2(texture.size().height() as i32) as usize];
 
-        self.wgpu_queue.write_texture(
+        let image = texture.image();
+        Ok(self.wgpu_queue.write_texture(
             metadatas.create_image_copy(),
-            texture.image_bytes(format),
+            image.as_rgba8_bytes().unwrap(),
             *metadatas.image_data_layout(),
             *metadatas.image_size(),
-        );
+        ))
     }
 
     /// Submits a series of finished command buffers for execution.

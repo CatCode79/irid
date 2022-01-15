@@ -33,6 +33,16 @@ pub enum RendererError {
         #[from]
         source: wgpu::RequestDeviceError,
     },
+    #[error("unable to load the texture")]
+    LoadTexture {
+        #[from]
+        source: irid_assets_interface::TextureError,
+    },
+    #[error("unable to enqueue the texture")]
+    WriteTexture {
+        #[from]
+        source: crate::QueueError,
+    }
 }
 
 //= CONSTS =========================================================================================
@@ -357,9 +367,8 @@ where
             //  and therefore it is useless to add a new type of error
             queue.write_texture(
                 &texture_image_metadatas,
-                T::load(self.texture_path.unwrap()).unwrap(),
-                surface.format(),
-            );
+                T::load(self.texture_path.unwrap())?,
+            )?
         }
 
         //- Vertex and Index Buffers ---------------------------------------------------------------
