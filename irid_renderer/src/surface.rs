@@ -70,13 +70,11 @@ impl Surface {
 
         let format = preferred_format.unwrap_or({
             wgpu::TextureFormat::Rgba8UnormSrgb
+            /*
             // This part is commented out because if by chance the format is returned as
             // Bgra8UnormSrgb then we need to convert all textures to that format, which is
             // currently performance-heavy, if I'm not wrong, in the current crate image API.
-            // Ideally, it would be an on-the-fly conversion while loading the image.
-            // This eventual improvement is to be considered a very low priority thing to-do
-            // and for this reason it is not even labeled as such.
-            /*
+            // TODO: Ideally, it would be an on-the-fly conversion while loading the image.
             wgpu_surface
                 .get_preferred_format(adapter.expose_wrapped_adapter())
                 // Most images are stored using sRGB so we need to reflect that here.

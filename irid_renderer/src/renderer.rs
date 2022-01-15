@@ -164,12 +164,15 @@ where
     }
 
     ///
+    // TODO: Will be implemented, it was paused because we have doubts about how to convert images
+    //  from Rgb to Bgr format without affecting the performance and ergonomics of the code
     pub fn with_preferred_format<F: Into<Option<wgpu::TextureFormat>>>(
-        mut self,
-        preferred_format: F,
+        /*mut*/ self,
+        _preferred_format: F,
     ) -> Self {
-        self.preferred_format = preferred_format.into();
-        self
+        unimplemented!("Search for wgpu::TextureFormat::Rgba8UnormSrgb on surface.rs file for more info");
+        //self.preferred_format = preferred_format.into();
+        //self
     }
 
     ///
