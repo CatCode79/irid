@@ -170,7 +170,7 @@ pub(crate) struct ImageSizeArray([u32; 2]);
 
 impl From<ImageSizeTuple> for Option<DiffuseImageSize> {
     fn from(tuple: ImageSizeTuple) -> Self {
-        DiffuseImageSize::new(tuple.0.0, tuple.0.1)
+        DiffuseImageSize::new(tuple.0 .0, tuple.0 .1)
     }
 }
 

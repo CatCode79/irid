@@ -15,6 +15,7 @@ pub const DEFAULT_FRAGMENT_ENTRY_POINT: &str = "fs_main";
 //= SHADER MODULE BUILDER ==========================================================================
 
 /// [ShaderModule](wgpu::ShaderModule)'s Builder.
+//#[derive(Debug)] TODO: cannot derive it because of wgpu::ShaderSource
 pub struct ShaderModuleBuilder<'a> {
     label: Option<&'a str>,
     source: wgpu::ShaderSource<'a>,

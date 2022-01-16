@@ -577,7 +577,7 @@ impl<C: Camera> Renderer<C> {
     //- Camera -------------------------------------------------------------------------------------
 
     ///
-    pub fn process_camera_events(&mut self, input: &winit::event::KeyboardInput) -> bool {
+    pub fn process_camera_events(&mut self, input: winit::event::KeyboardInput) -> bool {
         self.camera_controller.process_events(input)
     }
 

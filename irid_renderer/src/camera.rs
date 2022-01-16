@@ -1,7 +1,5 @@
 //= USES ===========================================================================================
 
-use cgmath::Point3;
-
 use irid_renderer_interface::Camera;
 
 //= CONSTS =========================================================================================
@@ -88,7 +86,7 @@ impl Camera for PerspectiveCamera {
     //- Setters ------------------------------------------------------------------------------------
 
     #[inline]
-    fn set_eye(&mut self, value: Point3<f32>) {
+    fn set_eye(&mut self, value: cgmath::Point3<f32>) {
         self.eye = value;
     }
 
@@ -121,7 +119,7 @@ impl CameraController {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
-    pub fn new(speed: f32) -> Self {
+    pub(crate) fn new(speed: f32) -> Self {
         Self {
             speed,
             is_up_pressed: false,
@@ -134,8 +132,8 @@ impl CameraController {
     }
 
     ///
-    pub fn process_events(&mut self, input: &winit::event::KeyboardInput) -> bool {
-        match *input {
+    pub(crate) fn process_events(&mut self, input: winit::event::KeyboardInput) -> bool {
+        match input {
             winit::event::KeyboardInput {
                 state,
                 virtual_keycode: Some(keycode),
@@ -175,7 +173,7 @@ impl CameraController {
     }
 
     ///
-    pub fn update_camera<C: Camera>(&self, camera: &mut C) {
+    pub(crate) fn update_camera<C: Camera>(&self, camera: &mut C) {
         use cgmath::InnerSpace;
 
         let forward = camera.target() - camera.eye();

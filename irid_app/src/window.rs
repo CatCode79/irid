@@ -1,9 +1,9 @@
 //= USES ===========================================================================================
 
-use winit::dpi::{PhysicalPosition, PhysicalSize, Position, Size};
+use winit::dpi::{PhysicalPosition, PhysicalSize};
 use winit::error::{ExternalError, NotSupportedError, OsError};
 use winit::monitor::MonitorHandle;
-use winit::window::{CursorIcon, Fullscreen, Icon, UserAttentionType, WindowId};
+use winit::window::{CursorIcon, UserAttentionType, WindowId};
 
 use irid_app_interface::{Window, WindowBuilder};
 
@@ -184,7 +184,7 @@ impl Window for IridWindow {
     }
 
     #[inline]
-    fn set_outer_position<P: Into<Position>>(&self, position: P) {
+    fn set_outer_position<P: Into<winit::dpi::Position>>(&self, position: P) {
         self.winit_window.set_outer_position(position)
     }
 
@@ -194,7 +194,7 @@ impl Window for IridWindow {
     }
 
     #[inline]
-    fn set_inner_size<S: Into<Size>>(&self, size: S) {
+    fn set_inner_size<S: Into<winit::dpi::Size>>(&self, size: S) {
         self.winit_window.set_inner_size(size)
     }
 
@@ -204,12 +204,12 @@ impl Window for IridWindow {
     }
 
     #[inline]
-    fn set_min_inner_size<S: Into<Size>>(&self, min_size: Option<S>) {
+    fn set_min_inner_size<S: Into<winit::dpi::Size>>(&self, min_size: Option<S>) {
         self.winit_window.set_min_inner_size(min_size)
     }
 
     #[inline]
-    fn set_max_inner_size<S: Into<Size>>(&self, max_size: Option<S>) {
+    fn set_max_inner_size<S: Into<winit::dpi::Size>>(&self, max_size: Option<S>) {
         self.winit_window.set_max_inner_size(max_size)
     }
 
@@ -246,12 +246,12 @@ impl Window for IridWindow {
     }
 
     #[inline]
-    fn set_fullscreen(&self, fullscreen: Option<Fullscreen>) {
+    fn set_fullscreen(&self, fullscreen: Option<winit::window::Fullscreen>) {
         self.winit_window.set_fullscreen(fullscreen)
     }
 
     #[inline]
-    fn fullscreen(&self) -> Option<Fullscreen> {
+    fn fullscreen(&self) -> Option<winit::window::Fullscreen> {
         self.winit_window.fullscreen()
     }
 
@@ -266,12 +266,12 @@ impl Window for IridWindow {
     }
 
     #[inline]
-    fn set_window_icon(&self, window_icon: Option<Icon>) {
+    fn set_window_icon(&self, window_icon: Option<winit::window::Icon>) {
         self.winit_window.set_window_icon(window_icon)
     }
 
     #[inline]
-    fn set_ime_position<P: Into<Position>>(&self, position: P) {
+    fn set_ime_position<P: Into<winit::dpi::Position>>(&self, position: P) {
         self.winit_window.set_ime_position(position)
     }
 
@@ -293,7 +293,7 @@ impl Window for IridWindow {
     }
 
     #[inline]
-    fn set_cursor_position<P: Into<Position>>(&self, position: P) -> Result<(), ExternalError> {
+    fn set_cursor_position<P: Into<winit::dpi::Position>>(&self, position: P) -> Result<(), ExternalError> {
         self.winit_window.set_cursor_position(position)
     }
 

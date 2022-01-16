@@ -6,6 +6,7 @@ use crate::Device;
 //= RENDERER PIPELINE BUILDER ======================================================================
 
 ///
+#[derive(Debug)]
 pub struct RenderPipelineBuilder<'a> {
     // Descriptor fields
     label: wgpu::Label<'a>,

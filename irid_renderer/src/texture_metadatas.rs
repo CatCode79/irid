@@ -52,7 +52,7 @@ impl TextureImageMetadatas {
     //- ImageCopyTexture ---------------------------------------------------------------------------
 
     ///
-    pub fn create_image_copy(&self) -> wgpu::ImageCopyTexture {
+    pub fn create_image_copy(&self) -> wgpu::ImageCopyTexture<'_> {
         wgpu::ImageCopyTexture {
             texture: &self.texture,
             mip_level: 0,
@@ -181,7 +181,7 @@ impl TextureBindGroupMetadatas {
 
 ///
 #[derive(Debug)]
-pub struct TextureDepthMetadatas {
+pub(crate) struct TextureDepthMetadatas {
     _texture: wgpu::Texture,
     view: wgpu::TextureView,
     _sampler: wgpu::Sampler,
@@ -191,13 +191,13 @@ impl TextureDepthMetadatas {
     //- Constants ----------------------------------------------------------------------------------
 
     ///
-    pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
+    pub(crate) const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
 
     //- Constructors -------------------------------------------------------------------------------
 
     /// Our depth texture needs to be the same size as our screen if we want things
     /// to render correctly so we give to constructor windows_size value.
-    pub fn new(device: &Device, window_size: winit::dpi::PhysicalSize<u32>) -> Self {
+    pub(crate) fn new(device: &Device, window_size: winit::dpi::PhysicalSize<u32>) -> Self {
         let size = wgpu::Extent3d {
             width: window_size.width,
             height: window_size.height,
@@ -249,7 +249,7 @@ impl TextureDepthMetadatas {
     //- Getters ------------------------------------------------------------------------------------
 
     ///
-    pub fn view(&self) -> &wgpu::TextureView {
+    pub(crate) fn view(&self) -> &wgpu::TextureView {
         &self.view
     }
 }

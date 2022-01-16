@@ -12,12 +12,9 @@ publish = false
 [dependencies]
 bytemuck = { version = "1.7", features = ["derive"] }
 cgmath = "0.18"
-image = "0.23"
 irid_app_interface = { path = "../irid_app_interface" }
-irid_assets = { path = "../irid_assets" }
 irid_assets_interface = { path = "../irid_assets_interface" }
 irid_renderer_interface = { path = "../irid_renderer_interface" }
-log = "0.4"
 pollster = "0.2"
 thiserror = "1.0"
 wgpu = "0.12"

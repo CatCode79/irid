@@ -62,8 +62,8 @@ impl<'a, L, B, PS, PT, V, I> ApplicationBuilder<'a, L, B, PS, PT, V, I>
 where
     L: Listener,
     B: WindowBuilder,
-    PS: AsRef<std::path::Path>,
-    PT: AsRef<std::path::Path>,
+    PS: AsRef<Path>,
+    PT: AsRef<Path>,
     V: Vertex,
     I: Index,
 {
@@ -206,7 +206,7 @@ where
     /// To remember that the resize is not managed perfectly with run_return.
     pub fn start(self) -> Result<(), ApplicationError>
     where
-        <B as irid_app_interface::WindowBuilder>::BuildOutput: irid_app_interface::Window,
+        <B as WindowBuilder>::BuildOutput: Window,
     {
         let mut event_loop = winit::event_loop::EventLoop::new();
         // TODO: remove the clone
@@ -317,7 +317,7 @@ where
                                     control_flow,
                                     device_id,
                                     &mut renderer,
-                                    &input,
+                                    input,
                                 );
                             }
                         }
@@ -557,7 +557,7 @@ where
         control_flow: &mut winit::event_loop::ControlFlow,
         device_id: winit::event::DeviceId,
         renderer: &mut Renderer<PerspectiveCamera>,
-        input: &winit::event::KeyboardInput,
+        input: winit::event::KeyboardInput,
     ) {
         // First call a generic method to manage the key events
         let use_default_behaviour = self.listener.on_window_keyboard_input(
@@ -569,7 +569,7 @@ where
         // Then check the input's type for default behaviours
         if use_default_behaviour {
             // Check the camera controller
-            renderer.process_camera_events(input);
+            let _ = renderer.process_camera_events(input);
 
             if let winit::event::KeyboardInput {
                 state: winit::event::ElementState::Pressed,

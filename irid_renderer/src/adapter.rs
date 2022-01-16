@@ -6,7 +6,7 @@ use thiserror::Error;
 //= ERRORS =========================================================================================
 
 #[non_exhaustive]
-#[derive(Debug, Error)]
+#[derive(Copy, Clone, Debug, Error)]
 pub enum AdapterError {
     #[error("An adapter compatible with the given surface could not be obtained")]
     NotObtained,
@@ -31,7 +31,7 @@ impl Adapter {
     /// If no adapters are found that suffice all the "hard" options, Err is returned.
     pub(crate) fn new(
         wgpu_instance: &wgpu::Instance,
-        adapter_options: wgpu::RequestAdapterOptions,
+        adapter_options: wgpu::RequestAdapterOptions<'_>,
     ) -> Result<Self, AdapterError> {
         let wgpu_adapter =
             async { wgpu_instance.request_adapter(&adapter_options).await }.block_on();
@@ -63,7 +63,7 @@ impl Adapter {
     /// - Adapter does not support all features wgpu requires to safely operate.
     pub fn request_device(
         &self,
-        desc: &wgpu::DeviceDescriptor,
+        desc: &wgpu::DeviceDescriptor<'_>,
         trace_path: Option<&std::path::Path>,
     ) -> impl std::future::Future<
         Output = Result<(wgpu::Device, wgpu::Queue), wgpu::RequestDeviceError>,

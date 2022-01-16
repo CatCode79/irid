@@ -2,7 +2,7 @@
 
 /// Instances allows us to draw the same object multiple times with different properties
 /// (position, orientation, size, color, etcetera).
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Instance {
     pub position: cgmath::Vector3<f32>,
     pub rotation: cgmath::Quaternion<f32>,

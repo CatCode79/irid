@@ -22,7 +22,7 @@ pub struct Device {
     wgpu_device: wgpu::Device,
 }
 
-impl<'a> Device {
+impl Device {
     //- Constructors -------------------------------------------------------------------------------
 
     /// Create a new Device and Queue given ad adapter.
@@ -65,7 +65,7 @@ impl<'a> Device {
     /// Creates a [Buffer](wgpu::Buffer) with data to initialize it.
     pub fn create_buffer_init(
         &self,
-        buffer_init_desc: &wgpu::util::BufferInitDescriptor,
+        buffer_init_desc: &wgpu::util::BufferInitDescriptor<'_>,
     ) -> wgpu::Buffer {
         use wgpu::util::DeviceExt;
         self.wgpu_device.create_buffer_init(buffer_init_desc)
@@ -104,7 +104,7 @@ impl<'a> Device {
     /// Creates a [BindGroupLayout](wgpu::BindGroupLayout).
     pub fn create_bind_group_layout(
         &self,
-        bind_group_layout_desc: &wgpu::BindGroupLayoutDescriptor,
+        bind_group_layout_desc: &wgpu::BindGroupLayoutDescriptor<'_>,
     ) -> wgpu::BindGroupLayout {
         self.wgpu_device
             .create_bind_group_layout(bind_group_layout_desc)
@@ -113,7 +113,7 @@ impl<'a> Device {
     /// Creates a new [BindGroup](wgpu::BindGroup).
     pub fn create_bind_group(
         &self,
-        bind_group_desc: &wgpu::BindGroupDescriptor,
+        bind_group_desc: &wgpu::BindGroupDescriptor<'_>,
     ) -> wgpu::BindGroup {
         self.wgpu_device.create_bind_group(bind_group_desc)
     }
@@ -121,7 +121,7 @@ impl<'a> Device {
     /// Creates a [ShaderModule](wgpu::ShaderModule) from either SPIR-V or WGSL source code.
     pub fn create_shader_module(
         &self,
-        shader_module_desc: &wgpu::ShaderModuleDescriptor,
+        shader_module_desc: &wgpu::ShaderModuleDescriptor<'_>,
     ) -> wgpu::ShaderModule {
         self.wgpu_device.create_shader_module(shader_module_desc)
     }
@@ -129,7 +129,7 @@ impl<'a> Device {
     /// Creates a [PipelineLayout](wgpu::PipelineLayout).
     pub fn create_pipeline_layout(
         &self,
-        pipeline_layout_desc: &wgpu::PipelineLayoutDescriptor,
+        pipeline_layout_desc: &wgpu::PipelineLayoutDescriptor<'_>,
     ) -> wgpu::PipelineLayout {
         self.wgpu_device
             .create_pipeline_layout(pipeline_layout_desc)
@@ -138,7 +138,7 @@ impl<'a> Device {
     /// Creates a [RenderPipeline](wgpu::RenderPipeline).
     pub fn create_render_pipeline(
         &self,
-        render_pipeline_desc: &wgpu::RenderPipelineDescriptor,
+        render_pipeline_desc: &wgpu::RenderPipelineDescriptor<'_>,
     ) -> wgpu::RenderPipeline {
         self.wgpu_device
             .create_render_pipeline(render_pipeline_desc)
@@ -147,7 +147,7 @@ impl<'a> Device {
     /// Creates a [CommandEncoder](wgpu::CommandEncoder).
     pub fn create_command_encoder(
         &self,
-        command_encoder_desc: &wgpu::CommandEncoderDescriptor,
+        command_encoder_desc: &wgpu::CommandEncoderDescriptor<'_>,
     ) -> wgpu::CommandEncoder {
         self.wgpu_device
             .create_command_encoder(command_encoder_desc)
@@ -157,7 +157,7 @@ impl<'a> Device {
     ///
     /// # Param
     /// - texture_desc specifies the general format of the texture.
-    pub fn create_texture(&self, texture_desc: &wgpu::TextureDescriptor) -> wgpu::Texture {
+    pub fn create_texture(&self, texture_desc: &wgpu::TextureDescriptor<'_>) -> wgpu::Texture {
         self.wgpu_device.create_texture(texture_desc)
     }
 
@@ -165,7 +165,7 @@ impl<'a> Device {
     ///
     /// # Param
     /// - desc specifies the behavior of the sampler.
-    pub fn create_sampler(&self, sampler_desc: &wgpu::SamplerDescriptor) -> wgpu::Sampler {
+    pub fn create_sampler(&self, sampler_desc: &wgpu::SamplerDescriptor<'_>) -> wgpu::Sampler {
         self.wgpu_device.create_sampler(sampler_desc)
     }
 

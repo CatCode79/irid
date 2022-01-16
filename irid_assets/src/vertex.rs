@@ -15,7 +15,7 @@ pub struct ModelVertex {
     normal: [f32; 3],
 }
 
-impl<'a> Vertex for ModelVertex {
+impl Vertex for ModelVertex {
     fn new() -> Self {
         Self::default()
     }
@@ -72,7 +72,7 @@ pub struct ColorVertex {
     pub colors: [f32; 3],
 }
 
-impl<'a> Vertex for ColorVertex {
+impl Vertex for ColorVertex {
     fn new() -> Self {
         Self::default()
     }
@@ -121,7 +121,7 @@ pub struct TextCoordsVertex {
     pub tex_coords: [f32; 2],
 }
 
-impl<'a> Vertex for TextCoordsVertex {
+impl Vertex for TextCoordsVertex {
     fn new() -> Self {
         Self::default()
     }

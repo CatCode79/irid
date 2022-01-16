@@ -14,6 +14,5 @@ bytemuck = { version = "1.7", features = ["derive"] }
 image = "0.23"
 irid_assets_interface = { path = "../irid_assets_interface" }
 #log = "0.4"
-thiserror = "1.0"
-tobj = "3.2"
+#tobj = "3.2"
 wgpu = "0.12"
