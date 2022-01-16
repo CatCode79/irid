@@ -1,6 +1,7 @@
 //= USES ===========================================================================================
 
-use std::num::NonZeroU32;
+use std::convert::TryFrom;
+use std::num::{NonZeroU32, TryFromIntError};
 
 use irid_assets_interface::{Image, ImageSize};
 
@@ -105,11 +106,31 @@ pub struct DiffuseImageSize {
 impl ImageSize for DiffuseImageSize {
     //- Constructors -------------------------------------------------------------------------------
 
-    fn new(width: u32, height: u32) -> Self {
+    fn new(width: u32, height: u32) -> Option<Self> {
+        if width == 0 {
+            return None;
+        }
+        if height == 0 {
+            return None;
+        }
+        Some(Self {
+            width: NonZeroU32::new(width).unwrap(),
+            height: NonZeroU32::new(height).unwrap(),
+        })
+    }
+
+    fn new_unchecked(width: u32, height: u32) -> Self {
         Self {
             width: NonZeroU32::new(width).unwrap(),
             height: NonZeroU32::new(height).unwrap(),
         }
+    }
+
+    fn try_new(width: u32, height: u32) -> Result<Self, TryFromIntError> {
+        Ok(Self {
+            width: NonZeroU32::try_from(width)?,
+            height: NonZeroU32::try_from(height)?,
+        })
     }
 
     //- Getters ------------------------------------------------------------------------------------
@@ -132,12 +153,29 @@ impl ImageSize for DiffuseImageSize {
 
 impl From<(u32, u32)> for DiffuseImageSize {
     fn from(tuple: (u32, u32)) -> Self {
-        Self::new(tuple.0, tuple.1)
+        Self::new_unchecked(tuple.0, tuple.1)
     }
 }
 
 impl From<[u32; 2]> for DiffuseImageSize {
     fn from(array: [u32; 2]) -> Self {
-        Self::new(array[0], array[1])
+        Self::new_unchecked(array[0], array[1])
+    }
+}
+
+// These newtypes must exist due to this compiler error:
+// "[E0117] Only traits defined in the current crate can be implemented for arbitrary types"
+pub(crate) struct ImageSizeTuple((u32, u32));
+pub(crate) struct ImageSizeArray([u32; 2]);
+
+impl From<ImageSizeTuple> for Option<DiffuseImageSize> {
+    fn from(tuple: ImageSizeTuple) -> Self {
+        DiffuseImageSize::new(tuple.0.0, tuple.0.1)
+    }
+}
+
+impl From<ImageSizeArray> for Option<DiffuseImageSize> {
+    fn from(array: ImageSizeArray) -> Self {
+        DiffuseImageSize::new(array.0[0], array.0[1])
     }
 }

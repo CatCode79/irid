@@ -1,6 +1,7 @@
 //= USES ===========================================================================================
 
 use std::convert::TryFrom;
+use std::num::TryFromIntError;
 
 use thiserror::Error;
 
@@ -41,7 +42,13 @@ pub trait Image {
 /// - [irid_assets::DiffuseImageSize](irid_assets::DiffuseImageSize)
 pub trait ImageSize: From<(u32, u32)> + From<[u32; 2]> {
     ///
-    fn new(width: u32, height: u32) -> Self;
+    fn new(width: u32, height: u32) -> Option<Self>;
+
+    ///
+    fn new_unchecked(width: u32, height: u32) -> Self;
+
+    ///
+    fn try_new(width: u32, height: u32) -> Result<Self, TryFromIntError>;
 
     /// Returns the [Image] width.
     fn width(&self) -> u32;
@@ -120,7 +127,7 @@ pub trait Vertex {
 //= INDEX TRAIT ====================================================================================
 
 /// Super Trait to identify u16 and u32
-// TODO: possibly we can do and/or simpler than that
+// TODO: possibly we can do it simpler than that
 pub trait Index: Default + PartialEq + From<u8> + TryFrom<u64> {}
 
 // Nothing to implement, since u16 and u32 already supports the other traits.
