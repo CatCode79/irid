@@ -134,7 +134,32 @@ where
         self
     }
 
-    /// Color used by a [render pass color attachment](wgpu::RenderPassColorAttachment)
+    /// Set a clear color with rgb channels as arguments.
+    /// The alpha channel is set to 1.0 by default.
+    /// See also the method [with_clear_color_rgba].
+    pub fn with_clear_color_rgb(mut self, r: f32, g: f32, b: f32) -> Self {
+        self.clear_color = Some(wgpu::Color {
+            r: r as f64,
+            g: g as f64,
+            b: b as f64,
+            a: 1.0_f64,
+        });
+        self
+    }
+
+    /// Set a clear color with rgba channels as arguments.
+    /// See also the method [with_clear_color].
+    pub fn with_clear_color_rgba(mut self, r: f32, g: f32, b: f32, a: f32) -> Self {
+        self.clear_color = Some(wgpu::Color {
+            r: r as f64,
+            g: g as f64,
+            b: b as f64,
+            a: a as f64,
+        });
+        self
+    }
+
+    /// Color is used by a [render pass color attachment](wgpu::RenderPassColorAttachment)
     /// to perform a [clear operation](wgpu::LoadOp).
     pub fn with_clear_color(mut self, clear_color: wgpu::Color) -> Self {
         self.clear_color = Some(clear_color);
