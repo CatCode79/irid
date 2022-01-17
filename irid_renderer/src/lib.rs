@@ -40,8 +40,6 @@ clippy::pattern_type_mismatch,
 pub use self::camera::*;
 pub use self::pipeline::*;
 pub use self::renderer::*;
-pub use self::shader::*;
-pub use self::utils::*;
 
 //= MODS ===========================================================================================
 
@@ -49,7 +47,6 @@ pub use self::utils::*;
 pub(crate) mod camera;
 pub(crate) mod pipeline;
 pub(crate) mod renderer;
-pub(crate) mod shader;
 
 // Used only internally
 mod adapter;
@@ -57,6 +54,7 @@ mod camera_bind;
 mod device;
 mod instance;
 mod queue;
+mod shader;
 mod surface;
 mod texture_metadatas;
 mod utils;

@@ -15,11 +15,11 @@ use crate::{
     device::Device,
     instance::Instance,
     queue::{Queue, QueueError},
+    shader::{DEFAULT_FRAGMENT_ENTRY_POINT, DEFAULT_VERTEX_ENTRY_POINT},
     surface::Surface,
     texture_metadatas::{TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas},
     utils::log2,
     CameraController, PipelineLayoutBuilder, RenderPipeline, RenderPipelineBuilder,
-    ShaderModuleBuilder, DEFAULT_FRAGMENT_ENTRY_POINT, DEFAULT_VERTEX_ENTRY_POINT,
 };
 
 //= ERRORS =========================================================================================
@@ -302,7 +302,10 @@ where
             //#[cfg(feature = "glsl")]
             //wgpu::ShaderSource::Glsl(std::borrow::Cow::Owned(shader_key))
 
-            let shader_module = ShaderModuleBuilder::new(source).build(&device);
+            let shader_module = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
+                label: None,
+                source,
+            });
 
             // TODO: no good...
             let vertex_buffers = [V::desc()];
