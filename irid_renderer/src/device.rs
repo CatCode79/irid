@@ -5,7 +5,7 @@ use pollster::FutureExt;
 
 use irid_assets_interface::{Index, Vertex};
 
-use crate::{adapter::Adapter, Queue};
+use crate::{adapter::Adapter, queue::Queue};
 
 //= DEVICE =========================================================================================
 

@@ -14,10 +14,11 @@ use crate::{
     camera_bind::CameraBindGroup,
     device::Device,
     instance::Instance,
+    queue::{Queue, QueueError},
     surface::Surface,
     texture_metadatas::{TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas},
     utils::log2,
-    CameraController, PipelineLayoutBuilder, Queue, RenderPipeline, RenderPipelineBuilder,
+    CameraController, PipelineLayoutBuilder, RenderPipeline, RenderPipelineBuilder,
     ShaderModuleBuilder, DEFAULT_FRAGMENT_ENTRY_POINT, DEFAULT_VERTEX_ENTRY_POINT,
 };
 
@@ -42,7 +43,7 @@ pub enum RendererError {
     #[error("unable to enqueue the texture")]
     WriteTexture {
         #[from]
-        source: crate::QueueError,
+        source: QueueError,
     },
 }
 
