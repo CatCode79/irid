@@ -40,7 +40,7 @@ impl Queue {
     /// This method is intended to have low performance costs.
     /// As such, the write is not immediately submitted, and instead enqueued
     /// internally to happen at the start of the next `submit()` call.
-    // TODO: to refact after the camera refact, need to pass only one arg
+    // TODO: to refact after the camera, need to pass only one arg
     pub(crate) fn write_camera_buffer<C: Camera>(
         &self,
         camera: &C,

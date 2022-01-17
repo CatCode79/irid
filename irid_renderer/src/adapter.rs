@@ -7,7 +7,7 @@ use thiserror::Error;
 
 #[non_exhaustive]
 #[derive(Copy, Clone, Debug, Error)]
-pub enum AdapterError {
+pub(crate) enum AdapterError {
     #[error("An adapter compatible with the given surface could not be obtained")]
     NotObtained,
 }

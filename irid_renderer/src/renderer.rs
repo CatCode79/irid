@@ -9,14 +9,15 @@ use irid_app_interface::Window;
 use irid_assets_interface::{Index, Texture, Vertex};
 use irid_renderer_interface::Camera;
 
-use crate::camera_bind::CameraBindGroup;
-use crate::texture_metadatas::{
-    TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas,
-};
-use crate::utils::log2;
 use crate::{
-    Adapter, CameraController, Device, Instance, PipelineLayoutBuilder, Queue, RenderPipeline,
-    RenderPipelineBuilder, ShaderModuleBuilder, Surface, DEFAULT_FRAGMENT_ENTRY_POINT,
+    adapter::Adapter,
+    camera_bind::CameraBindGroup,
+    device::Device,
+    surface::Surface,
+    texture_metadatas::{TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas},
+    utils::log2,
+    CameraController, Instance, PipelineLayoutBuilder, Queue, RenderPipeline,
+    RenderPipelineBuilder, ShaderModuleBuilder, DEFAULT_FRAGMENT_ENTRY_POINT,
     DEFAULT_VERTEX_ENTRY_POINT,
 };
 

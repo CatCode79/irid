@@ -56,7 +56,7 @@ impl<'a> ShaderModuleBuilder<'a> {
     /// Build the shader module.
     pub fn build(self, device: &Device) -> wgpu::ShaderModule {
         device.create_shader_module(&wgpu::ShaderModuleDescriptor {
-            label: Some(self.label.unwrap()), // TODO: remove unwrap
+            label: self.label,
             source: self.source,
         })
     }

@@ -293,7 +293,10 @@ impl Window for IridWindow {
     }
 
     #[inline]
-    fn set_cursor_position<P: Into<winit::dpi::Position>>(&self, position: P) -> Result<(), ExternalError> {
+    fn set_cursor_position<P: Into<winit::dpi::Position>>(
+        &self,
+        position: P,
+    ) -> Result<(), ExternalError> {
         self.winit_window.set_cursor_position(position)
     }
 

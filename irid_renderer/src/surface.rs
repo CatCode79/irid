@@ -4,15 +4,16 @@ use thiserror::Error;
 
 use irid_app_interface::Window;
 
-use crate::{adapter::Adapter, device::Device, AdapterError};
+use crate::{
+    adapter::{Adapter, AdapterError},
+    device::Device,
+};
 
 //= ERRORS =========================================================================================
 
 #[non_exhaustive]
 #[derive(Debug, Error)]
-pub enum SurfaceError {
-    #[error("no preferred format was found: Surface incompatible with adapter {:?}", .0)]
-    NoPreferredFormat(wgpu::AdapterInfo),
+pub(crate) enum SurfaceError {
     #[error("An adapter compatible with the given surface could not be obtained")]
     AdapterNotObtained {
         #[from]
@@ -25,7 +26,7 @@ pub enum SurfaceError {
 /// A Surface represents a platform-specific surface (e.g. a window) onto which rendered images
 /// may be presented.
 #[derive(Debug)]
-pub struct Surface {
+pub(crate) struct Surface {
     wgpu_surface: wgpu::Surface,
     format: wgpu::TextureFormat,
     configuration: wgpu::SurfaceConfiguration,
@@ -36,7 +37,7 @@ impl Surface {
 
     /// Create a new Surface using the window handle and retrieves an Adapter which matches
     /// the created surface.
-    pub fn new<W: Window>(
+    pub(crate) fn new<W: Window>(
         backends: wgpu::Backends,
         window: &W,
         power_preference: wgpu::PowerPreference,
@@ -104,20 +105,20 @@ impl Surface {
     //- Getters ------------------------------------------------------------------------------------
 
     /// Returns the optimal texture format to use with this Surface.
-    pub fn format(&self) -> wgpu::TextureFormat {
+    pub(crate) fn format(&self) -> wgpu::TextureFormat {
         self.format
     }
 
     // Swapchain -----------------------------------------------------------------------------------
 
     /// Initializes Surface for presentation.
-    pub fn configure(&self, device: &Device) {
+    pub(crate) fn configure(&self, device: &Device) {
         self.wgpu_surface
             .configure(device.expose_wrapped_device(), &self.configuration);
     }
 
     /// Updates the Surface for presentation.
-    pub fn update(&mut self, device: &Device, size: winit::dpi::PhysicalSize<u32>) {
+    pub(crate) fn update(&mut self, device: &Device, size: winit::dpi::PhysicalSize<u32>) {
         self.configuration.width = size.width;
         self.configuration.height = size.height;
         self.wgpu_surface
@@ -126,7 +127,7 @@ impl Surface {
 
     /// Returns the next texture to be presented by the Surface for drawing.
     #[inline(always)]
-    pub fn get_current_texture(&self) -> Result<wgpu::SurfaceTexture, wgpu::SurfaceError> {
+    pub(crate) fn get_current_texture(&self) -> Result<wgpu::SurfaceTexture, wgpu::SurfaceError> {
         self.wgpu_surface.get_current_texture()
     }
 }

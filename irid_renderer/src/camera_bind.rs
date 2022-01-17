@@ -2,7 +2,7 @@
 
 use irid_renderer_interface::Camera;
 
-use crate::Device;
+use crate::device::Device;
 
 //= CAMERA BIND GROUP ==============================================================================
 

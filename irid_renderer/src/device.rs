@@ -1,10 +1,11 @@
 //= USES ===========================================================================================
 
 use bytemuck::Pod;
-use irid_assets_interface::{Index, Vertex};
 use pollster::FutureExt;
 
-use crate::{Adapter, Queue};
+use irid_assets_interface::{Index, Vertex};
+
+use crate::{adapter::Adapter, Queue};
 
 //= DEVICE =========================================================================================
 
