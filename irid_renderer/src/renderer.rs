@@ -13,12 +13,12 @@ use crate::{
     adapter::Adapter,
     camera_bind::CameraBindGroup,
     device::Device,
+    instance::Instance,
     surface::Surface,
     texture_metadatas::{TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas},
     utils::log2,
-    CameraController, Instance, PipelineLayoutBuilder, Queue, RenderPipeline,
-    RenderPipelineBuilder, ShaderModuleBuilder, DEFAULT_FRAGMENT_ENTRY_POINT,
-    DEFAULT_VERTEX_ENTRY_POINT,
+    CameraController, PipelineLayoutBuilder, Queue, RenderPipeline, RenderPipelineBuilder,
+    ShaderModuleBuilder, DEFAULT_FRAGMENT_ENTRY_POINT, DEFAULT_VERTEX_ENTRY_POINT,
 };
 
 //= ERRORS =========================================================================================
@@ -498,7 +498,7 @@ where
                         )
                     };
 
-                    Instance { position, rotation }
+                    Instance::new(position, rotation)
                 })
             })
             .collect::<Vec<_>>()

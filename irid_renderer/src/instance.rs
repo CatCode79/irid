@@ -3,14 +3,21 @@
 /// Instances allows us to draw the same object multiple times with different properties
 /// (position, orientation, size, color, etcetera).
 #[derive(Clone, Debug)]
-pub struct Instance {
-    pub position: cgmath::Vector3<f32>,
-    pub rotation: cgmath::Quaternion<f32>,
+pub(crate) struct Instance {
+    position: cgmath::Vector3<f32>,
+    rotation: cgmath::Quaternion<f32>,
 }
 
 impl Instance {
+    pub(crate) fn new(
+        position: cgmath::Vector3<f32>,
+        rotation: cgmath::Quaternion<f32>,
+    ) -> Instance {
+        Instance { position, rotation }
+    }
+
     /// Convert an Instance to a structure GPU readable.
-    pub fn to_raw(&self) -> InstanceRaw {
+    pub(crate) fn to_raw(&self) -> InstanceRaw {
         InstanceRaw {
             model: (cgmath::Matrix4::from_translation(self.position)
                 * cgmath::Matrix4::from(self.rotation))
@@ -26,13 +33,14 @@ impl Instance {
 /// to mess with quaternions. We only need to update the raw data before we draw.
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct InstanceRaw {
+pub(crate) struct InstanceRaw {
     model: [[f32; 4]; 4],
 }
 
 impl InstanceRaw {
     ///
-    pub fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
+    #[allow(dead_code)]
+    pub(crate) fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
         use std::mem;
         wgpu::VertexBufferLayout {
             array_stride: mem::size_of::<InstanceRaw>() as wgpu::BufferAddress,
