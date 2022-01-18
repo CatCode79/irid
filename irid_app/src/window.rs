@@ -5,19 +5,19 @@ use winit::error::{ExternalError, NotSupportedError, OsError};
 use winit::monitor::MonitorHandle;
 use winit::window::{CursorIcon, UserAttentionType, WindowId};
 
-use irid_app_interface::{Window, WindowBuilder};
+use irid_app_interface::{Window, WindowConfig};
 
 //= IRID WINDOW BUILDER ============================================================================
 
 ///
 #[derive(Clone, Debug)]
-pub struct IridWindowBuilder {
+pub struct IridWindowConfig {
     winit_builder: winit::window::WindowBuilder,
 }
 
-impl Default for IridWindowBuilder {
+impl Default for IridWindowConfig {
     fn default() -> Self {
-        IridWindowBuilder {
+        IridWindowConfig {
             winit_builder: winit::window::WindowBuilder::default(),
         }
         /*.with_inner_size(winit::dpi::PhysicalSize {
@@ -33,7 +33,7 @@ impl Default for IridWindowBuilder {
     }
 }
 
-impl WindowBuilder for IridWindowBuilder {
+impl WindowConfig for IridWindowConfig {
     //- Associated Types ---------------------------------------------------------------------------
 
     type BuildOutput = IridWindow;
@@ -138,7 +138,7 @@ pub struct IridWindow {
 impl Default for IridWindow {
     /// It may panic because of [IridWindowBuilder::build] causes.
     fn default() -> Self {
-        IridWindowBuilder::default()
+        IridWindowConfig::default()
             .build(&winit::event_loop::EventLoop::new())
             .unwrap()
     }
@@ -153,7 +153,7 @@ impl Window for IridWindow {
 
     #[inline]
     fn new(event_loop: &winit::event_loop::EventLoop<()>) -> Result<Self::Output, OsError> {
-        IridWindowBuilder::default().build(event_loop)
+        IridWindowConfig::default().build(event_loop)
     }
 
     #[inline]

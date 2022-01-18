@@ -60,9 +60,8 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 
 ///
 #[derive(Clone, Debug)]
-pub struct RendererBuilder<
+pub struct RendererConfig<
     'a,
-    W: Window,
     C: Camera,
     PS: AsRef<Path>,
     PT: AsRef<Path>,
@@ -70,8 +69,6 @@ pub struct RendererBuilder<
     I: Index,
     T: Texture,
 > {
-    window: &'a W,
-
     // First tier support backends for the Instance request
     backends: wgpu::Backends,
 
@@ -101,22 +98,17 @@ pub struct RendererBuilder<
     generic_texture: PhantomData<T>,
 }
 
-impl<'a, W, C, PS, PT, V, I, T> RendererBuilder<'a, W, C, PS, PT, V, I, T>
+impl<'a, C, PS, PT, V, I, T> Default for RendererConfig<'a, C, PS, PT, V, I, T>
 where
-    W: Window,
-    C: Camera,
+    C: Camera + Clone,
     PS: AsRef<Path> + Debug,
     PT: AsRef<Path> + Debug,
     V: Vertex + Pod,
     I: Index + Pod,
     T: Texture,
 {
-    //- Constructors -------------------------------------------------------------------------------
-
-    ///
-    pub fn new(window: &'a W) -> Self {
+    fn default() -> Self {
         Self {
-            window,
             backends: wgpu::Backends::VULKAN | wgpu::Backends::DX12 | wgpu::Backends::METAL,
             power_preference: wgpu::PowerPreference::HighPerformance,
             force_fallback_adapter: false,
@@ -133,14 +125,25 @@ where
             generic_texture: Default::default(),
         }
     }
+}
 
-    //- Setters ------------------------------------------------------------------------------------
+impl<'a, C, PS, PT, V, I, T> RendererConfig<'a, C, PS, PT, V, I, T>
+where
+    C: Camera + Clone,
+    PS: AsRef<Path> + Debug,
+    PT: AsRef<Path> + Debug,
+    V: Vertex + Pod,
+    I: Index + Pod,
+    T: Texture,
+{
+    //- Constructors -------------------------------------------------------------------------------
 
     ///
-    pub fn with_window(mut self, window: &'a W) -> Self {
-        self.window = window;
-        self
+    pub fn new() -> Self {
+        Self::default()
     }
+
+    //- Setters ------------------------------------------------------------------------------------
 
     ///
     pub fn with_backends(mut self, backends: wgpu::Backends) -> Self {
@@ -232,14 +235,14 @@ where
     //- Build --------------------------------------------------------------------------------------
 
     ///
-    pub fn build(self) -> Result<Renderer<C>, RendererError> {
+    pub fn build<W: Window>(&self, window: &'a W) -> Result<Renderer<C>, RendererError> {
         //- Surface, Device, Queue -----------------------------------------------------------------
 
-        let window_size = self.window.inner_size();
+        let window_size = window.inner_size();
 
         let (surface, adapter) = Surface::new(
             self.backends,
-            self.window,
+            window,
             self.power_preference,
             self.force_fallback_adapter,
             self.preferred_format,
@@ -267,7 +270,7 @@ where
         //- Texture Metadatas ----------------------------------------------------------------------
 
         let texture_image_metadatas = if self.texture_path.is_some() {
-            RendererBuilder::<'a, W, C, PS, PT, V, I, T>::create_texture_image_metadatas(
+            RendererConfig::<'a, C, PS, PT, V, I, T>::create_texture_image_metadatas(
                 &device,
                 surface.format(),
             )
@@ -276,7 +279,7 @@ where
         };
 
         let texture_bind_group_metadatas = if self.texture_path.is_some() {
-            RendererBuilder::<'a, W, C, PS, PT, V, I, T>::create_texture_bind_group_metadatas(
+            RendererConfig::<'a, C, PS, PT, V, I, T>::create_texture_bind_group_metadatas(
                 &device,
                 &texture_image_metadatas,
             )
@@ -292,7 +295,7 @@ where
             let path = std::env::current_dir()
                 .unwrap()
                 .as_path()
-                .join(&self.shader_path.unwrap());
+                .join(&self.shader_path.as_ref().unwrap());
             let content = match read_to_string(&path) {
                 Ok(content) => content,
                 Err(err) => panic!("Couldn't open {:?} file: {}", path, err),
@@ -380,7 +383,7 @@ where
             //  and therefore it is useless to add a new type of error
             queue.write_texture(
                 &texture_image_metadatas,
-                T::load(self.texture_path.unwrap())?,
+                T::load(self.texture_path.as_ref().unwrap())?,
             )?
         }
 
@@ -403,9 +406,9 @@ where
         //- Instances ------------------------------------------------------------------------------
 
         let (instances, instances_buffer) = if self.vertices.is_some() {
-            let instances = RendererBuilder::<'a, W, C, PS, PT, V, I, T>::create_instances();
+            let instances = RendererConfig::<'a, C, PS, PT, V, I, T>::create_instances();
             let instances_buffer =
-                RendererBuilder::<'a, W, C, PS, PT, V, I, T>::create_instances_buffer(
+                RendererConfig::<'a, C, PS, PT, V, I, T>::create_instances_buffer(
                     &device, &instances,
                 );
             (Some(instances), Some(instances_buffer))
@@ -423,7 +426,7 @@ where
             device,
             queue,
 
-            camera: self.camera,
+            camera: self.camera.clone(),
             camera_metadatas,
             camera_controller,
 

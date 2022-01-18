@@ -38,7 +38,7 @@ clippy::pattern_type_mismatch,
 //= WINDOW BUILDER TRAIT ===========================================================================
 
 ///
-pub trait WindowBuilder {
+pub trait WindowConfig {
     //- Associated Types ---------------------------------------------------------------------------
 
     /// **Associated type** regarding the build result.

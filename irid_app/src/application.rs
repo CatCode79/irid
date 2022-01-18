@@ -1,18 +1,12 @@
 //= USES ===========================================================================================
 
-use std::marker::PhantomData;
-use std::{
-    fmt::Debug,
-    path::{Path, PathBuf},
-};
+use std::{fmt::Debug, path::PathBuf};
 
-use bytemuck::Pod;
 use thiserror::Error;
 
-use irid_app_interface::{Window, WindowBuilder};
-use irid_assets_interface::{Index, Texture, Vertex};
-use irid_renderer::{Renderer, RendererBuilder, RendererError};
-use irid_renderer_interface::Camera;
+use irid_app_interface::{Window, WindowConfig};
+use irid_assets::{ColorVertex, DiffuseTexture};
+use irid_renderer::{PerspectiveCamera, Renderer, RendererConfig, RendererError};
 
 use crate::Listener;
 
@@ -37,41 +31,18 @@ pub enum ApplicationError {
 
 /// Build a new [Application] with wanted values.
 #[derive(Clone, Debug, Default)]
-pub struct ApplicationBuilder<
-    'a,
-    L: Listener,
-    B: WindowBuilder,
-    PS: AsRef<Path>,
-    PT: AsRef<Path>,
-    V: Vertex,
-    I: Index,
-    C: Camera,
-    T: Texture,
-> {
+pub struct ApplicationBuilder<'a, L: Listener, W: WindowConfig> {
     listener: L,
-    window_builder: Option<B>,
-
-    // Renderer stuff
-    clear_color: Option<wgpu::Color>,
-    shader_paths: Option<Vec<PS>>,
-    texture_path: Option<PT>,
-    vertices: Option<&'a [V]>,
-    indices: Option<&'a [I]>,
-    camera: Option<C>,
-
-    phantom_texture: PhantomData<T>,
+    window_config: Option<W>,
+    renderer_config: Option<
+        RendererConfig<'a, PerspectiveCamera, String, String, ColorVertex, u16, DiffuseTexture>,
+    >, // TODO: to refact
 }
 
-impl<'a, L, B, PS, PT, V, I, C, T> ApplicationBuilder<'a, L, B, PS, PT, V, I, C, T>
+impl<'a, L, W> ApplicationBuilder<'a, L, W>
 where
     L: Listener,
-    B: WindowBuilder,
-    PS: AsRef<Path>,
-    PT: AsRef<Path>,
-    V: Vertex,
-    I: Index,
-    T: Texture,
-    C: Camera,
+    W: WindowConfig,
 {
     //- Constructors -------------------------------------------------------------------------------
 
@@ -79,14 +50,8 @@ where
     pub fn new(listener: L) -> Self {
         Self {
             listener,
-            window_builder: None,
-            clear_color: None,
-            shader_paths: None,
-            texture_path: None,
-            vertices: None,
-            indices: None,
-            camera: None,
-            phantom_texture: PhantomData,
+            window_config: None,
+            renderer_config: None,
         }
     }
 
@@ -101,8 +66,8 @@ where
 
     ///
     #[inline]
-    pub fn with_window_builder(mut self, window_builder: B) -> Self {
-        self.window_builder = Some(window_builder);
+    pub fn with_window_builder<IW: Into<Option<W>>>(mut self, window_config: IW) -> Self {
+        self.window_config = window_config.into();
         self
     }
 
@@ -122,89 +87,39 @@ where
     }
     */
 
-    /// Set a clear color with rgb channels as arguments.
-    /// The alpha channel is set to 1.0 by default.
-    /// See also the method [with_clear_color_rgba].
-    #[inline]
-    pub fn with_clear_color_rgb(mut self, r: f32, g: f32, b: f32) -> Self {
-        self.clear_color = Some(wgpu::Color {
-            r: r as f64,
-            g: g as f64,
-            b: b as f64,
-            a: 1.0_f64,
-        });
-        self
-    }
-
-    /// Set a clear color with rgba channels as arguments.
-    /// See also the method [with_clear_color].
-    #[inline]
-    pub fn with_clear_color_rgba(mut self, r: f32, g: f32, b: f32, a: f32) -> Self {
-        self.clear_color = Some(wgpu::Color {
-            r: r as f64,
-            g: g as f64,
-            b: b as f64,
-            a: a as f64,
-        });
-        self
-    }
-
-    /// Color is used by a [render pass color attachment](wgpu::RenderPassColorAttachment)
-    /// to perform a [clear operation](wgpu::LoadOp).
-    #[inline]
-    pub fn with_clear_color(mut self, clear_color: wgpu::Color) -> Self {
-        self.clear_color = Some(clear_color);
-        self
-    }
-
     ///
     #[inline]
-    pub fn with_shader_paths(mut self, shader_paths: Vec<PS>) -> Self {
-        self.shader_paths = Some(shader_paths);
-        self
-    }
-
-    ///
-    #[inline]
-    pub fn with_texture_path(mut self, texture_path: PT) -> Self {
-        self.texture_path = Some(texture_path);
-        self
-    }
-
-    ///
-    #[inline]
-    pub fn with_vertices(mut self, vertices: &'a [V]) -> Self {
-        self.vertices = Some(vertices);
-        self
-    }
-
-    ///
-    #[inline]
-    pub fn with_indices(mut self, indices: &'a [I]) -> Self {
-        self.indices = Some(indices);
-        self
-    }
-
-    ///
-    pub fn with_camera<IC: Into<Option<C>>>(mut self, camera: IC) -> Self {
-        self.camera = camera.into();
+    pub fn with_renderer_config<
+        IR: Into<
+            Option<
+                RendererConfig<
+                    'a,
+                    PerspectiveCamera,
+                    String,
+                    String,
+                    ColorVertex,
+                    u16,
+                    DiffuseTexture,
+                >,
+            >,
+        >,
+    >(
+        // TODO: to refact
+        mut self,
+        renderer_config: IR,
+    ) -> Self {
+        self.renderer_config = renderer_config.into();
         self
     }
 
     //- Build --------------------------------------------------------------------------------------
 
     /// Build a new [Application] with given values.
-    pub fn build(self) -> Application<'a, L, B, PS, PT, V, I, C, T> {
+    pub fn build(self) -> Application<'a, L, W> {
         Application {
             listener: self.listener,
-            window_builder: self.window_builder.unwrap_or_else(B::new),
-            clear_color: self.clear_color,
-            shader_paths: self.shader_paths,
-            texture_path: self.texture_path,
-            vertices: self.vertices,
-            indices: self.indices,
-            camera: self.camera,
-            phantom_texture: PhantomData,
+            window_config: self.window_config.unwrap_or_else(W::new),
+            renderer_config: self.renderer_config.unwrap_or_else(RendererConfig::new),
         }
     }
 }
@@ -212,42 +127,18 @@ where
 //= APPLICATION ====================================================================================
 
 /// Manages the whole game setup and logic.
-#[derive(Clone, Debug, Default)]
-pub struct Application<
-    'a,
-    L: Listener,
-    B: WindowBuilder,
-    PS: AsRef<Path>,
-    PT: AsRef<Path>,
-    V: Vertex,
-    I: Index,
-    C: Camera,
-    T: Texture,
-> {
+#[derive(Debug)] // TODO: add Clone and Default traits, impossible because Renderer
+pub struct Application<'a, L: Listener, W: WindowConfig> {
     listener: L,
-    window_builder: B,
-
-    // Renderer stuffs
-    clear_color: Option<wgpu::Color>,
-    shader_paths: Option<Vec<PS>>,
-    texture_path: Option<PT>,
-    vertices: Option<&'a [V]>,
-    indices: Option<&'a [I]>,
-    camera: Option<C>,
-
-    phantom_texture: PhantomData<T>,
+    window_config: W,
+    renderer_config:
+        RendererConfig<'a, PerspectiveCamera, String, String, ColorVertex, u16, DiffuseTexture>, // TODO: to refact
 }
 
-impl<'a, L, B, PS, PT, V, I, C, T> Application<'a, L, B, PS, PT, V, I, C, T>
+impl<'a, L, W> Application<'a, L, W>
 where
     L: Listener,
-    B: WindowBuilder + Clone,
-    PS: AsRef<Path> + Clone + Debug,
-    PT: AsRef<Path> + Clone + Debug,
-    V: Vertex + Pod,
-    I: Index + Pod,
-    C: Camera + Clone,
-    T: Texture,
+    W: WindowConfig + Clone, // TODO: after removing the clone below remove this coercion
 {
     /// Starts the
     /// [event loop](https://docs.rs/winit/0.25.0/winit/event_loop/struct.EventLoop.html).
@@ -265,231 +156,189 @@ where
     /// To remember that the resize is not managed perfectly with run_return.
     pub fn start(self) -> Result<(), ApplicationError>
     where
-        <B as WindowBuilder>::BuildOutput: Window,
+        <W as WindowConfig>::BuildOutput: Window,
     {
         let mut event_loop = winit::event_loop::EventLoop::new();
-        // TODO: remove the clone
-        let mut window = self.window_builder.clone().build(&event_loop)?;
-
-        let mut renderer_builder =
-            RendererBuilder::<<B as WindowBuilder>::BuildOutput, C, PS, PT, V, I, T>::new(&window);
-        if self.clear_color.is_some() {
-            // TODO: we have to have with_clear_color method only on RenderBuilder
-            //  and not also in ApplicationBuilder, so we can ride with this unwrap
-            renderer_builder = renderer_builder.with_clear_color(self.clear_color.unwrap());
-        }
-        if self.shader_paths.is_some() {
-            // TODO: remove unwrap and clone
-            renderer_builder = renderer_builder.with_shader_path(
-                self.shader_paths
-                    .as_ref()
-                    .map(|v| v.as_slice()[0].clone())
-                    .unwrap(),
-            );
-        }
-        if self.texture_path.is_some() {
-            // TODO: remove the clone
-            renderer_builder =
-                renderer_builder.with_texture_path(self.texture_path.as_ref().unwrap().clone());
-            // TODO: remove clone
-        }
-        if self.vertices.is_some() {
-            renderer_builder = renderer_builder.with_vertices(self.vertices.unwrap());
-        }
-        if self.indices.is_some() {
-            renderer_builder = renderer_builder.with_indices(self.indices.unwrap());
-        }
-        if self.camera.is_some() {
-            renderer_builder = renderer_builder.with_camera(self.camera.clone());
-            // TODO: remove clone
-        }
-
-        let mut renderer = match renderer_builder.build() {
-            Ok(renderer) => Ok(renderer),
-            Err(err) => {
-                log::error!("{:?}", err);
-                Err(err)
-            }
-        }?;
+        let mut window = self.window_config.clone().build(&event_loop)?; // TODO: this clone will be hard to remove..
 
         // Now is a good time to make the window visible: after the renderer has been initialized,
         // in this way we avoid a slight visible/invisible toggling effect of the window
         window.conclude_visibility_delay();
 
+        let renderer = &mut self.renderer_config.build(&window)?;
+
         use winit::platform::run_return::EventLoopExtRunReturn;
-        event_loop.run_return(move |event, _, control_flow| match event {
-            winit::event::Event::NewEvents(start_cause) => {
-                self.on_new_events(start_cause);
-            }
+        event_loop.run_return(move |event, _, control_flow| {
+            match event {
+                winit::event::Event::NewEvents(start_cause) => {
+                    self.on_new_events(start_cause);
+                }
 
-            winit::event::Event::WindowEvent {
-                event: window_event,
-                window_id,
-            } => {
-                // TODO: add a multi-monitor support
-                if window_id == window.id() {
-                    match window_event {
-                        winit::event::WindowEvent::Resized(physical_size) => {
-                            self.on_window_resize(&mut renderer, physical_size);
-                        }
-
-                        winit::event::WindowEvent::Moved(physical_position) => {
-                            self.on_window_move(physical_position);
-                        }
-
-                        winit::event::WindowEvent::CloseRequested => {
-                            self.on_window_close(control_flow);
-                        }
-
-                        winit::event::WindowEvent::Destroyed => {
-                            self.on_window_destroy();
-                        }
-
-                        winit::event::WindowEvent::DroppedFile(path) => {
-                            self.on_window_drop_file(path);
-                        }
-
-                        winit::event::WindowEvent::HoveredFile(path) => {
-                            self.on_window_hover_file(path);
-                        }
-
-                        winit::event::WindowEvent::HoveredFileCancelled => {
-                            self.on_window_hover_file_cancelled();
-                        }
-
-                        winit::event::WindowEvent::ReceivedCharacter(c) => {
-                            self.on_window_receive_character(c);
-                        }
-
-                        winit::event::WindowEvent::Focused(gained_focus) => {
-                            self.on_window_focus(gained_focus);
-                        }
-
-                        winit::event::WindowEvent::KeyboardInput {
-                            device_id,
-                            input,
-                            is_synthetic,
-                        } => {
-                            if !is_synthetic && input.virtual_keycode.is_some() {
-                                self.on_window_keyboard_input(
-                                    control_flow,
-                                    device_id,
-                                    &mut renderer,
-                                    input,
-                                );
+                winit::event::Event::WindowEvent {
+                    event: window_event,
+                    window_id,
+                } => {
+                    // TODO: add a multi-monitor support
+                    if window_id == window.id() {
+                        match window_event {
+                            winit::event::WindowEvent::Resized(physical_size) => {
+                                self.on_window_resize(renderer, physical_size);
                             }
-                        }
 
-                        winit::event::WindowEvent::ModifiersChanged(state) => {
-                            self.on_window_modifiers_change(state);
-                        }
+                            winit::event::WindowEvent::Moved(physical_position) => {
+                                self.on_window_move(physical_position);
+                            }
 
-                        winit::event::WindowEvent::CursorMoved {
-                            device_id,
-                            position,
-                            ..
-                        } => {
-                            self.on_window_cursor_move(device_id, position);
-                        }
+                            winit::event::WindowEvent::CloseRequested => {
+                                self.on_window_close(control_flow);
+                            }
 
-                        winit::event::WindowEvent::CursorEntered { device_id } => {
-                            self.on_window_cursor_enter(device_id);
-                        }
+                            winit::event::WindowEvent::Destroyed => {
+                                self.on_window_destroy();
+                            }
 
-                        winit::event::WindowEvent::CursorLeft { device_id } => {
-                            self.on_window_cursor_left(device_id);
-                        }
+                            winit::event::WindowEvent::DroppedFile(path) => {
+                                self.on_window_drop_file(path);
+                            }
 
-                        winit::event::WindowEvent::MouseWheel {
-                            device_id,
-                            delta,
-                            phase,
-                            ..
-                        } => {
-                            self.on_window_mouse_wheel(device_id, delta, phase);
-                        }
+                            winit::event::WindowEvent::HoveredFile(path) => {
+                                self.on_window_hover_file(path);
+                            }
 
-                        winit::event::WindowEvent::MouseInput {
-                            device_id,
-                            state,
-                            button,
-                            ..
-                        } => {
-                            self.on_window_mouse_input(device_id, state, button);
-                        }
+                            winit::event::WindowEvent::HoveredFileCancelled => {
+                                self.on_window_hover_file_cancelled();
+                            }
 
-                        winit::event::WindowEvent::TouchpadPressure {
-                            device_id,
-                            pressure,
-                            stage,
-                        } => {
-                            self.on_window_touchpad_pressure(device_id, pressure, stage);
-                        }
+                            winit::event::WindowEvent::ReceivedCharacter(c) => {
+                                self.on_window_receive_character(c);
+                            }
 
-                        winit::event::WindowEvent::AxisMotion {
-                            device_id,
-                            axis,
-                            value,
-                        } => {
-                            self.on_window_axis_motion(device_id, axis, value);
-                        }
+                            winit::event::WindowEvent::Focused(gained_focus) => {
+                                self.on_window_focus(gained_focus);
+                            }
 
-                        winit::event::WindowEvent::Touch(touch) => {
-                            self.on_window_touch(touch);
-                        }
+                            winit::event::WindowEvent::KeyboardInput {
+                                device_id,
+                                input,
+                                is_synthetic,
+                            } => {
+                                if !is_synthetic && input.virtual_keycode.is_some() {
+                                    self.on_window_keyboard_input(
+                                        control_flow,
+                                        device_id,
+                                        renderer,
+                                        input,
+                                    );
+                                }
+                            }
 
-                        // The window's scale factor has changed.
-                        winit::event::WindowEvent::ScaleFactorChanged {
-                            scale_factor,
-                            new_inner_size,
-                        } => {
-                            self.on_window_scale_change(
-                                &mut renderer,
+                            winit::event::WindowEvent::ModifiersChanged(state) => {
+                                self.on_window_modifiers_change(state);
+                            }
+
+                            winit::event::WindowEvent::CursorMoved {
+                                device_id,
+                                position,
+                                ..
+                            } => {
+                                self.on_window_cursor_move(device_id, position);
+                            }
+
+                            winit::event::WindowEvent::CursorEntered { device_id } => {
+                                self.on_window_cursor_enter(device_id);
+                            }
+
+                            winit::event::WindowEvent::CursorLeft { device_id } => {
+                                self.on_window_cursor_left(device_id);
+                            }
+
+                            winit::event::WindowEvent::MouseWheel {
+                                device_id,
+                                delta,
+                                phase,
+                                ..
+                            } => {
+                                self.on_window_mouse_wheel(device_id, delta, phase);
+                            }
+
+                            winit::event::WindowEvent::MouseInput {
+                                device_id,
+                                state,
+                                button,
+                                ..
+                            } => {
+                                self.on_window_mouse_input(device_id, state, button);
+                            }
+
+                            winit::event::WindowEvent::TouchpadPressure {
+                                device_id,
+                                pressure,
+                                stage,
+                            } => {
+                                self.on_window_touchpad_pressure(device_id, pressure, stage);
+                            }
+
+                            winit::event::WindowEvent::AxisMotion {
+                                device_id,
+                                axis,
+                                value,
+                            } => {
+                                self.on_window_axis_motion(device_id, axis, value);
+                            }
+
+                            winit::event::WindowEvent::Touch(touch) => {
+                                self.on_window_touch(touch);
+                            }
+
+                            // The window's scale factor has changed.
+                            winit::event::WindowEvent::ScaleFactorChanged {
                                 scale_factor,
                                 new_inner_size,
-                            );
-                        }
+                            } => {
+                                self.on_window_scale_change(renderer, scale_factor, new_inner_size);
+                            }
 
-                        winit::event::WindowEvent::ThemeChanged(theme) => {
-                            self.on_window_theme_change(theme);
+                            winit::event::WindowEvent::ThemeChanged(theme) => {
+                                self.on_window_theme_change(theme);
+                            }
                         }
                     }
                 }
-            }
 
-            winit::event::Event::DeviceEvent {
-                device_id: _device_id,
-                event: ref _device_event,
-            } => {
-                // TODO: Currently we don't have to manage it
-            }
+                winit::event::Event::DeviceEvent {
+                    device_id: _device_id,
+                    event: ref _device_event,
+                } => {
+                    // TODO: Currently we don't have to manage it
+                }
 
-            winit::event::Event::UserEvent(event) => {
-                self.on_user_event(&event);
-            }
+                winit::event::Event::UserEvent(event) => {
+                    self.on_user_event(&event);
+                }
 
-            winit::event::Event::Suspended => {
-                self.on_suspend();
-            }
+                winit::event::Event::Suspended => {
+                    self.on_suspend();
+                }
 
-            winit::event::Event::Resumed => {
-                self.on_resume();
-            }
+                winit::event::Event::Resumed => {
+                    self.on_resume();
+                }
 
-            winit::event::Event::MainEventsCleared => {
-                self.on_redraw(&mut renderer, control_flow);
-            }
+                winit::event::Event::MainEventsCleared => {
+                    self.on_redraw(renderer, control_flow);
+                }
 
-            winit::event::Event::RedrawRequested(window_id) => {
-                self.on_redraw_request(&window_id);
-            }
+                winit::event::Event::RedrawRequested(window_id) => {
+                    self.on_redraw_request(&window_id);
+                }
 
-            winit::event::Event::RedrawEventsCleared => {
-                self.on_redraw_clear();
-            }
+                winit::event::Event::RedrawEventsCleared => {
+                    self.on_redraw_clear();
+                }
 
-            winit::event::Event::LoopDestroyed => {
-                self.on_destroy();
+                winit::event::Event::LoopDestroyed => {
+                    self.on_destroy();
+                }
             }
         });
 
@@ -518,7 +367,7 @@ where
     #[inline(always)]
     fn on_redraw(
         &self,
-        renderer: &mut Renderer<C>,
+        renderer: &mut Renderer<PerspectiveCamera>,
         control_flow: &mut winit::event_loop::ControlFlow,
     ) {
         let use_default_behaviour = self.listener.on_redraw();
@@ -560,7 +409,7 @@ where
 
     fn on_window_resize(
         &self,
-        renderer: &mut Renderer<C>,
+        renderer: &mut Renderer<PerspectiveCamera>,
         physical_size: winit::dpi::PhysicalSize<u32>,
     ) {
         let use_default_behaviour = self.listener.on_window_resize(physical_size);
@@ -614,7 +463,7 @@ where
         &self,
         control_flow: &mut winit::event_loop::ControlFlow,
         device_id: winit::event::DeviceId,
-        renderer: &mut Renderer<C>,
+        renderer: &mut Renderer<PerspectiveCamera>,
         input: winit::event::KeyboardInput,
     ) {
         // First call a generic method to manage the key events
@@ -701,7 +550,7 @@ where
 
     fn on_window_scale_change(
         &self,
-        renderer: &mut Renderer<C>,
+        renderer: &mut Renderer<PerspectiveCamera>,
         scale_factor: f64,
         new_inner_size: &mut winit::dpi::PhysicalSize<u32>,
     ) {
