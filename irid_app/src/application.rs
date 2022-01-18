@@ -4,13 +4,13 @@ use std::{
     fmt::Debug,
     path::{Path, PathBuf},
 };
+use std::marker::PhantomData;
 
 use bytemuck::Pod;
 use thiserror::Error;
 
 use irid_app_interface::{Window, WindowBuilder};
-use irid_assets::DiffuseTexture;
-use irid_assets_interface::{Index, Vertex};
+use irid_assets_interface::{Index, Texture, Vertex};
 use irid_renderer::{PerspectiveCamera, Renderer, RendererBuilder, RendererError};
 
 use crate::Listener;
@@ -44,21 +44,22 @@ pub struct ApplicationBuilder<
     PT: AsRef<Path>,
     V: Vertex,
     I: Index,
+    T: Texture,
 > {
     listener: L,
     window_builder: Option<B>,
 
     // Renderer stuff
+    clear_color: Option<wgpu::Color>,
     shader_paths: Option<Vec<PS>>,
     texture_path: Option<PT>,
     vertices: Option<&'a [V]>,
     indices: Option<&'a [I]>,
 
-    // Renderer specific options
-    clear_color: Option<wgpu::Color>,
+    phantom_texture: PhantomData<T>,
 }
 
-impl<'a, L, B, PS, PT, V, I> ApplicationBuilder<'a, L, B, PS, PT, V, I>
+impl<'a, L, B, PS, PT, V, I, T> ApplicationBuilder<'a, L, B, PS, PT, V, I, T>
 where
     L: Listener,
     B: WindowBuilder,
@@ -66,6 +67,7 @@ where
     PT: AsRef<Path>,
     V: Vertex,
     I: Index,
+    T: Texture,
 {
     //- Constructors -------------------------------------------------------------------------------
 
@@ -74,11 +76,12 @@ where
         Self {
             listener,
             window_builder: None,
+            clear_color: None,
             shader_paths: None,
             texture_path: None,
             vertices: None,
             indices: None,
-            clear_color: None,
+            phantom_texture: PhantomData,
         }
     }
 
@@ -180,15 +183,16 @@ where
     //- Build --------------------------------------------------------------------------------------
 
     /// Build a new [Application] with given values.
-    pub fn build(self) -> Application<'a, L, B, PS, PT, V, I> {
+    pub fn build(self) -> Application<'a, L, B, PS, PT, V, I, T> {
         Application {
             listener: self.listener,
             window_builder: self.window_builder.unwrap_or_else(B::new),
+            clear_color: self.clear_color,
             shader_paths: self.shader_paths,
             texture_path: self.texture_path,
             vertices: self.vertices,
             indices: self.indices,
-            clear_color: self.clear_color,
+            phantom_texture: PhantomData,
         }
     }
 }
@@ -205,19 +209,22 @@ pub struct Application<
     PT: AsRef<Path>,
     V: Vertex,
     I: Index,
+    T: Texture,
 > {
     listener: L,
     window_builder: B,
 
     // Renderer stuffs
+    clear_color: Option<wgpu::Color>,
     shader_paths: Option<Vec<PS>>,
     texture_path: Option<PT>,
     vertices: Option<&'a [V]>,
     indices: Option<&'a [I]>,
-    clear_color: Option<wgpu::Color>,
+
+    phantom_texture: PhantomData<T>,
 }
 
-impl<'a, L, B, PS, PT, V, I> Application<'a, L, B, PS, PT, V, I>
+impl<'a, L, B, PS, PT, V, I, T> Application<'a, L, B, PS, PT, V, I, T>
 where
     L: Listener,
     B: WindowBuilder + Clone,
@@ -225,6 +232,7 @@ where
     PT: AsRef<Path> + Clone + Debug,
     V: Vertex + Pod,
     I: Index + Pod,
+    T: Texture,
 {
     /// Starts the
     /// [event loop](https://docs.rs/winit/0.25.0/winit/event_loop/struct.EventLoop.html).
@@ -255,7 +263,7 @@ where
             PT,
             V,
             I,
-            DiffuseTexture,
+            T,
         >::new(&window);
         if self.clear_color.is_some() {
             // TODO: we have to have with_clear_color method only on RenderBuilder
