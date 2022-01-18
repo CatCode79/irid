@@ -255,14 +255,14 @@ where
 
         //- Camera ---------------------------------------------------------------------------------
 
-        let camera = if self.camera.is_some() {
-            self.camera.unwrap()
+        let (camera_metadatas, camera_controller) = if self.camera.is_some() {
+            (
+                Some(CameraBindGroup::new(self.camera.as_ref().unwrap(), &device)),
+                Some(CameraController::new(0.2)),
+            )
         } else {
-            C::new(window_size.width as f32, window_size.height as f32)
+            (None, None)
         };
-
-        let camera_metadatas = CameraBindGroup::new(&camera, &device);
-        let camera_controller = CameraController::new(0.2);
 
         //- Texture Metadatas ----------------------------------------------------------------------
 
@@ -342,17 +342,25 @@ where
             };
 
             let pipeline_layout = if texture_bind_group_metadatas.is_empty() {
-                let camera_bgl = camera_metadatas.bind_group_layout();
-                PipelineLayoutBuilder::new()
-                    .with_bind_group_layouts(&[camera_bgl])
-                    .build(&device)
+                let plb = PipelineLayoutBuilder::new();
+                if self.camera.is_some() {
+                    let camera_bgl = camera_metadatas.as_ref().unwrap().bind_group_layout(); // TODO: remove unwrap
+                    plb.with_bind_group_layouts(&[camera_bgl]).build(&device)
+                } else {
+                    plb.build(&device)
+                }
             } else {
                 // TODO: 256x256 texture, hardcoded for now :(
                 let texture_bgl = texture_bind_group_metadatas[8][8].bind_group_layout();
-                let camera_bgl = camera_metadatas.bind_group_layout();
-                PipelineLayoutBuilder::new()
-                    .with_bind_group_layouts(&[texture_bgl, camera_bgl])
-                    .build(&device)
+
+                let plb = PipelineLayoutBuilder::new();
+                if self.camera.is_some() {
+                    let camera_bgl = camera_metadatas.as_ref().unwrap().bind_group_layout(); // TODO: remove unwrap
+                    plb.with_bind_group_layouts(&[texture_bgl, camera_bgl])
+                        .build(&device)
+                } else {
+                    plb.with_bind_group_layouts(&[texture_bgl]).build(&device)
+                }
             };
 
             Some(
@@ -415,7 +423,7 @@ where
             device,
             queue,
 
-            camera,
+            camera: self.camera,
             camera_metadatas,
             camera_controller,
 
@@ -533,9 +541,9 @@ pub struct Renderer<C: Camera> {
     device: Device,
     queue: Queue,
 
-    camera: C,
-    camera_metadatas: CameraBindGroup,
-    camera_controller: CameraController,
+    camera: Option<C>,
+    camera_metadatas: Option<CameraBindGroup>,
+    camera_controller: Option<CameraController>,
 
     #[allow(dead_code)]
     texture_image_metadatas: Vec<Vec<TextureImageMetadatas>>,
@@ -551,7 +559,10 @@ pub struct Renderer<C: Camera> {
     instances_buffer: Option<wgpu::Buffer>,
 }
 
-impl<C: Camera> Renderer<C> {
+impl<C> Renderer<C>
+where
+    C: Camera + Clone,
+{
     //- Surface (Re)size ---------------------------------------------------------------------------
 
     /// Getter for the windows's physical size attribute.
@@ -583,7 +594,14 @@ impl<C: Camera> Renderer<C> {
 
     ///
     pub fn process_camera_events(&mut self, input: winit::event::KeyboardInput) -> bool {
-        self.camera_controller.process_events(input)
+        if self.camera_controller.is_some() {
+            self.camera_controller
+                .as_mut()
+                .unwrap()
+                .process_events(input) // TODO: remove Unwrap
+        } else {
+            true
+        }
     }
 
     //- Command Encoder ----------------------------------------------------------------------------
@@ -600,9 +618,18 @@ impl<C: Camera> Renderer<C> {
 
     ///
     pub fn redraw(&mut self) -> Result<(), wgpu::SurfaceError> {
-        self.camera_controller.update_camera(&mut self.camera);
-        self.queue
-            .write_camera_buffer(&self.camera, &self.camera_metadatas);
+        // TODO: remove clone (and probably) also unwraps
+        if self.camera.is_some() {
+            let camera = self.camera.as_mut().unwrap();
+            self.camera_controller
+                .as_ref()
+                .unwrap()
+                .update_camera(camera);
+            self.queue.write_camera_buffer(
+                self.camera.as_ref().unwrap(),
+                self.camera_metadatas.as_ref().unwrap(),
+            );
+        }
 
         let frame = self.surface.get_current_texture()?;
         let texture = &frame.texture;
@@ -632,12 +659,18 @@ impl<C: Camera> Renderer<C> {
             });
 
             if self.renderer_pipeline.is_some() {
-                let rp = self.renderer_pipeline.as_ref().unwrap();
+                let pipeline = self.renderer_pipeline.as_ref().unwrap();
                 // TODO: remove this expose call creating an RenderPass wrapper
-                render_pass.set_pipeline(rp.expose_wrapped_render_pipeline());
+                render_pass.set_pipeline(pipeline.expose_wrapped_render_pipeline());
 
                 if self.texture_bind_group_metadatas.is_empty() {
-                    render_pass.set_bind_group(0, self.camera_metadatas.bind_group(), &[]);
+                    if self.camera.is_some() {
+                        render_pass.set_bind_group(
+                            0,
+                            self.camera_metadatas.as_ref().unwrap().bind_group(), // TODO: Remove unwrap()
+                            &[],
+                        );
+                    }
                 } else {
                     render_pass.set_bind_group(
                         0,
@@ -645,7 +678,13 @@ impl<C: Camera> Renderer<C> {
                         self.texture_bind_group_metadatas[8][8].bind_group(),
                         &[],
                     );
-                    render_pass.set_bind_group(1, self.camera_metadatas.bind_group(), &[]);
+                    if self.camera.is_some() {
+                        render_pass.set_bind_group(
+                            1,
+                            self.camera_metadatas.as_ref().unwrap().bind_group(), // TODO: Remove unwrap()
+                            &[],
+                        );
+                    }
                 }
 
                 if self.vertex_buffer.is_some() {

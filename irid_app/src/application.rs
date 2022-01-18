@@ -1,17 +1,18 @@
 //= USES ===========================================================================================
 
+use std::marker::PhantomData;
 use std::{
     fmt::Debug,
     path::{Path, PathBuf},
 };
-use std::marker::PhantomData;
 
 use bytemuck::Pod;
 use thiserror::Error;
 
 use irid_app_interface::{Window, WindowBuilder};
 use irid_assets_interface::{Index, Texture, Vertex};
-use irid_renderer::{PerspectiveCamera, Renderer, RendererBuilder, RendererError};
+use irid_renderer::{Renderer, RendererBuilder, RendererError};
+use irid_renderer_interface::Camera;
 
 use crate::Listener;
 
@@ -44,6 +45,7 @@ pub struct ApplicationBuilder<
     PT: AsRef<Path>,
     V: Vertex,
     I: Index,
+    C: Camera,
     T: Texture,
 > {
     listener: L,
@@ -55,11 +57,12 @@ pub struct ApplicationBuilder<
     texture_path: Option<PT>,
     vertices: Option<&'a [V]>,
     indices: Option<&'a [I]>,
+    camera: Option<C>,
 
     phantom_texture: PhantomData<T>,
 }
 
-impl<'a, L, B, PS, PT, V, I, T> ApplicationBuilder<'a, L, B, PS, PT, V, I, T>
+impl<'a, L, B, PS, PT, V, I, C, T> ApplicationBuilder<'a, L, B, PS, PT, V, I, C, T>
 where
     L: Listener,
     B: WindowBuilder,
@@ -68,6 +71,7 @@ where
     V: Vertex,
     I: Index,
     T: Texture,
+    C: Camera,
 {
     //- Constructors -------------------------------------------------------------------------------
 
@@ -81,6 +85,7 @@ where
             texture_path: None,
             vertices: None,
             indices: None,
+            camera: None,
             phantom_texture: PhantomData,
         }
     }
@@ -117,34 +122,6 @@ where
     }
     */
 
-    ///
-    #[inline]
-    pub fn with_shader_paths(mut self, shader_paths: Vec<PS>) -> Self {
-        self.shader_paths = Some(shader_paths);
-        self
-    }
-
-    ///
-    #[inline]
-    pub fn with_texture_path(mut self, texture_path: PT) -> Self {
-        self.texture_path = Some(texture_path);
-        self
-    }
-
-    ///
-    #[inline]
-    pub fn with_vertices(mut self, vertices: &'a [V]) -> Self {
-        self.vertices = Some(vertices);
-        self
-    }
-
-    ///
-    #[inline]
-    pub fn with_indices(mut self, indices: &'a [I]) -> Self {
-        self.indices = Some(indices);
-        self
-    }
-
     /// Set a clear color with rgb channels as arguments.
     /// The alpha channel is set to 1.0 by default.
     /// See also the method [with_clear_color_rgba].
@@ -180,10 +157,44 @@ where
         self
     }
 
+    ///
+    #[inline]
+    pub fn with_shader_paths(mut self, shader_paths: Vec<PS>) -> Self {
+        self.shader_paths = Some(shader_paths);
+        self
+    }
+
+    ///
+    #[inline]
+    pub fn with_texture_path(mut self, texture_path: PT) -> Self {
+        self.texture_path = Some(texture_path);
+        self
+    }
+
+    ///
+    #[inline]
+    pub fn with_vertices(mut self, vertices: &'a [V]) -> Self {
+        self.vertices = Some(vertices);
+        self
+    }
+
+    ///
+    #[inline]
+    pub fn with_indices(mut self, indices: &'a [I]) -> Self {
+        self.indices = Some(indices);
+        self
+    }
+
+    ///
+    pub fn with_camera<IC: Into<Option<C>>>(mut self, camera: IC) -> Self {
+        self.camera = camera.into();
+        self
+    }
+
     //- Build --------------------------------------------------------------------------------------
 
     /// Build a new [Application] with given values.
-    pub fn build(self) -> Application<'a, L, B, PS, PT, V, I, T> {
+    pub fn build(self) -> Application<'a, L, B, PS, PT, V, I, C, T> {
         Application {
             listener: self.listener,
             window_builder: self.window_builder.unwrap_or_else(B::new),
@@ -192,6 +203,7 @@ where
             texture_path: self.texture_path,
             vertices: self.vertices,
             indices: self.indices,
+            camera: self.camera,
             phantom_texture: PhantomData,
         }
     }
@@ -209,6 +221,7 @@ pub struct Application<
     PT: AsRef<Path>,
     V: Vertex,
     I: Index,
+    C: Camera,
     T: Texture,
 > {
     listener: L,
@@ -220,11 +233,12 @@ pub struct Application<
     texture_path: Option<PT>,
     vertices: Option<&'a [V]>,
     indices: Option<&'a [I]>,
+    camera: Option<C>,
 
     phantom_texture: PhantomData<T>,
 }
 
-impl<'a, L, B, PS, PT, V, I, T> Application<'a, L, B, PS, PT, V, I, T>
+impl<'a, L, B, PS, PT, V, I, C, T> Application<'a, L, B, PS, PT, V, I, C, T>
 where
     L: Listener,
     B: WindowBuilder + Clone,
@@ -232,6 +246,7 @@ where
     PT: AsRef<Path> + Clone + Debug,
     V: Vertex + Pod,
     I: Index + Pod,
+    C: Camera + Clone,
     T: Texture,
 {
     /// Starts the
@@ -256,15 +271,8 @@ where
         // TODO: remove the clone
         let mut window = self.window_builder.clone().build(&event_loop)?;
 
-        let mut renderer_builder = RendererBuilder::<
-            <B as WindowBuilder>::BuildOutput,
-            PerspectiveCamera,
-            PS,
-            PT,
-            V,
-            I,
-            T,
-        >::new(&window);
+        let mut renderer_builder =
+            RendererBuilder::<<B as WindowBuilder>::BuildOutput, C, PS, PT, V, I, T>::new(&window);
         if self.clear_color.is_some() {
             // TODO: we have to have with_clear_color method only on RenderBuilder
             //  and not also in ApplicationBuilder, so we can ride with this unwrap
@@ -283,6 +291,7 @@ where
             // TODO: remove the clone
             renderer_builder =
                 renderer_builder.with_texture_path(self.texture_path.as_ref().unwrap().clone());
+            // TODO: remove clone
         }
         if self.vertices.is_some() {
             renderer_builder = renderer_builder.with_vertices(self.vertices.unwrap());
@@ -290,6 +299,11 @@ where
         if self.indices.is_some() {
             renderer_builder = renderer_builder.with_indices(self.indices.unwrap());
         }
+        if self.camera.is_some() {
+            renderer_builder = renderer_builder.with_camera(self.camera.clone());
+            // TODO: remove clone
+        }
+
         let mut renderer = match renderer_builder.build() {
             Ok(renderer) => Ok(renderer),
             Err(err) => {
@@ -504,7 +518,7 @@ where
     #[inline(always)]
     fn on_redraw(
         &self,
-        renderer: &mut Renderer<PerspectiveCamera>,
+        renderer: &mut Renderer<C>,
         control_flow: &mut winit::event_loop::ControlFlow,
     ) {
         let use_default_behaviour = self.listener.on_redraw();
@@ -546,7 +560,7 @@ where
 
     fn on_window_resize(
         &self,
-        renderer: &mut Renderer<PerspectiveCamera>,
+        renderer: &mut Renderer<C>,
         physical_size: winit::dpi::PhysicalSize<u32>,
     ) {
         let use_default_behaviour = self.listener.on_window_resize(physical_size);
@@ -600,7 +614,7 @@ where
         &self,
         control_flow: &mut winit::event_loop::ControlFlow,
         device_id: winit::event::DeviceId,
-        renderer: &mut Renderer<PerspectiveCamera>,
+        renderer: &mut Renderer<C>,
         input: winit::event::KeyboardInput,
     ) {
         // First call a generic method to manage the key events
@@ -687,7 +701,7 @@ where
 
     fn on_window_scale_change(
         &self,
-        renderer: &mut Renderer<PerspectiveCamera>,
+        renderer: &mut Renderer<C>,
         scale_factor: f64,
         new_inner_size: &mut winit::dpi::PhysicalSize<u32>,
     ) {
