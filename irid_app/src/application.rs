@@ -85,12 +85,14 @@ where
     //- Setters ------------------------------------------------------------------------------------
 
     ///
+    #[inline]
     pub fn with_listener(mut self, listener: L) -> Self {
         self.listener = listener;
         self
     }
 
     ///
+    #[inline]
     pub fn with_window_builder(mut self, window_builder: B) -> Self {
         self.window_builder = Some(window_builder);
         self
@@ -98,12 +100,14 @@ where
 
     /*
     ///
+    #[inline]
     pub fn with_window(mut self, window: W) -> Self {
         self.window = Some(window);
         self
     }
 
     ///
+    #[inline]
     pub fn with_event_loop(mut self, event_loop: winit::event_loop::EventLoop<()>) -> Self {
         self.event_loop = Some(event_loop);
         self
@@ -111,24 +115,28 @@ where
     */
 
     ///
+    #[inline]
     pub fn with_shader_paths(mut self, shader_paths: Vec<PS>) -> Self {
         self.shader_paths = Some(shader_paths);
         self
     }
 
     ///
+    #[inline]
     pub fn with_texture_path(mut self, texture_path: PT) -> Self {
         self.texture_path = Some(texture_path);
         self
     }
 
     ///
+    #[inline]
     pub fn with_vertices(mut self, vertices: &'a [V]) -> Self {
         self.vertices = Some(vertices);
         self
     }
 
     ///
+    #[inline]
     pub fn with_indices(mut self, indices: &'a [I]) -> Self {
         self.indices = Some(indices);
         self
@@ -137,6 +145,7 @@ where
     /// Set a clear color with rgb channels as arguments.
     /// The alpha channel is set to 1.0 by default.
     /// See also the method [with_clear_color_rgba].
+    #[inline]
     pub fn with_clear_color_rgb(mut self, r: f32, g: f32, b: f32) -> Self {
         self.clear_color = Some(wgpu::Color {
             r: r as f64,
@@ -149,6 +158,7 @@ where
 
     /// Set a clear color with rgba channels as arguments.
     /// See also the method [with_clear_color].
+    #[inline]
     pub fn with_clear_color_rgba(mut self, r: f32, g: f32, b: f32, a: f32) -> Self {
         self.clear_color = Some(wgpu::Color {
             r: r as f64,
@@ -161,6 +171,7 @@ where
 
     /// Color is used by a [render pass color attachment](wgpu::RenderPassColorAttachment)
     /// to perform a [clear operation](wgpu::LoadOp).
+    #[inline]
     pub fn with_clear_color(mut self, clear_color: wgpu::Color) -> Self {
         self.clear_color = Some(clear_color);
         self
