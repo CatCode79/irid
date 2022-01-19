@@ -146,18 +146,21 @@ where
     //- Setters ------------------------------------------------------------------------------------
 
     ///
+    #[inline]
     pub fn with_backends(mut self, backends: wgpu::Backends) -> Self {
         self.backends = backends;
         self
     }
 
     ///
+    #[inline]
     pub fn with_power_preference(mut self, power_preference: wgpu::PowerPreference) -> Self {
         self.power_preference = power_preference;
         self
     }
 
     ///
+    #[inline]
     pub fn with_force_fallback_adapter(mut self, force_fallback_adapter: bool) -> Self {
         self.force_fallback_adapter = force_fallback_adapter;
         self
@@ -166,6 +169,7 @@ where
     ///
     // TODO: Will be implemented, it was paused because we have doubts about how to convert images
     //  from Rgb to Bgr format without affecting the performance and ergonomics of the code
+    #[inline]
     pub fn with_preferred_format<F: Into<Option<wgpu::TextureFormat>>>(
         /*mut*/ self,
         _preferred_format: F,
@@ -178,55 +182,91 @@ where
     }
 
     ///
+    #[inline]
     pub fn with_present_mode(mut self, present_mode: wgpu::PresentMode) -> Self {
         self.present_mode = present_mode;
         self
     }
 
     ///
+    #[inline]
     pub fn with_features(mut self, features: wgpu::Features) -> Self {
         self.features = features;
         self
     }
 
     ///
+    #[inline]
     pub fn with_limits(mut self, limits: wgpu::Limits) -> Self {
         self.limits = limits;
         self
     }
 
     ///
+    #[inline]
     pub fn with_camera<IC: Into<Option<C>>>(mut self, camera: IC) -> Self {
         self.camera = camera.into();
         self
     }
 
     ///
+    #[inline]
     pub fn with_shader_path(mut self, shader_path: PS) -> Self {
         self.shader_path = Some(shader_path);
         self
     }
 
     ///
+    #[inline]
     pub fn with_texture_path(mut self, texture_path: PT) -> Self {
         self.texture_path = Some(texture_path);
         self
     }
 
     ///
-    pub fn with_vertices<IV: Into<Option<&'a [V]>>>(mut self, vertices: IV) -> Self {
-        self.vertices = vertices.into();
+    #[inline]
+    pub fn with_vertices(mut self, vertices: &'a [V]) -> Self {
+        self.vertices = Some(vertices);
         self
     }
 
     ///
-    pub fn with_indices<II: Into<Option<&'a [I]>>>(mut self, indices: II) -> Self {
-        self.indices = indices.into();
+    #[inline]
+    pub fn with_indices(mut self, indices: &'a [I]) -> Self {
+        self.indices = Some(indices);
+        self
+    }
+
+    /// Set a clear color with rgb channels as arguments.
+    /// The alpha channel is set to 1.0 by default.
+    /// See also the method [with_clear_color_rgba].
+    #[inline]
+    pub fn with_clear_color_rgb(mut self, r: f32, g: f32, b: f32) -> Self {
+        self.clear_color = Some(wgpu::Color {
+            r: r as f64,
+            g: g as f64,
+            b: b as f64,
+            a: 1.0_f64,
+        });
+        self
+    }
+
+    /// Set a clear color with rgba channels as arguments.
+    /// See also the method [with_clear_color].
+    #[inline]
+    pub fn with_clear_color_rgba(mut self, r: f32, g: f32, b: f32, a: f32) -> Self {
+        self.clear_color = Some(wgpu::Color {
+            r: r as f64,
+            g: g as f64,
+            b: b as f64,
+            a: a as f64,
+        });
         self
     }
 
     /// Color used by a [render pass color attachment](wgpu::RenderPassColorAttachment)
     /// to perform a [clear operation](wgpu::LoadOp).
+    #[inline]
     pub fn with_clear_color(mut self, clear_color: wgpu::Color) -> Self {
         self.clear_color = clear_color.into();
         self

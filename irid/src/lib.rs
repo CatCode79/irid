@@ -6,4 +6,8 @@ pub use irid_renderer::*;
 
 //= TYPE ALIASES ===================================================================================
 
-pub type ApplicationBuilder<'a, L> = irid_app::ApplicationBuilder<'a, L, IridWindowConfig>;
+pub type ApplicationConfig<'a, L> =
+    irid_app::ApplicationConfig<'a, L, IridWindowConfig>;
+
+pub type RendererConfig<'a, V> =
+    irid_renderer::RendererConfig<'a, PerspectiveCamera, &'a str, &'a str, V, u16, DiffuseTexture>;

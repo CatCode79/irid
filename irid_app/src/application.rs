@@ -31,15 +31,15 @@ pub enum ApplicationError {
 
 /// Build a new [Application] with wanted values.
 #[derive(Clone, Debug, Default)]
-pub struct ApplicationBuilder<'a, L: Listener, W: WindowConfig> {
+pub struct ApplicationConfig<'a, L: Listener, W: WindowConfig> {
     listener: L,
     window_config: Option<W>,
     renderer_config: Option<
-        RendererConfig<'a, PerspectiveCamera, String, String, ColorVertex, u16, DiffuseTexture>,
+        RendererConfig<'a, PerspectiveCamera, &'a str,  &'a str, ColorVertex, u16, DiffuseTexture>,
     >, // TODO: to refact
 }
 
-impl<'a, L, W> ApplicationBuilder<'a, L, W>
+impl<'a, L, W> ApplicationConfig<'a, L, W>
 where
     L: Listener,
     W: WindowConfig,
@@ -95,8 +95,8 @@ where
                 RendererConfig<
                     'a,
                     PerspectiveCamera,
-                    String,
-                    String,
+                    &'a str,
+                    &'a str,
                     ColorVertex,
                     u16,
                     DiffuseTexture,
@@ -132,7 +132,7 @@ pub struct Application<'a, L: Listener, W: WindowConfig> {
     listener: L,
     window_config: W,
     renderer_config:
-        RendererConfig<'a, PerspectiveCamera, String, String, ColorVertex, u16, DiffuseTexture>, // TODO: to refact
+        RendererConfig<'a, PerspectiveCamera, &'a str,  &'a str, ColorVertex, u16, DiffuseTexture>, // TODO: to refact
 }
 
 impl<'a, L, W> Application<'a, L, W>
