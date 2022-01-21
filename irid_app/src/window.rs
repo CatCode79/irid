@@ -28,7 +28,6 @@ impl Default for IridWindowConfig {
             width: 1980 / 4,
             height: 720 / 4,
         })*/
-        .with_resizable(true)
         .with_title("Irid Application")
     }
 }

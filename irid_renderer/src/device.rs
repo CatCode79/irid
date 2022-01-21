@@ -5,7 +5,7 @@ use pollster::FutureExt;
 
 use irid_assets_interface::{Index, Vertex};
 
-use crate::{adapter::Adapter, queue::Queue};
+use crate::queue::Queue;
 
 //= DEVICE =========================================================================================
 
@@ -28,7 +28,7 @@ impl Device {
 
     /// Create a new Device and Queue given ad adapter.
     pub fn new(
-        adapter: &Adapter,
+        adapter: &wgpu::Adapter,
         features: wgpu::Features,
         limits: wgpu::Limits,
     ) -> Result<(Self, Queue), wgpu::RequestDeviceError> {

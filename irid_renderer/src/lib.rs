@@ -49,7 +49,6 @@ pub(crate) mod pipeline;
 pub(crate) mod renderer;
 
 // Used only internally
-mod adapter;
 mod camera_bind;
 mod device;
 mod instance;

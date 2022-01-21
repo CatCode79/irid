@@ -10,7 +10,6 @@ use irid_assets_interface::{Index, Texture, Vertex};
 use irid_renderer_interface::Camera;
 
 use crate::{
-    adapter::Adapter,
     camera_bind::CameraBindGroup,
     device::Device,
     instance::Instance,
@@ -462,7 +461,6 @@ where
             window_size,
             clear_color: self.clear_color.unwrap_or(wgpu::Color::WHITE),
             surface,
-            _adapter: adapter,
             device,
             queue,
 
@@ -580,7 +578,6 @@ pub struct Renderer<C: Camera> {
     window_size: winit::dpi::PhysicalSize<u32>,
     clear_color: wgpu::Color,
     surface: Surface,
-    _adapter: Adapter,
     device: Device,
     queue: Queue,
 

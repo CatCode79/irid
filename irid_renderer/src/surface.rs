@@ -1,13 +1,11 @@
 //= USES ===========================================================================================
 
+use pollster::FutureExt;
 use thiserror::Error;
 
 use irid_app_interface::Window;
 
-use crate::{
-    adapter::{Adapter, AdapterError},
-    device::Device,
-};
+use crate::device::Device;
 
 //= ERRORS =========================================================================================
 
@@ -15,10 +13,7 @@ use crate::{
 #[derive(Debug, Error)]
 pub(crate) enum SurfaceError {
     #[error("An adapter compatible with the given surface could not be obtained")]
-    AdapterNotObtained {
-        #[from]
-        source: AdapterError,
-    },
+    AdapterNotObtained,
 }
 
 //= SURFACE WRAPPER ================================================================================
@@ -44,7 +39,7 @@ impl Surface {
         force_fallback_adapter: bool,
         preferred_format: Option<wgpu::TextureFormat>,
         present_mode: wgpu::PresentMode,
-    ) -> Result<(Self, Adapter), SurfaceError> {
+    ) -> Result<(Self, wgpu::Adapter), SurfaceError> {
         // Context for all other wgpu objects
         let wgpu_instance = wgpu::Instance::new(backends);
 
@@ -55,18 +50,28 @@ impl Surface {
         #[cfg(debug_assertions)]
         enumerate_all_adapters(backends, &wgpu_instance);
 
-        let adapter_options = wgpu::RequestAdapterOptions {
-            power_preference,
-            force_fallback_adapter,
-            compatible_surface: Some(&wgpu_surface),
-        };
-        let adapter = Adapter::new(&wgpu_instance, adapter_options)
-            /*.or_else(|e| Err(SurfaceError::AdapterNotObtained))*/?;
+        let adapter = {
+            let adapter_options = wgpu::RequestAdapterOptions {
+                power_preference,
+                force_fallback_adapter,
+                compatible_surface: Some(&wgpu_surface),
+            };
+
+            let adapter_option = async {
+                wgpu_instance.request_adapter(&adapter_options).await
+            }.block_on();
+
+            if let Some(a) = adapter_option {
+                Ok( a )
+            } else {
+                Err(SurfaceError::AdapterNotObtained)
+            }
+        }?;
 
         #[cfg(debug_assertions)]
         println!(
             "Picked Adapter: {}",
-            pprint_adapter_info(adapter.expose_wrapped_adapter())
+            pprint_adapter_info(&adapter)
         );
 
         let format = preferred_format.unwrap_or({
