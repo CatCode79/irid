@@ -5,9 +5,11 @@ use thiserror::Error;
 
 use irid_assets_interface::{Image, ImageSize};
 use irid_assets::DiffuseTexture;
-use irid_renderer_interface::Camera;
 
-use crate::{camera_bind::CameraBindGroup, texture_metadatas::TextureImageMetadatas, utils::log2};
+use crate::camera::Camera;
+use crate::camera_bind::CameraBindGroup;
+use crate::texture_metadatas::TextureImageMetadatas;
+use crate::utils::log2;
 
 //= ERRORS =========================================================================================
 

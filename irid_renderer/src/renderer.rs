@@ -8,9 +8,9 @@ use thiserror::Error;
 use irid_app_interface::Window;
 use irid_assets_interface::{Index, Vertex};
 use irid_assets::DiffuseTexture;
-use irid_renderer_interface::Camera;
 
 use crate::{
+    camera::Camera,
     camera_bind::CameraBindGroup,
     device::Device,
     instance::Instance,
