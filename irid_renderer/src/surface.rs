@@ -69,24 +69,17 @@ impl Surface {
         }?;
 
         #[cfg(debug_assertions)]
-        println!(
-            "Picked Adapter: {}",
-            pprint_adapter_info(&adapter)
-        );
+        println!("Picked Adapter: {}", pprint_adapter_info(&adapter));
 
         let format = preferred_format.unwrap_or({
-            wgpu::TextureFormat::Rgba8UnormSrgb
-            /*
-            // This part is commented out because if by chance the format is returned as
-            // Bgra8UnormSrgb then we need to convert all textures to that format, which is
-            // currently performance-heavy, if I'm not wrong, in the current crate image API.
-            // TODO: Ideally, it would be an on-the-fly conversion while loading the image.
             wgpu_surface
-                .get_preferred_format(adapter.expose_wrapped_adapter())
+                .get_preferred_format(&adapter)
                 // Most images are stored using sRGB so we need to reflect that here.
                 .unwrap_or(wgpu::TextureFormat::Rgba8UnormSrgb)
-            */
         });
+
+        #[cfg(debug_assertions)]
+        println!("Preferred Texture Color Format: {:?}", format);
 
         let window_size = window.inner_size();
 
