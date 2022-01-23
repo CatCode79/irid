@@ -367,7 +367,7 @@ where
                     // These errors should be resolved by the next frame
                     wgpu::SurfaceError::Timeout | wgpu::SurfaceError::Outdated => {
                         // TODO: better error messages?
-                        eprintln!("{:?}", error)
+                        log::error!("{:?}", error)
                     }
 
                     // Recreate the swap chain if lost

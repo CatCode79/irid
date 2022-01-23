@@ -12,6 +12,7 @@ publish = false
 [dependencies]
 bytemuck = { version = "1.7", features = ["derive"] }
 cgmath = "0.18"
+log = "0.4"
 irid_assets = { path = "../irid_assets" }
 irid_assets_interface = { path = "../irid_assets_interface" }
 pollster = "0.2"

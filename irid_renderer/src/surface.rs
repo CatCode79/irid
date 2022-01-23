@@ -45,7 +45,6 @@ impl Surface {
         let wgpu_surface = unsafe { wgpu_instance.create_surface(window) };
 
         // For debug purpose prints on console all the available adapters
-        #[cfg(debug_assertions)]
         enumerate_all_adapters(backends, &wgpu_instance);
 
         let adapter = {
@@ -65,8 +64,7 @@ impl Surface {
             }
         }?;
 
-        #[cfg(debug_assertions)]
-        println!("Picked Adapter: {}", pprint_adapter_info(&adapter));
+        log::info!("Picked Adapter: {}", pprint_adapter_info(&adapter));
 
         let format = preferred_format.unwrap_or({
             wgpu_surface
@@ -75,8 +73,7 @@ impl Surface {
                 .unwrap_or(wgpu::TextureFormat::Rgba8UnormSrgb)
         });
 
-        #[cfg(debug_assertions)]
-        println!("Preferred Texture Color Format: {:?}", format);
+        log::info!("Preferred Texture Color Format: {:?}", format);
 
         let window_size = window.inner_size();
 
@@ -129,8 +126,7 @@ impl Surface {
 
 //= FUNCTIONS ======================================================================================
 
-// Shows all the adapters information for debug.
-#[cfg(debug_assertions)]
+// Shows all the adapters information.
 fn enumerate_all_adapters(backends: wgpu::Backends, instance: &wgpu::Instance) {
     instance.poll_all(true);
     let adapters = instance.enumerate_adapters(backends);
@@ -139,20 +135,19 @@ fn enumerate_all_adapters(backends: wgpu::Backends, instance: &wgpu::Instance) {
     for (i, adapter) in adapters.enumerate() {
         let info = pprint_adapter_info(&adapter);
         if i == 0 {
-            println!("Adapter(s) found - {}", info);
+            log::info!("Adapter(s) found - {}", info);
         } else {
-            println!("                 - {}", info);
+            log::info!("                 - {}", info);
         }
         found = true;
     }
 
     if !found {
-        println!("No Adapter Found");
+        log::info!("No Adapter Found");
     }
 }
 
 // Wgpu adapter info pretty printing.
-#[cfg(debug_assertions)]
 fn pprint_adapter_info(adapter: &wgpu::Adapter) -> String {
     format!("{:?}", adapter.get_info())
         .replace("AdapterInfo { name: ", "")
