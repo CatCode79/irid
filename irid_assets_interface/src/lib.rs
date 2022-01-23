@@ -40,8 +40,6 @@ clippy::pattern_type_mismatch,
 use std::convert::TryFrom;
 use std::num::TryFromIntError;
 
-use thiserror::Error;
-
 //= IMAGE TRAIT ====================================================================================
 
 /// Trait that describes the generic behavior of an image object.
@@ -95,47 +93,6 @@ pub trait ImageSize: From<(u32, u32)> + From<[u32; 2]> {
 
     /// Returns the [Image] width and height (in that order) as tuple.
     fn as_tuple(&self) -> (u32, u32);
-}
-
-//= TEXTURE ERRORS =================================================================================
-
-#[non_exhaustive]
-#[derive(Debug, Error)] // TODO: impossible to add Clone because of image::error::ImageError
-pub enum TextureError {
-    #[error("Cannot load the image")]
-    CannotLoad {
-        #[from]
-        source: image::error::ImageError,
-    },
-}
-
-//= TEXTURE TRAIT ==================================================================================
-
-///
-pub trait Texture {
-    ///
-    type Output: Texture;
-    ///
-    type Img: Image;
-    ///
-    type Size: ImageSize;
-
-    ///
-    fn load<P: AsRef<std::path::Path>>(filepath: P) -> Result<Self::Output, TextureError>;
-
-    ///
-    fn load_with_guessed_format<P: AsRef<std::path::Path>>(
-        filepath: P,
-    ) -> Result<Self::Output, TextureError>;
-
-    ///
-    fn path(&self) -> &std::path::PathBuf;
-
-    ///
-    fn image(&self) -> &Self::Img;
-
-    ///
-    fn size(&self) -> Self::Size;
 }
 
 //= VERTEX TRAIT ===================================================================================

@@ -57,12 +57,11 @@ impl Surface {
                 compatible_surface: Some(&wgpu_surface),
             };
 
-            let adapter_option = async {
-                wgpu_instance.request_adapter(&adapter_options).await
-            }.block_on();
+            let adapter_option =
+                async { wgpu_instance.request_adapter(&adapter_options).await }.block_on();
 
             if let Some(a) = adapter_option {
-                Ok( a )
+                Ok(a)
             } else {
                 Err(SurfaceError::AdapterNotObtained)
             }

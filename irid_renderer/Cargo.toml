@@ -13,6 +13,7 @@ publish = false
 bytemuck = { version = "1.7", features = ["derive"] }
 cgmath = "0.18"
 irid_app_interface = { path = "../irid_app_interface" }
+irid_assets = { path = "../irid_assets" }
 irid_assets_interface = { path = "../irid_assets_interface" }
 irid_renderer_interface = { path = "../irid_renderer_interface" }
 pollster = "0.2"

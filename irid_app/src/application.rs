@@ -5,7 +5,7 @@ use std::{fmt::Debug, path::PathBuf};
 use thiserror::Error;
 
 use irid_app_interface::{Window, WindowConfig};
-use irid_assets::{ColorVertex, DiffuseTexture};
+use irid_assets_interface::Vertex;
 use irid_renderer::{PerspectiveCamera, Renderer, RendererConfig, RendererError};
 
 use crate::Listener;
@@ -31,18 +31,19 @@ pub enum ApplicationError {
 
 /// Build a new [Application] with wanted values.
 #[derive(Clone, Debug, Default)]
-pub struct ApplicationConfig<'a, L: Listener, W: WindowConfig> {
+pub struct ApplicationConfig<'a, L: Listener, W: WindowConfig, V: Vertex> {
     listener: L,
     window_config: Option<W>,
     renderer_config: Option<
-        RendererConfig<'a, PerspectiveCamera, &'a str,  &'a str, ColorVertex, u16, DiffuseTexture>,
+        RendererConfig<'a, PerspectiveCamera, &'a str, &'a str, V, u16>,
     >, // TODO: to refact
 }
 
-impl<'a, L, W> ApplicationConfig<'a, L, W>
+impl<'a, L, W, V> ApplicationConfig<'a, L, W, V>
 where
     L: Listener,
     W: WindowConfig,
+    V: Vertex + bytemuck::Pod,
 {
     //- Constructors -------------------------------------------------------------------------------
 
@@ -66,8 +67,8 @@ where
 
     ///
     #[inline]
-    pub fn with_window_builder<IW: Into<Option<W>>>(mut self, window_config: IW) -> Self {
-        self.window_config = window_config.into();
+    pub fn with_window_builder(mut self, window_config: W) -> Self {
+        self.window_config = Some(window_config);
         self
     }
 
@@ -89,33 +90,26 @@ where
 
     ///
     #[inline]
-    pub fn with_renderer_config<
-        IR: Into<
-            Option<
-                RendererConfig<
-                    'a,
-                    PerspectiveCamera,
-                    &'a str,
-                    &'a str,
-                    ColorVertex,
-                    u16,
-                    DiffuseTexture,
-                >,
-            >,
-        >,
-    >(
+    pub fn with_renderer_config(
         // TODO: to refact
         mut self,
-        renderer_config: IR,
+        renderer_config: RendererConfig<
+            'a,
+            PerspectiveCamera,
+            &'a str,
+            &'a str,
+            V,
+            u16,
+        >,
     ) -> Self {
-        self.renderer_config = renderer_config.into();
+        self.renderer_config = Some(renderer_config);
         self
     }
 
     //- Build --------------------------------------------------------------------------------------
 
     /// Build a new [Application] with given values.
-    pub fn build(self) -> Application<'a, L, W> {
+    pub fn build(self) -> Application<'a, L, W, V> {
         Application {
             listener: self.listener,
             window_config: self.window_config.unwrap_or_else(W::new),
@@ -128,17 +122,18 @@ where
 
 /// Manages the whole game setup and logic.
 #[derive(Debug)] // TODO: add Clone and Default traits, impossible because Renderer
-pub struct Application<'a, L: Listener, W: WindowConfig> {
+pub struct Application<'a, L: Listener, W: WindowConfig, V: Vertex> {
     listener: L,
     window_config: W,
     renderer_config:
-        RendererConfig<'a, PerspectiveCamera, &'a str,  &'a str, ColorVertex, u16, DiffuseTexture>, // TODO: to refact
+        RendererConfig<'a, PerspectiveCamera, &'a str, &'a str, V, u16>, // TODO: to refact
 }
 
-impl<'a, L, W> Application<'a, L, W>
+impl<'a, L, W, V> Application<'a, L, W, V>
 where
     L: Listener,
     W: WindowConfig + Clone, // TODO: after removing the clone below remove this coercion
+    V: Vertex + bytemuck::Pod,
 {
     /// Starts the
     /// [event loop](https://docs.rs/winit/0.25.0/winit/event_loop/struct.EventLoop.html).

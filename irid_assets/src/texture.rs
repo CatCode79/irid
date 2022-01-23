@@ -1,8 +1,22 @@
 //= USES ===========================================================================================
 
-use irid_assets_interface::{Image, Texture, TextureError};
+use thiserror::Error;
+
+use irid_assets_interface::Image;
 
 use crate::{DiffuseImage, DiffuseImageSize};
+
+//= TEXTURE ERRORS =================================================================================
+
+#[non_exhaustive]
+#[derive(Debug, Error)] // TODO: impossible to add Clone because of image::error::ImageError
+pub enum TextureError {
+    #[error("Cannot load the image")]
+    CannotLoad {
+        #[from]
+        source: image::error::ImageError,
+    },
+}
 
 //= DIFFUSE TEXTURE ================================================================================
 
@@ -13,43 +27,37 @@ pub struct DiffuseTexture {
     image: DiffuseImage,
 }
 
-impl Texture for DiffuseTexture {
-    //- Associated Types ---------------------------------------------------------------------------
-
-    type Output = Self;
-    type Img = DiffuseImage;
-    type Size = DiffuseImageSize;
-
+impl DiffuseTexture {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
-    fn load<P: AsRef<std::path::Path>>(filepath: P) -> Result<Self, TextureError> {
+    pub fn load<P: AsRef<std::path::Path>>(filepath: P) -> Result<Self, TextureError> {
         Ok(Self {
             path: filepath.as_ref().to_path_buf(),
-            image: Self::Img::load(filepath)?,
+            image: DiffuseImage::load(filepath)?,
         })
     }
 
-    fn load_with_guessed_format<P: AsRef<std::path::Path>>(
+    pub fn load_with_guessed_format<P: AsRef<std::path::Path>>(
         filepath: P,
     ) -> Result<Self, TextureError> {
         Ok(Self {
             path: filepath.as_ref().to_path_buf(),
-            image: Self::Img::load_with_guessed_format(filepath)?,
+            image: DiffuseImage::load_with_guessed_format(filepath)?,
         })
     }
 
     //- Getters ------------------------------------------------------------------------------------
 
-    fn path(&self) -> &std::path::PathBuf {
+    pub fn path(&self) -> &std::path::PathBuf {
         &self.path
     }
 
-    fn image(&self) -> &Self::Img {
+    pub fn image(&self) -> &DiffuseImage {
         &self.image
     }
 
-    fn size(&self) -> Self::Size {
+    pub fn size(&self) -> DiffuseImageSize {
         self.image.size()
     }
 }

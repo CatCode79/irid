@@ -15,4 +15,5 @@ image = "0.23"
 irid_assets_interface = { path = "../irid_assets_interface" }
 #log = "0.4"
 #tobj = "3.2"
+thiserror = "1.0"
 wgpu = "0.12"

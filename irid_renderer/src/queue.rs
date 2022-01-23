@@ -3,7 +3,8 @@
 use std::future::Future;
 use thiserror::Error;
 
-use irid_assets_interface::{Image, ImageSize, Texture};
+use irid_assets_interface::{Image, ImageSize};
+use irid_assets::DiffuseTexture;
 use irid_renderer_interface::Camera;
 
 use crate::{camera_bind::CameraBindGroup, texture_metadatas::TextureImageMetadatas, utils::log2};
@@ -60,10 +61,10 @@ impl Queue {
     /// This method is intended to have low performance costs.
     /// As such, the write is not immediately submitted, and instead enqueued
     /// internally to happen at the start of the next `submit()` call.
-    pub fn write_texture<T: Texture>(
+    pub fn write_texture(
         &self,
         texture_image_metadatas: &[Vec<TextureImageMetadatas>],
-        texture: T,
+        texture: DiffuseTexture,
     ) -> Result<(), QueueError> {
         // TODO: better add a ref to metas inside irid Texture structs
         let metadatas = &texture_image_metadatas[log2(texture.size().width() as i32) as usize]

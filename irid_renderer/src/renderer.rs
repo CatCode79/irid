@@ -1,12 +1,13 @@
 //= USES ===========================================================================================
 
-use std::{fmt::Debug, fs::read_to_string, marker::PhantomData, path::Path};
+use std::{fmt::Debug, fs::read_to_string, path::Path};
 
 use bytemuck::Pod;
 use thiserror::Error;
 
 use irid_app_interface::Window;
-use irid_assets_interface::{Index, Texture, Vertex};
+use irid_assets_interface::{Index, Vertex};
+use irid_assets::DiffuseTexture;
 use irid_renderer_interface::Camera;
 
 use crate::{
@@ -37,7 +38,7 @@ pub enum RendererError {
     #[error("unable to load the texture")]
     LoadTexture {
         #[from]
-        source: irid_assets_interface::TextureError,
+        source: irid_assets::TextureError,
     },
     #[error("unable to enqueue the texture")]
     WriteTexture {
@@ -66,7 +67,6 @@ pub struct RendererConfig<
     PT: AsRef<Path>,
     V: Vertex,
     I: Index,
-    T: Texture,
 > {
     // First tier support backends for the Instance request
     backends: wgpu::Backends,
@@ -93,18 +93,15 @@ pub struct RendererConfig<
     vertices: Option<&'a [V]>,
     indices: Option<&'a [I]>,
     clear_color: Option<wgpu::Color>,
-
-    generic_texture: PhantomData<T>,
 }
 
-impl<'a, C, PS, PT, V, I, T> Default for RendererConfig<'a, C, PS, PT, V, I, T>
+impl<'a, C, PS, PT, V, I> Default for RendererConfig<'a, C, PS, PT, V, I>
 where
     C: Camera + Clone,
     PS: AsRef<Path> + Debug,
     PT: AsRef<Path> + Debug,
     V: Vertex + Pod,
     I: Index + Pod,
-    T: Texture,
 {
     fn default() -> Self {
         Self {
@@ -121,19 +118,17 @@ where
             vertices: None,
             indices: None,
             clear_color: None,
-            generic_texture: Default::default(),
         }
     }
 }
 
-impl<'a, C, PS, PT, V, I, T> RendererConfig<'a, C, PS, PT, V, I, T>
+impl<'a, C, PS, PT, V, I> RendererConfig<'a, C, PS, PT, V, I>
 where
     C: Camera + Clone,
     PS: AsRef<Path> + Debug,
     PT: AsRef<Path> + Debug,
     V: Vertex + Pod,
     I: Index + Pod,
-    T: Texture,
 {
     //- Constructors -------------------------------------------------------------------------------
 
@@ -309,7 +304,7 @@ where
         //- Texture Metadatas ----------------------------------------------------------------------
 
         let texture_image_metadatas = if self.texture_path.is_some() {
-            RendererConfig::<'a, C, PS, PT, V, I, T>::create_texture_image_metadatas(
+            RendererConfig::<'a, C, PS, PT, V, I>::create_texture_image_metadatas(
                 &device,
                 surface.format(),
             )
@@ -318,7 +313,7 @@ where
         };
 
         let texture_bind_group_metadatas = if self.texture_path.is_some() {
-            RendererConfig::<'a, C, PS, PT, V, I, T>::create_texture_bind_group_metadatas(
+            RendererConfig::<'a, C, PS, PT, V, I>::create_texture_bind_group_metadatas(
                 &device,
                 &texture_image_metadatas,
             )
@@ -422,7 +417,7 @@ where
             //  and therefore it is useless to add a new type of error
             queue.write_texture(
                 &texture_image_metadatas,
-                T::load(self.texture_path.as_ref().unwrap())?,
+                DiffuseTexture::load(self.texture_path.as_ref().unwrap())?,
             )?
         }
 
@@ -445,9 +440,9 @@ where
         //- Instances ------------------------------------------------------------------------------
 
         let (instances, instances_buffer) = if self.vertices.is_some() {
-            let instances = RendererConfig::<'a, C, PS, PT, V, I, T>::create_instances();
+            let instances = RendererConfig::<'a, C, PS, PT, V, I>::create_instances();
             let instances_buffer =
-                RendererConfig::<'a, C, PS, PT, V, I, T>::create_instances_buffer(
+                RendererConfig::<'a, C, PS, PT, V, I>::create_instances_buffer(
                     &device, &instances,
                 );
             (Some(instances), Some(instances_buffer))
