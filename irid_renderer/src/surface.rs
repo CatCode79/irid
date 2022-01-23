@@ -3,8 +3,6 @@
 use pollster::FutureExt;
 use thiserror::Error;
 
-use irid_app_interface::Window;
-
 use crate::device::Device;
 
 //= ERRORS =========================================================================================
@@ -32,9 +30,9 @@ impl Surface {
 
     /// Create a new Surface using the window handle and retrieves an Adapter which matches
     /// the created surface.
-    pub(crate) fn new<W: Window>(
+    pub(crate) fn new(
         backends: wgpu::Backends,
-        window: &W,
+        window: &winit::window::Window,
         power_preference: wgpu::PowerPreference,
         force_fallback_adapter: bool,
         preferred_format: Option<wgpu::TextureFormat>,
@@ -44,7 +42,7 @@ impl Surface {
         let wgpu_instance = wgpu::Instance::new(backends);
 
         // Handle to a presentable surface onto which rendered images
-        let wgpu_surface = unsafe { wgpu_instance.create_surface(window.expose_inner_window()) };
+        let wgpu_surface = unsafe { wgpu_instance.create_surface(window) };
 
         // For debug purpose prints on console all the available adapters
         #[cfg(debug_assertions)]

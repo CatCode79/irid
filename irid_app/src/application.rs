@@ -4,11 +4,10 @@ use std::{fmt::Debug, path::PathBuf};
 
 use thiserror::Error;
 
-use irid_app_interface::{Window, WindowConfig};
 use irid_assets_interface::Vertex;
 use irid_renderer::{PerspectiveCamera, Renderer, RendererConfig, RendererError};
 
-use crate::Listener;
+use crate::{IridWindowConfig, Listener};
 
 //= ERRORS =========================================================================================
 
@@ -31,18 +30,17 @@ pub enum ApplicationError {
 
 /// Build a new [Application] with wanted values.
 #[derive(Clone, Debug, Default)]
-pub struct ApplicationConfig<'a, L: Listener, W: WindowConfig, V: Vertex> {
+pub struct ApplicationConfig<'a, L: Listener, V: Vertex> {
     listener: L,
-    window_config: Option<W>,
+    window_config: Option<IridWindowConfig>,
     renderer_config: Option<
         RendererConfig<'a, PerspectiveCamera, &'a str, &'a str, V, u16>,
     >, // TODO: to refact
 }
 
-impl<'a, L, W, V> ApplicationConfig<'a, L, W, V>
+impl<'a, L, V> ApplicationConfig<'a, L, V>
 where
     L: Listener,
-    W: WindowConfig,
     V: Vertex + bytemuck::Pod,
 {
     //- Constructors -------------------------------------------------------------------------------
@@ -67,7 +65,7 @@ where
 
     ///
     #[inline]
-    pub fn with_window_builder(mut self, window_config: W) -> Self {
+    pub fn with_window_builder(mut self, window_config: IridWindowConfig) -> Self {
         self.window_config = Some(window_config);
         self
     }
@@ -109,10 +107,10 @@ where
     //- Build --------------------------------------------------------------------------------------
 
     /// Build a new [Application] with given values.
-    pub fn build(self) -> Application<'a, L, W, V> {
+    pub fn build(self) -> Application<'a, L, V> {
         Application {
             listener: self.listener,
-            window_config: self.window_config.unwrap_or_else(W::new),
+            window_config: self.window_config.unwrap_or_else(IridWindowConfig::new),
             renderer_config: self.renderer_config.unwrap_or_else(RendererConfig::new),
         }
     }
@@ -122,17 +120,16 @@ where
 
 /// Manages the whole game setup and logic.
 #[derive(Debug)] // TODO: add Clone and Default traits, impossible because Renderer
-pub struct Application<'a, L: Listener, W: WindowConfig, V: Vertex> {
+pub struct Application<'a, L: Listener, V: Vertex> {
     listener: L,
-    window_config: W,
+    window_config: IridWindowConfig,
     renderer_config:
         RendererConfig<'a, PerspectiveCamera, &'a str, &'a str, V, u16>, // TODO: to refact
 }
 
-impl<'a, L, W, V> Application<'a, L, W, V>
+impl<'a, L, V> Application<'a, L, V>
 where
     L: Listener,
-    W: WindowConfig + Clone, // TODO: after removing the clone below remove this coercion
     V: Vertex + bytemuck::Pod,
 {
     /// Starts the
@@ -149,18 +146,15 @@ where
     /// method instead but all those static variables are a bore to handle.
     ///
     /// To remember that the resize is not managed perfectly with run_return.
-    pub fn start(self) -> Result<(), ApplicationError>
-    where
-        <W as WindowConfig>::BuildOutput: Window,
-    {
+    pub fn start(self) -> Result<(), ApplicationError> {
         let mut event_loop = winit::event_loop::EventLoop::new();
-        let mut window = self.window_config.clone().build(&event_loop)?; // TODO: this clone will be hard to remove..
+        let mut window = self.window_config.clone().build(&event_loop)?; // TODO: this clone probably will be hard to remove
 
         // Now is a good time to make the window visible: after the renderer has been initialized,
         // in this way we avoid a slight visible/invisible toggling effect of the window
         window.conclude_visibility_delay();
 
-        let renderer = &mut self.renderer_config.build(&window)?;
+        let renderer = &mut self.renderer_config.build(&window.expose_inner_window())?;
 
         use winit::platform::run_return::EventLoopExtRunReturn;
         event_loop.run_return(move |event, _, control_flow| {

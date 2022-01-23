@@ -5,7 +5,6 @@ use std::{fmt::Debug, fs::read_to_string, path::Path};
 use bytemuck::Pod;
 use thiserror::Error;
 
-use irid_app_interface::Window;
 use irid_assets_interface::{Index, Vertex};
 use irid_assets::DiffuseTexture;
 
@@ -269,7 +268,10 @@ where
     //- Build --------------------------------------------------------------------------------------
 
     ///
-    pub fn build<W: Window>(&self, window: &'a W) -> Result<Renderer<C>, RendererError> {
+    pub fn build(
+        &self,
+        window: &'a winit::window::Window
+    ) -> Result<Renderer<C>, RendererError> {
         //- Surface, Device, Queue -----------------------------------------------------------------
 
         let window_size = window.inner_size();
@@ -282,7 +284,6 @@ where
             self.preferred_format,
             self.present_mode,
         )
-        // TODO: better pass `e` as argument to SurfaceAdapterRequest for chaining error descr?
         .map_err(|_| RendererError::SurfaceAdapterRequest)?;
 
         // TODO: better find a way to remove the limits.clone()
