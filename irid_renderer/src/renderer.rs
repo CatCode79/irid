@@ -305,10 +305,7 @@ where
         //- Texture Metadatas ----------------------------------------------------------------------
 
         let texture_image_metadatas = if self.texture_path.is_some() {
-            RendererConfig::<'a, C, PS, PT, V, I>::create_texture_image_metadatas(
-                &device,
-                surface.format(),
-            )
+            RendererConfig::<'a, C, PS, PT, V, I>::create_texture_image_metadatas(&device)
         } else {
             vec![]
         };
@@ -480,10 +477,7 @@ where
     ///
     ///
     /// It can't cache zero sized textures.
-    pub fn create_texture_image_metadatas(
-        device: &Device,
-        preferred_format: wgpu::TextureFormat,
-    ) -> Vec<Vec<TextureImageMetadatas>> {
+    pub fn create_texture_image_metadatas(device: &Device) -> Vec<Vec<TextureImageMetadatas>> {
         let qty = log2(wgpu::Limits::downlevel_defaults().max_texture_dimension_2d as i32) as usize;
         let mut vec_w = Vec::<Vec<TextureImageMetadatas>>::with_capacity(qty);
         for width in 0..qty {
@@ -491,7 +485,6 @@ where
             for height in 0..qty {
                 vec_h.push(TextureImageMetadatas::new(
                     device,
-                    preferred_format,
                     2_u32.pow(width as u32),
                     2_u32.pow(height as u32),
                 ));

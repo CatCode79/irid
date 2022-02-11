@@ -16,7 +16,7 @@ impl TextureImageMetadatas {
     //- Constructors -------------------------------------------------------------------------------
 
     ///
-    pub fn new(device: &Device, format: wgpu::TextureFormat, width: u32, height: u32) -> Self {
+    pub fn new(device: &Device, width: u32, height: u32) -> Self {
         let image_size = wgpu::Extent3d {
             width,
             height,
@@ -25,15 +25,15 @@ impl TextureImageMetadatas {
         };
 
         let texture = device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("Diffuse Texture"),
+            format: wgpu::TextureFormat::Rgba8UnormSrgb,
             size: image_size,
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
-            format,
             // TEXTURE_BINDING tells wgpu that we want to use this texture in shaders
             // COPY_DST means that we want to copy data to this texture
             usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
-            label: Some("Diffuse Texture"),
         });
 
         let image_data_layout = wgpu::ImageDataLayout {
