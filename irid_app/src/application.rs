@@ -151,7 +151,7 @@ where
         let mut window = self.window_config.clone().build(&event_loop)?; // TODO: this clone probably will be hard to remove
 
         // Now is a good time to make the window visible: after the renderer has been initialized,
-        // in this way we avoid a slight visible/invisible toggling effect of the window
+        // in this way we avoid a slight window's visible/invisible toggling effect
         window.conclude_visibility_delay();
 
         let renderer = &mut self.renderer_config.build(&window.expose_inner_window())?;
