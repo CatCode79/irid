@@ -1,6 +1,8 @@
 //= USES ===========================================================================================
 
-use irid::{ApplicationConfig, Camera, Listener, PerspectiveCamera, RendererConfig, TextCoordsVertex};
+use irid::{
+    ApplicationConfig, Camera, Listener, PerspectiveCamera, RendererConfig, TextCoordsVertex,
+};
 
 //= GAME LOGIC =====================================================================================
 

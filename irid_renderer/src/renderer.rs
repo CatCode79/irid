@@ -5,8 +5,8 @@ use std::{fmt::Debug, fs::read_to_string, path::Path};
 use bytemuck::Pod;
 use thiserror::Error;
 
-use irid_assets_interface::{Index, Vertex};
 use irid_assets::DiffuseTexture;
+use irid_assets_interface::{Index, Vertex};
 
 use crate::{
     camera::Camera,
@@ -59,14 +59,7 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 
 ///
 #[derive(Clone, Debug)]
-pub struct RendererConfig<
-    'a,
-    C: Camera,
-    PS: AsRef<Path>,
-    PT: AsRef<Path>,
-    V: Vertex,
-    I: Index,
-> {
+pub struct RendererConfig<'a, C: Camera, PS: AsRef<Path>, PT: AsRef<Path>, V: Vertex, I: Index> {
     // First tier support backends for the Instance request
     backends: wgpu::Backends,
 
@@ -268,10 +261,7 @@ where
     //- Build --------------------------------------------------------------------------------------
 
     ///
-    pub fn build(
-        &self,
-        window: &'a winit::window::Window
-    ) -> Result<Renderer<C>, RendererError> {
+    pub fn build(&self, window: &'a winit::window::Window) -> Result<Renderer<C>, RendererError> {
         //- Surface, Device, Queue -----------------------------------------------------------------
 
         let window_size = window.inner_size();
@@ -440,9 +430,7 @@ where
         let (instances, instances_buffer) = if self.vertices.is_some() {
             let instances = RendererConfig::<'a, C, PS, PT, V, I>::create_instances();
             let instances_buffer =
-                RendererConfig::<'a, C, PS, PT, V, I>::create_instances_buffer(
-                    &device, &instances,
-                );
+                RendererConfig::<'a, C, PS, PT, V, I>::create_instances_buffer(&device, &instances);
             (Some(instances), Some(instances_buffer))
         } else {
             (None, None)

@@ -33,9 +33,7 @@ pub enum ApplicationError {
 pub struct ApplicationConfig<'a, L: Listener, V: Vertex> {
     listener: L,
     window_config: Option<IridWindowConfig>,
-    renderer_config: Option<
-        RendererConfig<'a, PerspectiveCamera, &'a str, &'a str, V, u16>,
-    >, // TODO: to refact
+    renderer_config: Option<RendererConfig<'a, PerspectiveCamera, &'a str, &'a str, V, u16>>, // TODO: to refact
 }
 
 impl<'a, L, V> ApplicationConfig<'a, L, V>
@@ -91,14 +89,7 @@ where
     pub fn with_renderer_config(
         // TODO: to refact
         mut self,
-        renderer_config: RendererConfig<
-            'a,
-            PerspectiveCamera,
-            &'a str,
-            &'a str,
-            V,
-            u16,
-        >,
+        renderer_config: RendererConfig<'a, PerspectiveCamera, &'a str, &'a str, V, u16>,
     ) -> Self {
         self.renderer_config = Some(renderer_config);
         self
@@ -123,8 +114,7 @@ where
 pub struct Application<'a, L: Listener, V: Vertex> {
     listener: L,
     window_config: IridWindowConfig,
-    renderer_config:
-        RendererConfig<'a, PerspectiveCamera, &'a str, &'a str, V, u16>, // TODO: to refact
+    renderer_config: RendererConfig<'a, PerspectiveCamera, &'a str, &'a str, V, u16>, // TODO: to refact
 }
 
 impl<'a, L, V> Application<'a, L, V>

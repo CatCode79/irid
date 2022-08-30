@@ -2,8 +2,8 @@
 
 use thiserror::Error;
 
-use irid_assets_interface::{Image, ImageSize};
 use irid_assets::DiffuseTexture;
+use irid_assets_interface::{Image, ImageSize};
 
 use crate::camera::Camera;
 use crate::camera_bind::CameraBindGroup;

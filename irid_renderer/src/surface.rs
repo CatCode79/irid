@@ -66,7 +66,8 @@ impl Surface {
 
         log::info!("Picked Adapter: {}", pprint_adapter_info(&adapter));
 
-        let format = preferred_format.unwrap_or_else(|| wgpu_surface.get_supported_formats(&adapter)[0]);
+        let format =
+            preferred_format.unwrap_or_else(|| wgpu_surface.get_supported_formats(&adapter)[0]);
 
         log::info!("Preferred Texture Color Format: {:?}", format);
 
