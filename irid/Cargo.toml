@@ -5,7 +5,7 @@ authors = ["CatCode79 https://github.com/CatCode79"]
 edition = "2021"
 rust-version = "1.63"
 description = "Irid Game Framework"
-repository = "https://github.com/irid-game-framework/irid"
+repository = "https://github.com/CatCode79/irid"
 license = "MIT OR Apache-2.0"
 publish = false
 
