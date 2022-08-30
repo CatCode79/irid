@@ -1,0 +1,17 @@
+[package]
+name = "lw05_textures_bind_groups"
+version = "0.0.13"
+authors = ["CatCode79 https://github.com/CatCode79"]
+edition = "2021"
+rust-version = "1.63"
+description = "based on https://sotrh.github.io/learn-wgpu/beginner/tutorial5-textures/"
+repository = "https://github.com/irid-game-framework/lw-examples"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[dependencies]
+env_logger = "0.9"
+irid = { path = "../../irid" }
+log = "0.4"
+wgpu = "0.13"
+winit = "0.26"

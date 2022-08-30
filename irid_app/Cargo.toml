@@ -1,7 +1,7 @@
 [package]
 name = "irid_app"
 version = "0.0.13"
-authors = ["https://github.com/irid-game-framework/irid/graphs/contributors"]
+authors = ["CatCode79 https://github.com/CatCode79"]
 edition = "2021"
 rust-version = "1.63"
 description = "Irid Game Framework Application"
@@ -11,10 +11,10 @@ publish = false
 
 [dependencies]
 bytemuck = "1"
-log = "0.4"
 #irid_assets = { path = "../irid_assets" }
 irid_assets_interface = { path = "../irid_assets_interface" }
 irid_renderer = { path = "../irid_renderer" }
+log = "0.4"
 thiserror = "1"
 wgpu = "0.13"
 winit = "0.26"

@@ -7,4 +7,13 @@ members = [
     "irid_assets",
     "irid_assets_interface",
     "irid_renderer",
+    "examples/lw01_window",
+    "examples/lw02_swapchain",
+    "examples/lw03_pipeline",
+    "examples/lw04_buffers_indices",
+    "examples/lw05_textures_bind_groups",
+    "examples/lw06_uniforms_3d_camera",
+    "examples/lw07_instancing",
+    #examples/"lw08_depth_buffer",
+    #examples/"lw09_model_loading",
 ]

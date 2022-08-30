@@ -1,0 +1,22 @@
+[package]
+name = "lw09_model_loading"
+version = "0.0.13"
+authors = ["CatCode79 https://github.com/CatCode79"]
+edition = "2021"
+rust-version = "1.63"
+description = "based on https://sotrh.github.io/learn-wgpu/beginner/tutorial9-models/"
+repository = "https://github.com/irid-game-framework/lw-examples"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[dependencies]
+env_logger = "0.9"
+irid = { path = "../../irid" }
+log = "0.4"
+wgpu = "0.13"
+winit = "0.26"
+
+[build-dependencies]
+anyhow = "1.0"
+fs_extra = "1.2"
+glob = "0.3"  # but, it's used anymore?
