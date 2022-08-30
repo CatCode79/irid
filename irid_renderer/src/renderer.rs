@@ -337,7 +337,7 @@ where
             //#[cfg(feature = "glsl")]
             //wgpu::ShaderSource::Glsl(std::borrow::Cow::Owned(shader_key))
 
-            let shader_module = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
+            let shader_module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
                 label: None,
                 source,
             });
@@ -361,14 +361,14 @@ where
                 }
             };
 
-            let color_targets = [wgpu::ColorTargetState {
+            let color_targets = [Some(wgpu::ColorTargetState {
                 format: surface.format(),
                 blend: Some(wgpu::BlendState {
                     color: wgpu::BlendComponent::REPLACE,
                     alpha: wgpu::BlendComponent::REPLACE,
                 }),
                 write_mask: wgpu::ColorWrites::ALL,
-            }];
+            })];
 
             let fragment_states = wgpu::FragmentState {
                 module: &shader_module,
@@ -669,14 +669,14 @@ where
         {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
-                color_attachments: &[wgpu::RenderPassColorAttachment {
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &frame_view,
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(self.clear_color),
                         store: true,
                     },
-                }],
+                })],
                 depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
                     view: self.texture_depth_metadatas.view(),
                     depth_ops: Some(wgpu::Operations {

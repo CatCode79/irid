@@ -1,6 +1,5 @@
 //= USES ===========================================================================================
 
-use std::future::Future;
 use thiserror::Error;
 
 use irid_assets_interface::{Image, ImageSize};
@@ -91,7 +90,7 @@ impl Queue {
 
     /// Submits a series of finished command buffers for execution.
     pub fn submit<I: IntoIterator<Item = wgpu::CommandBuffer>>(&self, command_buffers: I) {
-        self.wgpu_queue.submit(command_buffers);
+        let _ = self.wgpu_queue.submit(command_buffers);
     }
 
     /// Gets the amount of nanoseconds each tick of a timestamp query represents.
@@ -99,11 +98,5 @@ impl Queue {
     /// Returns zero if timestamp queries are unsupported.
     pub fn get_timestamp_period(&self) -> f32 {
         self.wgpu_queue.get_timestamp_period()
-    }
-
-    /// Returns a future that resolves once all the work submitted by this point
-    /// is done processing on GPU.
-    pub fn on_submitted_work_done(&self) -> impl Future<Output = ()> + Send {
-        self.wgpu_queue.on_submitted_work_done()
     }
 }

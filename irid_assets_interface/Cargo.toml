@@ -1,14 +1,14 @@
 [package]
 name = "irid_assets_interface"
-version = "0.0.12"
+version = "0.0.13"
 authors = ["https://github.com/irid-game-framework/irid/graphs/contributors"]
-edition = "2018"
-#rust-version = "1.48"
+edition = "2021"
+rust-version = "1.63"
 description = "Irid Game Framework Assets Interface"
 repository = "https://github.com/irid-game-framework/irid"
 license = "MIT OR Apache-2.0"
 publish = false
 
 [dependencies]
-image = "0.23"
-wgpu = "0.12"
+image = "0.24"
+wgpu = "0.13"

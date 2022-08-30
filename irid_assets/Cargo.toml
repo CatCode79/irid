@@ -1,19 +1,19 @@
 [package]
 name = "irid_assets"
-version = "0.0.12"
+version = "0.0.13"
 authors = ["https://github.com/irid-game-framework/irid/graphs/contributors"]
-edition = "2018"
-#rust-version = "1.48"
+edition = "2021"
+rust-version = "1.63"
 description = "Irid Game Framework Assets"
 repository = "https://github.com/irid-game-framework/irid"
 license = "MIT OR Apache-2.0"
 publish = false
 
 [dependencies]
-bytemuck = { version = "1.7", features = ["derive"] }
-image = "0.23"
+bytemuck = { version = "1", features = ["derive"] }
+image = "0.24"
 irid_assets_interface = { path = "../irid_assets_interface" }
 #log = "0.4"
 #tobj = "3.2"
-thiserror = "1.0"
-wgpu = "0.12"
+thiserror = "1"
+wgpu = "0.13"

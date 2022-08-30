@@ -122,7 +122,7 @@ impl Device {
     /// Creates a [ShaderModule](wgpu::ShaderModule) from either SPIR-V or WGSL source code.
     pub fn create_shader_module(
         &self,
-        shader_module_desc: &wgpu::ShaderModuleDescriptor<'_>,
+        shader_module_desc: wgpu::ShaderModuleDescriptor<'_>,
     ) -> wgpu::ShaderModule {
         self.wgpu_device.create_shader_module(shader_module_desc)
     }

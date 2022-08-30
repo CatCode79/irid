@@ -66,12 +66,7 @@ impl Surface {
 
         log::info!("Picked Adapter: {}", pprint_adapter_info(&adapter));
 
-        let format = preferred_format.unwrap_or({
-            wgpu_surface
-                .get_preferred_format(&adapter)
-                // Most images are stored using sRGB so we need to reflect that here.
-                .unwrap_or(wgpu::TextureFormat::Rgba8UnormSrgb)
-        });
+        let format = preferred_format.unwrap_or_else(|| wgpu_surface.get_supported_formats(&adapter)[0]);
 
         log::info!("Preferred Texture Color Format: {:?}", format);
 
@@ -128,7 +123,7 @@ impl Surface {
 
 // Shows all the adapters information.
 fn enumerate_all_adapters(backends: wgpu::Backends, instance: &wgpu::Instance) {
-    instance.poll_all(true);
+    let _ = instance.poll_all(true);
     let adapters = instance.enumerate_adapters(backends);
 
     let mut found = false;
