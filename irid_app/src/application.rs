@@ -144,7 +144,7 @@ where
         // in this way we avoid a slight window's visible/invisible toggling effect
         window.conclude_visibility_delay();
 
-        let renderer = &mut self.renderer_config.build(&window.expose_inner_window())?;
+        let renderer = &mut self.renderer_config.build(window.expose_inner_window())?;
 
         use winit::platform::run_return::EventLoopExtRunReturn;
         event_loop.run_return(move |event, _, control_flow| {

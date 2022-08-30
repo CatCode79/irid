@@ -26,11 +26,11 @@ fn main() {
     // to be wgpu::FrontFace::Ccw so that we cull the back face.
     #[rustfmt::skip]
     let vertices = &[
-        ColorVertex { position: [-0.08682410,  0.49240386, 0.0], colors: [0.5, 0.0, 0.5] },
-        ColorVertex { position: [-0.49513406,  0.06958647, 0.0], colors: [0.5, 0.0, 0.5] },
-        ColorVertex { position: [-0.21918549, -0.44939706, 0.0], colors: [0.5, 0.0, 0.5] },
-        ColorVertex { position: [ 0.35966998, -0.34732910, 0.0], colors: [0.5, 0.0, 0.5] },
-        ColorVertex { position: [ 0.44147372,  0.23473590, 0.0], colors: [0.5, 0.0, 0.5] },
+        ColorVertex { position: [-0.086824,  0.492403, 0.0], colors: [0.5, 0.0, 0.5] },
+        ColorVertex { position: [-0.495134,  0.069586, 0.0], colors: [0.5, 0.0, 0.5] },
+        ColorVertex { position: [-0.219185, -0.449397, 0.0], colors: [0.5, 0.0, 0.5] },
+        ColorVertex { position: [ 0.359669, -0.347329, 0.0], colors: [0.5, 0.0, 0.5] },
+        ColorVertex { position: [ 0.441473,  0.234735, 0.0], colors: [0.5, 0.0, 0.5] },
     ];
 
     #[rustfmt::skip]

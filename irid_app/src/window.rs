@@ -8,7 +8,7 @@ use winit::window::{CursorIcon, UserAttentionType, WindowId};
 //= IRID WINDOW BUILDER ============================================================================
 
 ///
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct IridWindowConfig {
     winit_builder: winit::window::WindowBuilder,
 }
@@ -17,18 +17,16 @@ impl IridWindowConfig {
     //- Constructors -------------------------------------------------------------------------------
 
     pub fn new() -> Self {
-        IridWindowConfig {
-            winit_builder: winit::window::WindowBuilder::default(),
-        }
-        /*.with_inner_size(winit::dpi::PhysicalSize {
-            width: 1980 / 2,
-            height: 720 / 2,
-        })
-        .with_min_inner_size(winit::dpi::PhysicalSize {
-            width: 1980 / 4,
-            height: 720 / 4,
-        })*/
-        .with_title("Irid Application")
+        IridWindowConfig::default()
+            /*.with_inner_size(winit::dpi::PhysicalSize {
+                width: 1980 / 2,
+                height: 720 / 2,
+            })
+            .with_min_inner_size(winit::dpi::PhysicalSize {
+                width: 1980 / 4,
+                height: 720 / 4,
+            })*/
+            .with_title("Irid Application")
     }
 
     //- Setters ------------------------------------------------------------------------------------

@@ -24,11 +24,11 @@ fn main() {
 
     #[rustfmt::skip]
     let vertices = &[
-        TextCoordsVertex { position: [-0.08682410,  0.49240386, 0.0], tex_coords: [0.4131759000, 0.00759614], },
-        TextCoordsVertex { position: [-0.49513406,  0.06958647, 0.0], tex_coords: [0.0048659444, 0.43041354], },
-        TextCoordsVertex { position: [-0.21918549, -0.44939706, 0.0], tex_coords: [0.2808145300, 0.94939700], },
-        TextCoordsVertex { position: [ 0.35966998, -0.34732910, 0.0], tex_coords: [0.8596700000, 0.84732914], },
-        TextCoordsVertex { position: [ 0.44147372,  0.23473590, 0.0], tex_coords: [0.9414737000, 0.26526410], },
+        TextCoordsVertex { position: [-0.086824,  0.492403, 0.0], tex_coords: [0.413175, 0.007596], },
+        TextCoordsVertex { position: [-0.495134,  0.069586, 0.0], tex_coords: [0.004865, 0.430413], },
+        TextCoordsVertex { position: [-0.219185, -0.449397, 0.0], tex_coords: [0.280814, 0.949397], },
+        TextCoordsVertex { position: [ 0.359669, -0.347329, 0.0], tex_coords: [0.859670, 0.847329], },
+        TextCoordsVertex { position: [ 0.441473,  0.234735, 0.0], tex_coords: [0.941473, 0.265264], },
     ];
 
     #[rustfmt::skip]
