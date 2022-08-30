@@ -1,4 +1,4 @@
-//= USES ===========================================================================================
+//= USES =====================================================================
 
 use thiserror::Error;
 
@@ -10,7 +10,7 @@ use crate::camera_bind::CameraBindGroup;
 use crate::texture_metadatas::TextureImageMetadatas;
 use crate::utils::log2;
 
-//= ERRORS =========================================================================================
+//= ERRORS ===================================================================
 
 #[non_exhaustive]
 #[derive(Clone, Debug, Error)]
@@ -19,7 +19,7 @@ pub enum QueueError {
     RgbaTextureNoneBytes { path: std::path::PathBuf },
 }
 
-//= QUEUE ==========================================================================================
+//= QUEUE ====================================================================
 
 ///
 #[derive(Debug)]
@@ -28,14 +28,14 @@ pub struct Queue {
 }
 
 impl Queue {
-    //- Constructors -------------------------------------------------------------------------------
+    //- Constructors ---------------------------------------------------------
 
     ///
     pub fn new(wgpu_queue: wgpu::Queue) -> Self {
         Self { wgpu_queue }
     }
 
-    //- Wrapped Methods ----------------------------------------------------------------------------
+    //- Wrapped Methods ------------------------------------------------------
 
     /// Schedule a data write into `buffer` starting at `offset`.
     ///

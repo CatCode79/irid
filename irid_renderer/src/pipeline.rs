@@ -1,8 +1,8 @@
-//= USES ===========================================================================================
+//= USES =====================================================================
 
 use crate::{device::Device, texture_metadatas::TextureDepthMetadatas};
 
-//= RENDERER PIPELINE BUILDER ======================================================================
+//= RENDERER PIPELINE BUILDER ================================================
 
 ///
 #[derive(Debug)]
@@ -18,7 +18,7 @@ pub struct RenderPipelineBuilder<'a> {
 }
 
 impl<'a> RenderPipelineBuilder<'a> {
-    //- Constructors -------------------------------------------------------------------------------
+    //- Constructors ---------------------------------------------------------
 
     pub(crate) fn new(vertex: wgpu::VertexState<'a>) -> Self {
         Self {
@@ -32,7 +32,7 @@ impl<'a> RenderPipelineBuilder<'a> {
         }
     }
 
-    //- Setters ------------------------------------------------------------------------------------
+    //- Setters --------------------------------------------------------------
 
     /// Set the debug label of the pipeline.
     /// This will show up in graphics debuggers for easy identification.
@@ -81,7 +81,7 @@ impl<'a> RenderPipelineBuilder<'a> {
         self
     }
 
-    //- Build --------------------------------------------------------------------------------------
+    //- Build ----------------------------------------------------------------
 
     fn create_default_depth_stencil() -> Option<wgpu::DepthStencilState> {
         Some(wgpu::DepthStencilState {
@@ -116,7 +116,7 @@ impl<'a> RenderPipelineBuilder<'a> {
     }
 }
 
-//= RENDERER PIPELINE OBJECT =======================================================================
+//= RENDERER PIPELINE OBJECT =================================================
 
 /// Wrapper to the wgpu handle's rendering graphics pipeline.
 ///
@@ -127,7 +127,7 @@ pub struct RenderPipeline {
 }
 
 impl RenderPipeline {
-    //- Crate-Public Methods -----------------------------------------------------------------------
+    //- Crate-Public Methods -------------------------------------------------
 
     // This method MUST remains public at the crate level.
     pub(crate) fn expose_wrapped_render_pipeline(&self) -> &wgpu::RenderPipeline {
@@ -135,7 +135,7 @@ impl RenderPipeline {
     }
 }
 
-//= PIPELINE LAYOUT BUILDER ========================================================================
+//= PIPELINE LAYOUT BUILDER ==================================================
 
 ///
 #[derive(Clone, Debug, Default)]
@@ -144,7 +144,7 @@ pub struct PipelineLayoutBuilder<'a> {
 }
 
 impl<'a> PipelineLayoutBuilder<'a> {
-    //- Constructors -------------------------------------------------------------------------------
+    //- Constructors ---------------------------------------------------------
 
     ///
     pub fn new() -> Self {
@@ -157,7 +157,7 @@ impl<'a> PipelineLayoutBuilder<'a> {
         }
     }
 
-    //- Setters ------------------------------------------------------------------------------------
+    //- Setters --------------------------------------------------------------
 
     ///
     pub fn with_label(mut self, label_text: &'a str) -> Self {
@@ -187,7 +187,7 @@ impl<'a> PipelineLayoutBuilder<'a> {
         self
     }
 
-    //- Build --------------------------------------------------------------------------------------
+    //- Build ----------------------------------------------------------------
 
     /// Build a new [PipelineLayout](wgpu::PipelineLayout).
     pub fn build(self, device: &Device) -> wgpu::PipelineLayout {
@@ -195,7 +195,7 @@ impl<'a> PipelineLayoutBuilder<'a> {
     }
 }
 
-//= PRIMITIVE STATE BUILDER ========================================================================
+//= PRIMITIVE STATE BUILDER ==================================================
 
 ///
 #[derive(Clone, Debug, Default)]
@@ -204,7 +204,7 @@ pub struct PrimitiveStateBuilder {
 }
 
 impl PrimitiveStateBuilder {
-    //- Constructors -------------------------------------------------------------------------------
+    //- Constructors ---------------------------------------------------------
 
     ///
     pub fn new() -> Self {
@@ -224,7 +224,7 @@ impl PrimitiveStateBuilder {
         }
     }
 
-    //- Setters ------------------------------------------------------------------------------------
+    //- Setters --------------------------------------------------------------
 
     ///
     pub fn with_topology(mut self, topology: wgpu::PrimitiveTopology) -> Self {
@@ -268,7 +268,7 @@ impl PrimitiveStateBuilder {
         self
     }
 
-    //- Build --------------------------------------------------------------------------------------
+    //- Build ----------------------------------------------------------------
 
     ///
     pub fn build(self) -> wgpu::PrimitiveState {

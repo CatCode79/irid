@@ -1,11 +1,11 @@
-//= USES ===========================================================================================
+//= USES =====================================================================
 
 use pollster::FutureExt;
 use thiserror::Error;
 
 use crate::device::Device;
 
-//= ERRORS =========================================================================================
+//= ERRORS ===================================================================
 
 #[non_exhaustive]
 #[derive(Debug, Error)]
@@ -14,7 +14,7 @@ pub(crate) enum SurfaceError {
     AdapterNotObtained,
 }
 
-//= SURFACE WRAPPER ================================================================================
+//= SURFACE WRAPPER ==========================================================
 
 /// A Surface represents a platform-specific surface (e.g. a window) onto which rendered images
 /// may be presented.
@@ -26,7 +26,7 @@ pub(crate) struct Surface {
 }
 
 impl Surface {
-    //- Constructors -------------------------------------------------------------------------------
+    //- Constructors ---------------------------------------------------------
 
     /// Create a new Surface using the window handle and retrieves an Adapter which matches
     /// the created surface.
@@ -90,14 +90,14 @@ impl Surface {
         Ok((surface, adapter))
     }
 
-    //- Getters ------------------------------------------------------------------------------------
+    //- Getters --------------------------------------------------------------
 
     /// Returns the optimal texture format to use with this Surface.
     pub(crate) fn format(&self) -> wgpu::TextureFormat {
         self.format
     }
 
-    // Swapchain -----------------------------------------------------------------------------------
+    // Swapchain -------------------------------------------------------------
 
     /// Initializes Surface for presentation.
     pub(crate) fn configure(&self, device: &Device) {
@@ -120,7 +120,7 @@ impl Surface {
     }
 }
 
-//= FUNCTIONS ======================================================================================
+//= FUNCTIONS ================================================================
 
 // Shows all the adapters information.
 fn enumerate_all_adapters(backends: wgpu::Backends, instance: &wgpu::Instance) {

@@ -1,4 +1,4 @@
-//= USES ===========================================================================================
+//= USES =====================================================================
 
 use std::{fmt::Debug, path::PathBuf};
 
@@ -9,7 +9,7 @@ use irid_renderer::{PerspectiveCamera, Renderer, RendererConfig, RendererError};
 
 use crate::{IridWindowConfig, Listener};
 
-//= ERRORS =========================================================================================
+//= ERRORS ===================================================================
 
 #[non_exhaustive]
 #[derive(Debug, Error)]
@@ -26,7 +26,7 @@ pub enum ApplicationError {
     },
 }
 
-//= APPLICATION BUILDER ============================================================================
+//= APPLICATION BUILDER ======================================================
 
 /// Build a new [Application] with wanted values.
 #[derive(Clone, Debug, Default)]
@@ -41,7 +41,7 @@ where
     L: Listener,
     V: Vertex + bytemuck::Pod,
 {
-    //- Constructors -------------------------------------------------------------------------------
+    //- Constructors ---------------------------------------------------------
 
     ///
     pub fn new(listener: L) -> Self {
@@ -52,7 +52,7 @@ where
         }
     }
 
-    //- Setters ------------------------------------------------------------------------------------
+    //- Setters --------------------------------------------------------------
 
     ///
     #[inline]
@@ -95,7 +95,7 @@ where
         self
     }
 
-    //- Build --------------------------------------------------------------------------------------
+    //- Build ----------------------------------------------------------------
 
     /// Build a new [Application] with given values.
     pub fn build(self) -> Application<'a, L, V> {
@@ -107,7 +107,7 @@ where
     }
 }
 
-//= APPLICATION ====================================================================================
+//= APPLICATION ==============================================================
 
 /// Manages the whole game setup and logic.
 #[derive(Debug)] // TODO: add Clone and Default traits, impossible because Renderer
@@ -324,7 +324,7 @@ where
         Ok(())
     }
 
-    //- Generic Events -----------------------------------------------------------------------------
+    //- Generic Events -------------------------------------------------------
 
     fn on_new_events(&self, start_cause: winit::event::StartCause) {
         let _use_default_behaviour = self.listener.on_new_events(start_cause);
@@ -384,7 +384,7 @@ where
         let _use_default_behaviour = self.listener.on_destroy();
     }
 
-    //- Window Events ------------------------------------------------------------------------------
+    //- Window Events --------------------------------------------------------
 
     fn on_window_resize(
         &self,

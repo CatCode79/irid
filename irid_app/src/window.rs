@@ -1,11 +1,11 @@
-//= USES ===========================================================================================
+//= USES =====================================================================
 
 use winit::dpi::{PhysicalPosition, PhysicalSize};
 use winit::error::{ExternalError, NotSupportedError, OsError};
 use winit::monitor::MonitorHandle;
 use winit::window::{CursorIcon, UserAttentionType, WindowId};
 
-//= IRID WINDOW BUILDER ============================================================================
+//= IRID WINDOW BUILDER ======================================================
 
 ///
 #[derive(Clone, Debug, Default)]
@@ -14,7 +14,7 @@ pub struct IridWindowConfig {
 }
 
 impl IridWindowConfig {
-    //- Constructors -------------------------------------------------------------------------------
+    //- Constructors ---------------------------------------------------------
 
     pub fn new() -> Self {
         IridWindowConfig::default()
@@ -29,7 +29,7 @@ impl IridWindowConfig {
             .with_title("Irid Application")
     }
 
-    //- Setters ------------------------------------------------------------------------------------
+    //- Setters --------------------------------------------------------------
 
     pub fn with_inner_size<S: Into<winit::dpi::Size>>(mut self, size: S) -> Self {
         self.winit_builder.window.inner_size = Some(size.into());
@@ -96,7 +96,7 @@ impl IridWindowConfig {
         self
     }
 
-    //- Building -----------------------------------------------------------------------------------
+    //- Building -------------------------------------------------------------
 
     pub fn build(
         mut self,
@@ -112,7 +112,7 @@ impl IridWindowConfig {
     }
 }
 
-//= IRID WINDOW ====================================================================================
+//= IRID WINDOW ==============================================================
 
 #[derive(Debug)]
 pub struct IridWindow {
@@ -130,7 +130,7 @@ impl Default for IridWindow {
 }
 
 impl IridWindow {
-    //- Base Window Functions ----------------------------------------------------------------------
+    //- Base Window Functions ------------------------------------------------
 
     #[inline]
     pub fn new(event_loop: &winit::event_loop::EventLoop<()>) -> Result<IridWindow, OsError> {
@@ -152,7 +152,7 @@ impl IridWindow {
         self.winit_window.request_redraw()
     }
 
-    //- Position and Size Functions ----------------------------------------------------------------
+    //- Position and Size Functions ------------------------------------------
 
     #[inline]
     pub fn inner_position(&self) -> Result<PhysicalPosition<i32>, NotSupportedError> {
@@ -194,7 +194,7 @@ impl IridWindow {
         self.winit_window.set_max_inner_size(max_size)
     }
 
-    //- Misc. Attribute Functions ------------------------------------------------------------------
+    //- Misc. Attribute Functions --------------------------------------------
 
     #[inline]
     pub fn set_title(&self, title: &str) {
@@ -266,7 +266,7 @@ impl IridWindow {
         self.winit_window.request_user_attention(request_type)
     }
 
-    //- Cursor Functions ---------------------------------------------------------------------------
+    //- Cursor Functions -----------------------------------------------------
 
     #[inline]
     pub fn set_cursor_icon(&self, cursor: CursorIcon) {
@@ -291,7 +291,7 @@ impl IridWindow {
         self.winit_window.set_cursor_visible(visible)
     }
 
-    //- Monitor Info Functions ---------------------------------------------------------------------
+    //- Monitor Info Functions -----------------------------------------------
 
     #[inline]
     pub fn drag_window(&self) -> Result<(), ExternalError> {
@@ -317,7 +317,7 @@ impl IridWindow {
         self.winit_window.primary_monitor()
     }
 
-    //- Wrapper Functions --------------------------------------------------------------------------
+    //- Wrapper Functions ----------------------------------------------------
 
     #[inline]
     pub fn expose_inner_window(&self) -> &winit::window::Window {

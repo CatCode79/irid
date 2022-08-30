@@ -1,4 +1,4 @@
-//= LISTENER =======================================================================================
+//= LISTENER =================================================================
 
 /// The Listeners to be implemented for the game logic.
 ///
@@ -83,7 +83,7 @@ pub trait Listener {
         true
     }
 
-    //- Window Events ------------------------------------------------------------------------------
+    //- Window Events --------------------------------------------------------
 
     /// The size of the window has changed.
     ///
@@ -286,6 +286,6 @@ pub trait Listener {
         true
     }
 
-    //- Device Events ------------------------------------------------------------------------------
+    //- Device Events --------------------------------------------------------
     // TODO: I don't know exactly why I have to use those events, but maybe for the joypad...
 }

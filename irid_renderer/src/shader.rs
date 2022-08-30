@@ -1,4 +1,4 @@
-//= CONSTS =========================================================================================
+//= CONSTS ===================================================================
 
 /// This is the default vertex state entry point name that will be used in which case
 /// one will not be passed.

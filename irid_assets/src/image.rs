@@ -1,11 +1,11 @@
-//= USES ===========================================================================================
+//= USES =====================================================================
 
 use std::convert::TryFrom;
 use std::num::{NonZeroU32, TryFromIntError};
 
 use irid_assets_interface::{Image, ImageSize};
 
-//= DIFFUSE IMAGE ==================================================================================
+//= DIFFUSE IMAGE ============================================================
 
 /// A Diffuse Image
 #[derive(Clone, Debug)]
@@ -15,7 +15,7 @@ pub struct DiffuseImage {
 }
 
 impl DiffuseImage {
-    //- Constructor Handler ------------------------------------------------------------------------
+    //- Constructor Handler --------------------------------------------------
 
     fn handle_new<P: AsRef<std::path::Path>>(
         filepath: P,
@@ -39,12 +39,12 @@ impl DiffuseImage {
 }
 
 impl Image for DiffuseImage {
-    //- Associated Types ---------------------------------------------------------------------------
+    //- Associated Types -----------------------------------------------------
 
     type Output = Self;
     type Size = DiffuseImageSize;
 
-    //- Constructors -------------------------------------------------------------------------------
+    //- Constructors ---------------------------------------------------------
 
     /// Open and decode a file to read, format will be guessed from path.
     ///
@@ -77,14 +77,14 @@ impl Image for DiffuseImage {
         DiffuseImage::handle_new(filepath, true)
     }
 
-    //- Getters ------------------------------------------------------------------------------------
+    //- Getters --------------------------------------------------------------
 
     /// The width and height of this image.
     fn size(&self) -> Self::Size {
         self.size
     }
 
-    //- Color Data Conversions ---------------------------------------------------------------------
+    //- Color Data Conversions -----------------------------------------------
 
     fn as_rgba8_bytes(&self) -> Option<&[u8]> {
         use image::EncodableLayout;
@@ -95,7 +95,7 @@ impl Image for DiffuseImage {
     }
 }
 
-//= DIFFUSE IMAGE SIZE =============================================================================
+//= DIFFUSE IMAGE SIZE =======================================================
 
 #[derive(Clone, Copy, Debug)]
 pub struct DiffuseImageSize {
@@ -104,7 +104,7 @@ pub struct DiffuseImageSize {
 }
 
 impl ImageSize for DiffuseImageSize {
-    //- Constructors -------------------------------------------------------------------------------
+    //- Constructors ---------------------------------------------------------
 
     fn new(width: u32, height: u32) -> Option<Self> {
         if width == 0 {
@@ -133,7 +133,7 @@ impl ImageSize for DiffuseImageSize {
         })
     }
 
-    //- Getters ------------------------------------------------------------------------------------
+    //- Getters --------------------------------------------------------------
 
     /// The value is non-zero guaranteed.
     fn width(&self) -> u32 {

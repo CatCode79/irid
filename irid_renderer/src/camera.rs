@@ -1,4 +1,4 @@
-//= CONSTS =========================================================================================
+//= CONSTS ===================================================================
 
 /// The coordinate system in Wgpu is based on DirectX, and Metal's coordinate systems.
 /// That means that in normalized device coordinates the x axis and y axis are in the range
@@ -15,10 +15,10 @@ const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
     0.0, 0.0, 0.5, 1.0,
 );
 
-//= CAMERA TRAIT ===================================================================================
+//= CAMERA TRAIT =============================================================
 
 pub trait Camera {
-    //- Constructors -------------------------------------------------------------------------------
+    //- Constructors ---------------------------------------------------------
 
     /// Create a new camera given the window's width and height
     fn new(width: f32, height: f32) -> Self;
@@ -26,7 +26,7 @@ pub trait Camera {
     ///
     fn build_view_projection_matrix(&self) -> cgmath::Matrix4<f32>;
 
-    //- Getters ------------------------------------------------------------------------------------
+    //- Getters --------------------------------------------------------------
 
     ///
     fn eye(&self) -> cgmath::Point3<f32>;
@@ -37,7 +37,7 @@ pub trait Camera {
     ///
     fn up(&self) -> cgmath::Vector3<f32>;
 
-    //- Setters ------------------------------------------------------------------------------------
+    //- Setters --------------------------------------------------------------
 
     fn set_eye(&mut self, value: cgmath::Point3<f32>);
 
@@ -48,7 +48,7 @@ pub trait Camera {
     fn sub_to_eye(&mut self, value: cgmath::Vector3<f32>);
 }
 
-//= PERSPECTIVE CAMERA =============================================================================
+//= PERSPECTIVE CAMERA =======================================================
 
 ///
 #[derive(Debug, Clone)]
@@ -63,7 +63,7 @@ pub struct PerspectiveCamera {
 }
 
 impl Camera for PerspectiveCamera {
-    //- Constructors -------------------------------------------------------------------------------
+    //- Constructors ---------------------------------------------------------
 
     fn new(width: f32, height: f32) -> Self {
         Self {
@@ -81,7 +81,7 @@ impl Camera for PerspectiveCamera {
         }
     }
 
-    //- Camera Uniform Helpers ---------------------------------------------------------------------
+    //- Camera Uniform Helpers -----------------------------------------------
 
     fn build_view_projection_matrix(&self) -> cgmath::Matrix4<f32> {
         // The view matrix moves the world to be at the position and rotation of the camera.
@@ -95,7 +95,7 @@ impl Camera for PerspectiveCamera {
         OPENGL_TO_WGPU_MATRIX * proj * view
     }
 
-    //- Getters ------------------------------------------------------------------------------------
+    //- Getters --------------------------------------------------------------
 
     #[inline]
     fn eye(&self) -> cgmath::Point3<f32> {
@@ -112,7 +112,7 @@ impl Camera for PerspectiveCamera {
         self.up
     }
 
-    //- Setters ------------------------------------------------------------------------------------
+    //- Setters --------------------------------------------------------------
 
     #[inline]
     fn set_eye(&mut self, value: cgmath::Point3<f32>) {
@@ -130,7 +130,7 @@ impl Camera for PerspectiveCamera {
     }
 }
 
-//= CAMERA CONTROLLER ==============================================================================
+//= CAMERA CONTROLLER ========================================================
 
 ///
 #[derive(Clone, Debug)]
@@ -145,7 +145,7 @@ pub(crate) struct CameraController {
 }
 
 impl CameraController {
-    //- Constructors -------------------------------------------------------------------------------
+    //- Constructors ---------------------------------------------------------
 
     ///
     pub(crate) fn new(speed: f32) -> Self {

@@ -1,4 +1,4 @@
-//= INSTANCE =======================================================================================
+//= INSTANCE =================================================================
 
 /// Instances allows us to draw the same object multiple times with different properties
 /// (position, orientation, size, color, etcetera).
@@ -26,7 +26,7 @@ impl Instance {
     }
 }
 
-//= INSTANCE FOR SHADERS ===========================================================================
+//= INSTANCE FOR SHADERS =====================================================
 
 /// This is the data that will go into the wgpu::Buffer.
 /// We keep these separate so that we can update the Instance as much as we want without needing

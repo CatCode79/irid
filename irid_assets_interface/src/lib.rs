@@ -35,12 +35,12 @@ variant_size_differences,
 clippy::pattern_type_mismatch,
 )]
 
-//= USES ===========================================================================================
+//= USES =====================================================================
 
 use std::convert::TryFrom;
 use std::num::TryFromIntError;
 
-//= IMAGE TRAIT ====================================================================================
+//= IMAGE TRAIT ==============================================================
 
 /// Trait that describes the generic behavior of an image object.
 ///
@@ -68,7 +68,7 @@ pub trait Image {
     fn as_rgba8_bytes(&self) -> Option<&[u8]>;
 }
 
-//= IMAGE SIZE TRAIT ===============================================================================
+//= IMAGE SIZE TRAIT =========================================================
 
 /// Trait that describes the generic behavior of an image size info object.
 ///
@@ -95,7 +95,7 @@ pub trait ImageSize: From<(u32, u32)> + From<[u32; 2]> {
     fn as_tuple(&self) -> (u32, u32);
 }
 
-//= VERTEX TRAIT ===================================================================================
+//= VERTEX TRAIT =============================================================
 
 ///
 pub trait Vertex {
@@ -118,7 +118,7 @@ pub trait Vertex {
     fn desc() -> wgpu::VertexBufferLayout<'static>;
 }
 
-//= INDEX TRAIT ====================================================================================
+//= INDEX TRAIT ==============================================================
 
 /// Super Trait to identify u16 and u32
 // TODO: possibly we can do it simpler than that

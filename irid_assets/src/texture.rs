@@ -1,4 +1,4 @@
-//= USES ===========================================================================================
+//= USES =====================================================================
 
 use thiserror::Error;
 
@@ -6,7 +6,7 @@ use irid_assets_interface::Image;
 
 use crate::{DiffuseImage, DiffuseImageSize};
 
-//= TEXTURE ERRORS =================================================================================
+//= TEXTURE ERRORS ===========================================================
 
 #[non_exhaustive]
 #[derive(Debug, Error)] // TODO: impossible to add Clone because of image::error::ImageError
@@ -18,7 +18,7 @@ pub enum TextureError {
     },
 }
 
-//= DIFFUSE TEXTURE ================================================================================
+//= DIFFUSE TEXTURE ==========================================================
 
 ///
 #[derive(Clone, Debug)]
@@ -28,7 +28,7 @@ pub struct DiffuseTexture {
 }
 
 impl DiffuseTexture {
-    //- Constructors -------------------------------------------------------------------------------
+    //- Constructors ---------------------------------------------------------
 
     ///
     pub fn load<P: AsRef<std::path::Path>>(filepath: P) -> Result<Self, TextureError> {
@@ -47,7 +47,7 @@ impl DiffuseTexture {
         })
     }
 
-    //- Getters ------------------------------------------------------------------------------------
+    //- Getters --------------------------------------------------------------
 
     pub fn path(&self) -> &std::path::PathBuf {
         &self.path

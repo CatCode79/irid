@@ -1,8 +1,8 @@
-//= USES ===========================================================================================
+//= USES =====================================================================
 
 use crate::device::Device;
 
-//= TEXTURE IMAGE METADATAS ========================================================================
+//= TEXTURE IMAGE METADATAS ==================================================
 
 /// Struct containing values used by queue.write_texture()
 #[derive(Debug)] // TODO: Cannot use the Clone trait because of wgpu::Texture
@@ -13,7 +13,7 @@ pub struct TextureImageMetadatas {
 }
 
 impl TextureImageMetadatas {
-    //- Constructors -------------------------------------------------------------------------------
+    //- Constructors ---------------------------------------------------------
 
     ///
     pub fn new(device: &Device, width: u32, height: u32) -> Self {
@@ -49,7 +49,7 @@ impl TextureImageMetadatas {
         }
     }
 
-    //- ImageCopyTexture ---------------------------------------------------------------------------
+    //- ImageCopyTexture -----------------------------------------------------
 
     ///
     pub fn create_image_copy(&self) -> wgpu::ImageCopyTexture<'_> {
@@ -61,7 +61,7 @@ impl TextureImageMetadatas {
         }
     }
 
-    //- Getters ------------------------------------------------------------------------------------
+    //- Getters --------------------------------------------------------------
 
     ///
     pub fn texture(&self) -> &wgpu::Texture {
@@ -79,7 +79,7 @@ impl TextureImageMetadatas {
     }
 }
 
-//= TEXTURE BIND GROUP METADATAS ===================================================================
+//= TEXTURE BIND GROUP METADATAS =============================================
 
 ///
 #[derive(Debug)]
@@ -89,7 +89,7 @@ pub struct TextureBindGroupMetadatas {
 }
 
 impl TextureBindGroupMetadatas {
-    //- Constructors -------------------------------------------------------------------------------
+    //- Constructors ---------------------------------------------------------
 
     ///
     pub fn new(device: &Device, texture: &wgpu::Texture) -> Self {
@@ -164,7 +164,7 @@ impl TextureBindGroupMetadatas {
         })
     }
 
-    //- Getters ------------------------------------------------------------------------------------
+    //- Getters --------------------------------------------------------------
 
     ///
     pub fn bind_group_layout(&self) -> &wgpu::BindGroupLayout {
@@ -177,7 +177,7 @@ impl TextureBindGroupMetadatas {
     }
 }
 
-//= TEXTURE DEPTH METADATAS ========================================================================
+//= TEXTURE DEPTH METADATAS ==================================================
 
 ///
 #[derive(Debug)]
@@ -188,12 +188,12 @@ pub(crate) struct TextureDepthMetadatas {
 }
 
 impl TextureDepthMetadatas {
-    //- Constants ----------------------------------------------------------------------------------
+    //- Constants ------------------------------------------------------------
 
     ///
     pub(crate) const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
 
-    //- Constructors -------------------------------------------------------------------------------
+    //- Constructors ---------------------------------------------------------
 
     /// Our depth texture needs to be the same size as our screen if we want things
     /// to render correctly so we give to constructor windows_size value.
@@ -246,7 +246,7 @@ impl TextureDepthMetadatas {
         }
     }
 
-    //- Getters ------------------------------------------------------------------------------------
+    //- Getters --------------------------------------------------------------
 
     ///
     pub(crate) fn view(&self) -> &wgpu::TextureView {

@@ -1,4 +1,4 @@
-//= USES ===========================================================================================
+//= USES =====================================================================
 
 use std::{fmt::Debug, fs::read_to_string, path::Path};
 
@@ -21,7 +21,7 @@ use crate::{
     CameraController, PipelineLayoutBuilder, RenderPipeline, RenderPipelineBuilder,
 };
 
-//= ERRORS =========================================================================================
+//= ERRORS ===================================================================
 
 ///
 #[non_exhaustive]
@@ -46,7 +46,7 @@ pub enum RendererError {
     },
 }
 
-//= CONSTS =========================================================================================
+//= CONSTS ===================================================================
 
 const NUM_INSTANCES_PER_ROW: u32 = 10;
 const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
@@ -55,7 +55,7 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
     NUM_INSTANCES_PER_ROW as f32 * 0.5,
 );
 
-//= RENDERER BUILDER ===============================================================================
+//= RENDERER BUILDER =========================================================
 
 ///
 #[derive(Clone, Debug)]
@@ -122,14 +122,14 @@ where
     V: Vertex + Pod,
     I: Index + Pod,
 {
-    //- Constructors -------------------------------------------------------------------------------
+    //- Constructors ---------------------------------------------------------
 
     ///
     pub fn new() -> Self {
         Self::default()
     }
 
-    //- Setters ------------------------------------------------------------------------------------
+    //- Setters --------------------------------------------------------------
 
     ///
     #[inline]
@@ -258,11 +258,11 @@ where
         self
     }
 
-    //- Build --------------------------------------------------------------------------------------
+    //- Build ----------------------------------------------------------------
 
     ///
     pub fn build(&self, window: &'a winit::window::Window) -> Result<Renderer<C>, RendererError> {
-        //- Surface, Device, Queue -----------------------------------------------------------------
+        //- Surface, Device, Queue -------------------------------------------
 
         let window_size = window.inner_size();
 
@@ -281,7 +281,7 @@ where
 
         surface.configure(&device);
 
-        //- Camera ---------------------------------------------------------------------------------
+        //- Camera -----------------------------------------------------------
 
         let (camera_metadatas, camera_controller) = if self.camera.is_some() {
             (
@@ -292,7 +292,7 @@ where
             (None, None)
         };
 
-        //- Texture Metadatas ----------------------------------------------------------------------
+        //- Texture Metadatas ------------------------------------------------
 
         let texture_image_metadatas = if self.texture_path.is_some() {
             RendererConfig::<'a, C, PS, PT, V, I>::create_texture_image_metadatas(&device)
@@ -311,7 +311,7 @@ where
 
         let texture_depth_metadatas = TextureDepthMetadatas::new(&device, window_size);
 
-        //- Pipeline -------------------------------------------------------------------------------
+        //- Pipeline ---------------------------------------------------------
 
         let renderer_pipeline = if self.shader_path.is_some() {
             let path = std::env::current_dir()
@@ -398,7 +398,7 @@ where
             None
         };
 
-        //- Queue Schedule -------------------------------------------------------------------------
+        //- Queue Schedule ---------------------------------------------------
 
         if self.texture_path.is_some() {
             // TODO: here we use unwrap because texture loading will probably not be done at this point
@@ -409,7 +409,7 @@ where
             )?
         }
 
-        //- Vertex and Index Buffers ---------------------------------------------------------------
+        //- Vertex and Index Buffers -----------------------------------------
 
         let vertex_buffer = self
             .vertices
@@ -425,7 +425,7 @@ where
             0_u32
         };
 
-        //- Instances ------------------------------------------------------------------------------
+        //- Instances --------------------------------------------------------
 
         let (instances, instances_buffer) = if self.vertices.is_some() {
             let instances = RendererConfig::<'a, C, PS, PT, V, I>::create_instances();
@@ -436,7 +436,7 @@ where
             (None, None)
         };
 
-        //- Renderer Creation ----------------------------------------------------------------------
+        //- Renderer Creation ------------------------------------------------
 
         Ok(Renderer {
             window_size,
@@ -547,7 +547,7 @@ where
     }
 }
 
-//= RENDERER OBJECT ================================================================================
+//= RENDERER OBJECT ==========================================================
 
 ///
 #[derive(Debug)]
@@ -580,7 +580,7 @@ impl<C> Renderer<C>
 where
     C: Camera + Clone,
 {
-    //- Surface (Re)size ---------------------------------------------------------------------------
+    //- Surface (Re)size -----------------------------------------------------
 
     /// Getter for the windows's physical size attribute.
     pub fn get_size(&self) -> winit::dpi::PhysicalSize<u32> {
@@ -607,7 +607,7 @@ where
         self.surface.update(&self.device, self.window_size);
     }
 
-    //- Camera -------------------------------------------------------------------------------------
+    //- Camera ---------------------------------------------------------------
 
     ///
     pub fn process_camera_events(&mut self, input: winit::event::KeyboardInput) -> bool {
@@ -621,7 +621,7 @@ where
         }
     }
 
-    //- Command Encoder ----------------------------------------------------------------------------
+    //- Command Encoder ------------------------------------------------------
 
     ///
     pub fn create_command_encoder(&self, label_text: &str) -> wgpu::CommandEncoder {
@@ -631,7 +631,7 @@ where
             })
     }
 
-    //- Rendering ----------------------------------------------------------------------------------
+    //- Rendering ------------------------------------------------------------
 
     ///
     pub fn redraw(&mut self) -> Result<(), wgpu::SurfaceError> {

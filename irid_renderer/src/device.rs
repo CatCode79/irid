@@ -1,4 +1,4 @@
-//= USES ===========================================================================================
+//= USES =====================================================================
 
 use bytemuck::Pod;
 use pollster::FutureExt;
@@ -7,7 +7,7 @@ use irid_assets_interface::{Index, Vertex};
 
 use crate::queue::Queue;
 
-//= DEVICE =========================================================================================
+//= DEVICE ===================================================================
 
 /// Open connection to a graphics and/or compute device.
 ///
@@ -24,7 +24,7 @@ pub struct Device {
 }
 
 impl Device {
-    //- Constructors -------------------------------------------------------------------------------
+    //- Constructors ---------------------------------------------------------
 
     /// Create a new Device and Queue given ad adapter.
     pub fn new(
@@ -61,7 +61,7 @@ impl Device {
         Ok((device, queue))
     }
 
-    //- Object Creation ----------------------------------------------------------------------------
+    //- Object Creation ------------------------------------------------------
 
     /// Creates a [Buffer](wgpu::Buffer) with data to initialize it.
     pub fn create_buffer_init(
@@ -170,7 +170,7 @@ impl Device {
         self.wgpu_device.create_sampler(sampler_desc)
     }
 
-    //- Crate-Public Methods -----------------------------------------------------------------------
+    //- Crate-Public Methods -------------------------------------------------
 
     // This method MUST remains public at the crate level.
     pub(crate) fn expose_wrapped_device(&self) -> &wgpu::Device {
