@@ -1,9 +1,11 @@
 //= USES =====================================================================
 
-use winit::dpi::{PhysicalPosition, PhysicalSize};
-use winit::error::{ExternalError, NotSupportedError, OsError};
-use winit::monitor::MonitorHandle;
-use winit::window::{CursorIcon, UserAttentionType, WindowId};
+use winit::{
+    dpi::{PhysicalPosition, PhysicalSize},
+    error::{ExternalError, NotSupportedError, OsError},
+    monitor::MonitorHandle,
+    window::{CursorIcon, UserAttentionType, WindowId},
+};
 
 //= IRID WINDOW BUILDER ======================================================
 

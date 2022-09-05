@@ -1,6 +1,6 @@
 //= USES =====================================================================
 
-use crate::{device::Device, texture_metadatas::TextureDepthMetadatas};
+use crate::{device::Device, texture_metadata::TextureDepthMetadatas};
 
 //= RENDERER PIPELINE BUILDER ================================================
 

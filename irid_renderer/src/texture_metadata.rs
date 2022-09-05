@@ -2,17 +2,17 @@
 
 use crate::device::Device;
 
-//= TEXTURE IMAGE METADATAS ==================================================
+//= TEXTURE IMAGE METADATA ===================================================
 
 /// Struct containing values used by queue.write_texture()
 #[derive(Debug)] // TODO: Cannot use the Clone trait because of wgpu::Texture
-pub struct TextureImageMetadatas {
+pub struct TextureImageMetadata {
     texture: wgpu::Texture,
     image_data_layout: wgpu::ImageDataLayout,
     image_size: wgpu::Extent3d,
 }
 
-impl TextureImageMetadatas {
+impl TextureImageMetadata {
     //- Constructors ---------------------------------------------------------
 
     ///

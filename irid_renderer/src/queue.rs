@@ -1,19 +1,17 @@
 //= USES =====================================================================
 
-use thiserror::Error;
-
 use irid_assets::DiffuseTexture;
 use irid_assets_interface::{Image, ImageSize};
+use thiserror::Error;
 
 use crate::camera::Camera;
 use crate::camera_bind::CameraBindGroup;
-use crate::texture_metadatas::TextureImageMetadatas;
+use crate::texture_metadata::TextureImageMetadata;
 use crate::utils::log2;
 
 //= ERRORS ===================================================================
 
-#[non_exhaustive]
-#[derive(Clone, Debug, Error)]
+#[derive(Debug, Error)]
 pub enum QueueError {
     #[error("Impossible to enqueue None bytes, as rgba, from texture {{0}}")]
     RgbaTextureNoneBytes { path: std::path::PathBuf },
@@ -64,7 +62,7 @@ impl Queue {
     /// internally to happen at the start of the next `submit()` call.
     pub fn write_texture(
         &self,
-        texture_image_metadatas: &[Vec<TextureImageMetadatas>],
+        texture_image_metadatas: &[Vec<TextureImageMetadata>],
         texture: DiffuseTexture,
     ) -> Result<(), QueueError> {
         // TODO: better add a ref to metas inside irid Texture structs

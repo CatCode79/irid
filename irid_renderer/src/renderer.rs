@@ -3,10 +3,9 @@
 use std::{fmt::Debug, fs::read_to_string, path::Path};
 
 use bytemuck::Pod;
-use thiserror::Error;
-
 use irid_assets::DiffuseTexture;
 use irid_assets_interface::{Index, Vertex};
+use thiserror::Error;
 
 use crate::{
     camera::Camera,
@@ -16,7 +15,7 @@ use crate::{
     queue::{Queue, QueueError},
     shader::{DEFAULT_FRAGMENT_ENTRY_POINT, DEFAULT_VERTEX_ENTRY_POINT},
     surface::Surface,
-    texture_metadatas::{TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadatas},
+    texture_metadata::{TextureBindGroupMetadatas, TextureDepthMetadatas, TextureImageMetadata},
     utils::log2,
     CameraController, PipelineLayoutBuilder, RenderPipeline, RenderPipelineBuilder,
 };
@@ -24,7 +23,6 @@ use crate::{
 //= ERRORS ===================================================================
 
 ///
-#[non_exhaustive]
 #[derive(Debug, Error)]
 pub enum RendererError {
     #[error("unable to get a Surface or Adapter")]
@@ -81,7 +79,6 @@ pub struct RendererConfig<'a, C: Camera, PS: AsRef<Path>, PT: AsRef<Path>, V: Ve
     camera: Option<C>,
     shader_path: Option<PS>,
     texture_path: Option<PT>,
-    // TODO: Probably better to encapsulate the [ModelVertex] logic or use an Into
     vertices: Option<&'a [V]>,
     indices: Option<&'a [I]>,
     clear_color: Option<wgpu::Color>,
@@ -153,8 +150,6 @@ where
     }
 
     ///
-    // TODO: Will be implemented, it was paused because we have doubts about how to convert images
-    //  from Rgb to Bgr format without affecting the performance and ergonomics of the code
     #[inline]
     pub fn with_preferred_format<F: Into<Option<wgpu::TextureFormat>>>(
         /*mut*/ self,
@@ -465,13 +460,13 @@ where
     ///
     ///
     /// It can't cache zero sized textures.
-    pub fn create_texture_image_metadatas(device: &Device) -> Vec<Vec<TextureImageMetadatas>> {
+    pub fn create_texture_image_metadatas(device: &Device) -> Vec<Vec<TextureImageMetadata>> {
         let qty = log2(wgpu::Limits::downlevel_defaults().max_texture_dimension_2d as i32) as usize;
-        let mut vec_w = Vec::<Vec<TextureImageMetadatas>>::with_capacity(qty);
+        let mut vec_w = Vec::<Vec<TextureImageMetadata>>::with_capacity(qty);
         for width in 0..qty {
-            let mut vec_h = Vec::<TextureImageMetadatas>::with_capacity(qty);
+            let mut vec_h = Vec::<TextureImageMetadata>::with_capacity(qty);
             for height in 0..qty {
-                vec_h.push(TextureImageMetadatas::new(
+                vec_h.push(TextureImageMetadata::new(
                     device,
                     2_u32.pow(width as u32),
                     2_u32.pow(height as u32),
@@ -485,7 +480,7 @@ where
     ///
     pub fn create_texture_bind_group_metadatas(
         device: &Device,
-        texture_image_metadatas: &[Vec<TextureImageMetadatas>],
+        texture_image_metadatas: &[Vec<TextureImageMetadata>],
     ) -> Vec<Vec<TextureBindGroupMetadatas>> {
         let qty = texture_image_metadatas.len();
         let mut vec_w = Vec::<Vec<TextureBindGroupMetadatas>>::with_capacity(qty);
@@ -563,7 +558,7 @@ pub struct Renderer<C: Camera> {
     camera_controller: Option<CameraController>,
 
     #[allow(dead_code)]
-    texture_image_metadatas: Vec<Vec<TextureImageMetadatas>>,
+    texture_image_metadatas: Vec<Vec<TextureImageMetadata>>,
     texture_bind_group_metadatas: Vec<Vec<TextureBindGroupMetadatas>>,
     texture_depth_metadatas: TextureDepthMetadatas,
 

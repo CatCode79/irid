@@ -11,7 +11,6 @@ use crate::{IridWindowConfig, Listener};
 
 //= ERRORS ===================================================================
 
-#[non_exhaustive]
 #[derive(Debug, Error)]
 pub enum ApplicationError {
     #[error("the OS cannot perform the requested operation")]
@@ -33,7 +32,7 @@ pub enum ApplicationError {
 pub struct ApplicationConfig<'a, L: Listener, V: Vertex> {
     listener: L,
     window_config: Option<IridWindowConfig>,
-    renderer_config: Option<RendererConfig<'a, PerspectiveCamera, &'a str, &'a str, V, u16>>, // TODO: to refact
+    renderer_config: Option<RendererConfig<'a, PerspectiveCamera, &'a str, &'a str, V, u16>>,
 }
 
 impl<'a, L, V> ApplicationConfig<'a, L, V>
@@ -87,7 +86,6 @@ where
     ///
     #[inline]
     pub fn with_renderer_config(
-        // TODO: to refact
         mut self,
         renderer_config: RendererConfig<'a, PerspectiveCamera, &'a str, &'a str, V, u16>,
     ) -> Self {
@@ -114,7 +112,7 @@ where
 pub struct Application<'a, L: Listener, V: Vertex> {
     listener: L,
     window_config: IridWindowConfig,
-    renderer_config: RendererConfig<'a, PerspectiveCamera, &'a str, &'a str, V, u16>, // TODO: to refact
+    renderer_config: RendererConfig<'a, PerspectiveCamera, &'a str, &'a str, V, u16>,
 }
 
 impl<'a, L, V> Application<'a, L, V>
@@ -157,7 +155,6 @@ where
                     event: window_event,
                     window_id,
                 } => {
-                    // TODO: add a multi-monitor support
                     if window_id == window.id() {
                         match window_event {
                             winit::event::WindowEvent::Resized(physical_size) => {
@@ -288,7 +285,7 @@ where
                     device_id: _device_id,
                     event: ref _device_event,
                 } => {
-                    // TODO: Currently we don't have to manage it
+                    // Currently we don't have to manage it
                 }
 
                 winit::event::Event::UserEvent(event) => {
@@ -356,7 +353,6 @@ where
                 Err(error) => match error {
                     // These errors should be resolved by the next frame
                     wgpu::SurfaceError::Timeout | wgpu::SurfaceError::Outdated => {
-                        // TODO: better error messages?
                         log::error!("{:?}", error)
                     }
 

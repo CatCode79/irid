@@ -3,14 +3,17 @@
 /// The Listeners to be implemented for the game logic.
 ///
 /// For more information about the events see
-/// [`enum Event`](winit::event::Event) and [`enum WindowEvent`](winit::event::WindowEvent).
+/// [`enum Event`](winit::event::Event) and
+/// [`enum WindowEvent`](winit::event::WindowEvent).
 pub trait Listener {
     /// Emitted when new events arrive from the OS to be processed.
     ///
-    /// This event type is useful as a place to put code that should be done before you start
-    /// processing events, such as updating frame timing information for benchmarking or checking
-    /// the [`StartCause`][winit::event::StartCause] to see if a timer set by
-    /// [`ControlFlow::WaitUntil`](winit::event_loop::ControlFlow::WaitUntil) has elapsed.
+    /// This event type is useful as a place to put code that should be done
+    /// before you start processing events, such as updating frame timing
+    /// info for benchmarking or checking the
+    /// [`StartCause`][winit::event::StartCause] to see if a timer set by
+    /// [`ControlFlow::WaitUntil`](winit::event_loop::ControlFlow::WaitUntil)
+    /// has elapsed.
     #[allow(unused_variables)]
     fn on_new_events(&self, start_cause: winit::event::StartCause) -> bool {
         true
@@ -285,7 +288,4 @@ pub trait Listener {
     fn on_window_theme_change(&self, theme: winit::window::Theme) -> bool {
         true
     }
-
-    //- Device Events --------------------------------------------------------
-    // TODO: I don't know exactly why I have to use those events, but maybe for the joypad...
 }

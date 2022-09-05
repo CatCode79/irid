@@ -7,7 +7,6 @@ use crate::device::Device;
 
 //= ERRORS ===================================================================
 
-#[non_exhaustive]
 #[derive(Debug, Error)]
 pub(crate) enum SurfaceError {
     #[error("An adapter compatible with the given surface could not be obtained")]

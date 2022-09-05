@@ -1,15 +1,13 @@
 //= USES =====================================================================
 
-use thiserror::Error;
-
 use irid_assets_interface::Image;
+use thiserror::Error;
 
 use crate::{DiffuseImage, DiffuseImageSize};
 
 //= TEXTURE ERRORS ===========================================================
 
-#[non_exhaustive]
-#[derive(Debug, Error)] // TODO: impossible to add Clone because of image::error::ImageError
+#[derive(Debug, Error)]
 pub enum TextureError {
     #[error("Cannot load the image")]
     CannotLoad {
