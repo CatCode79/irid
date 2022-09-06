@@ -1,9 +1,8 @@
 //= USES =====================================================================
 
-use irid_assets_interface::Image;
 use thiserror::Error;
 
-use crate::{DiffuseImage, DiffuseImageSize};
+use crate::{DiffuseImage, DiffuseImageSize, Image};
 
 //= TEXTURE ERRORS ===========================================================
 
@@ -12,7 +11,7 @@ pub enum TextureError {
     #[error("Cannot load the image")]
     CannotLoad {
         #[from]
-        source: image::error::ImageError,
+        source: image_crate::error::ImageError,
     },
 }
 

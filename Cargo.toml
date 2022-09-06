@@ -5,7 +5,6 @@ members = [
     "irid",
     "irid_app",
     "irid_assets",
-    "irid_assets_interface",
     "irid_renderer",
     "examples/lw01_window",
     "examples/lw02_swapchain",

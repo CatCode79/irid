@@ -1,7 +1,7 @@
 //= USES =====================================================================
 
 use bytemuck::Pod;
-use irid_assets_interface::{Index, Vertex};
+use irid_assets::{Index, Vertex};
 use pollster::FutureExt;
 
 use crate::queue::Queue;

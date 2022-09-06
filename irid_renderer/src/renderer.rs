@@ -4,7 +4,7 @@ use std::{fmt::Debug, fs::read_to_string, path::Path};
 
 use bytemuck::Pod;
 use irid_assets::DiffuseTexture;
-use irid_assets_interface::{Index, Vertex};
+use irid_assets::{Index, Vertex};
 use thiserror::Error;
 
 use crate::{

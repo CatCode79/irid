@@ -2,10 +2,9 @@
 
 use std::{fmt::Debug, path::PathBuf};
 
-use thiserror::Error;
-
-use irid_assets_interface::Vertex;
+use irid_assets::Vertex;
 use irid_renderer::{PerspectiveCamera, Renderer, RendererConfig, RendererError};
+use thiserror::Error;
 
 use crate::{IridWindowConfig, Listener};
 

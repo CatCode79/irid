@@ -12,7 +12,7 @@ publish = false
 [dependencies]
 bytemuck = "1"
 #irid_assets = { path = "../irid_assets" }
-irid_assets_interface = { path = "../irid_assets_interface" }
+irid_assets = { path = "../irid_assets" }
 irid_renderer = { path = "../irid_renderer" }
 log = "0.4"
 thiserror = "1"

@@ -11,8 +11,7 @@ publish = false
 
 [dependencies]
 bytemuck = { version = "1", features = ["derive"] }
-image = "0.24"
-irid_assets_interface = { path = "../irid_assets_interface" }
+image_crate = { version = "0.24", package = "image"}
 #log = "0.4"
 thiserror = "1"
 #tobj = "3.2"

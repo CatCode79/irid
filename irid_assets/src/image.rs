@@ -3,14 +3,14 @@
 use std::convert::TryFrom;
 use std::num::{NonZeroU32, TryFromIntError};
 
-use irid_assets_interface::{Image, ImageSize};
+use crate::{Image, ImageSize};
 
 //= DIFFUSE IMAGE ============================================================
 
 /// A Diffuse Image
 #[derive(Clone, Debug)]
 pub struct DiffuseImage {
-    image: image::DynamicImage,
+    image: image_crate::DynamicImage,
     size: DiffuseImageSize,
 }
 
@@ -20,17 +20,17 @@ impl DiffuseImage {
     fn handle_new<P: AsRef<std::path::Path>>(
         filepath: P,
         guess_the_format: bool,
-    ) -> image::ImageResult<Self> {
+    ) -> image_crate::ImageResult<Self> {
         let file_reader = if guess_the_format {
-            image::io::Reader::open(filepath)?.with_guessed_format()?
+            image_crate::io::Reader::open(filepath)?.with_guessed_format()?
         } else {
-            image::io::Reader::open(filepath)?
+            image_crate::io::Reader::open(filepath)?
         };
 
         let image = file_reader.decode()?;
 
         let size = {
-            use image::GenericImageView;
+            use image_crate::GenericImageView;
             image.dimensions().into()
         };
 
@@ -51,7 +51,7 @@ impl Image for DiffuseImage {
     /// If you want to inspect the content for a better guess on the format,
     /// which does not depend on file extensions, see
     /// [new_with_guessed_format](DiffuseImage::new_with_guessed_format).
-    fn load<P: AsRef<std::path::Path>>(filepath: P) -> image::ImageResult<Self> {
+    fn load<P: AsRef<std::path::Path>>(filepath: P) -> image_crate::ImageResult<Self> {
         DiffuseImage::handle_new(filepath, false)
     }
 
@@ -73,7 +73,7 @@ impl Image for DiffuseImage {
     /// hazardous to continue with more IO operations**.
     fn load_with_guessed_format<P: AsRef<std::path::Path>>(
         filepath: P,
-    ) -> image::ImageResult<Self> {
+    ) -> image_crate::ImageResult<Self> {
         DiffuseImage::handle_new(filepath, true)
     }
 
@@ -87,7 +87,7 @@ impl Image for DiffuseImage {
     //- Color Data Conversions -----------------------------------------------
 
     fn as_rgba8_bytes(&self) -> Option<&[u8]> {
-        use image::EncodableLayout;
+        use image_crate::EncodableLayout;
         match self.image.as_rgba8() {
             None => None,
             Some(rgba8) => Some(rgba8.as_bytes()),
