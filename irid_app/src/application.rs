@@ -5,6 +5,11 @@ use std::{fmt::Debug, path::PathBuf};
 use irid_assets::Vertex;
 use irid_renderer::{PerspectiveCamera, Renderer, RendererConfig, RendererError};
 use thiserror::Error;
+use winit::event::Event::NewEvents;
+use winit::event::{
+    DeviceId, ElementState, Event, KeyboardInput, ModifiersState, MouseButton, MouseScrollDelta,
+    StartCause, Touch, TouchPhase, VirtualKeyCode, WindowEvent,
+};
 
 use crate::{IridWindowConfig, Listener};
 
@@ -125,53 +130,53 @@ where
         use winit::platform::run_return::EventLoopExtRunReturn;
         event_loop.run_return(move |event, _, control_flow| {
             match event {
-                winit::event::Event::NewEvents(start_cause) => {
+                NewEvents(start_cause) => {
                     self.on_new_events(start_cause);
                 }
 
-                winit::event::Event::WindowEvent {
+                Event::WindowEvent {
                     event: window_event,
                     window_id,
                 } => {
                     if window_id == window.id() {
                         match window_event {
-                            winit::event::WindowEvent::Resized(physical_size) => {
+                            WindowEvent::Resized(physical_size) => {
                                 self.on_window_resize(renderer, physical_size);
                             }
 
-                            winit::event::WindowEvent::Moved(physical_position) => {
+                            WindowEvent::Moved(physical_position) => {
                                 self.on_window_move(physical_position);
                             }
 
-                            winit::event::WindowEvent::CloseRequested => {
+                            WindowEvent::CloseRequested => {
                                 self.on_window_close(control_flow);
                             }
 
-                            winit::event::WindowEvent::Destroyed => {
+                            WindowEvent::Destroyed => {
                                 self.on_window_destroy();
                             }
 
-                            winit::event::WindowEvent::DroppedFile(path) => {
+                            WindowEvent::DroppedFile(path) => {
                                 self.on_window_drop_file(path);
                             }
 
-                            winit::event::WindowEvent::HoveredFile(path) => {
+                            WindowEvent::HoveredFile(path) => {
                                 self.on_window_hover_file(path);
                             }
 
-                            winit::event::WindowEvent::HoveredFileCancelled => {
+                            WindowEvent::HoveredFileCancelled => {
                                 self.on_window_hover_file_cancelled();
                             }
 
-                            winit::event::WindowEvent::ReceivedCharacter(c) => {
+                            WindowEvent::ReceivedCharacter(c) => {
                                 self.on_window_receive_character(c);
                             }
 
-                            winit::event::WindowEvent::Focused(gained_focus) => {
+                            WindowEvent::Focused(gained_focus) => {
                                 self.on_window_focus(gained_focus);
                             }
 
-                            winit::event::WindowEvent::KeyboardInput {
+                            WindowEvent::KeyboardInput {
                                 device_id,
                                 input,
                                 is_synthetic,
@@ -186,11 +191,11 @@ where
                                 }
                             }
 
-                            winit::event::WindowEvent::ModifiersChanged(state) => {
+                            WindowEvent::ModifiersChanged(state) => {
                                 self.on_window_modifiers_change(state);
                             }
 
-                            winit::event::WindowEvent::CursorMoved {
+                            WindowEvent::CursorMoved {
                                 device_id,
                                 position,
                                 ..
@@ -198,15 +203,15 @@ where
                                 self.on_window_cursor_move(device_id, position);
                             }
 
-                            winit::event::WindowEvent::CursorEntered { device_id } => {
+                            WindowEvent::CursorEntered { device_id } => {
                                 self.on_window_cursor_enter(device_id);
                             }
 
-                            winit::event::WindowEvent::CursorLeft { device_id } => {
+                            WindowEvent::CursorLeft { device_id } => {
                                 self.on_window_cursor_left(device_id);
                             }
 
-                            winit::event::WindowEvent::MouseWheel {
+                            WindowEvent::MouseWheel {
                                 device_id,
                                 delta,
                                 phase,
@@ -215,7 +220,7 @@ where
                                 self.on_window_mouse_wheel(device_id, delta, phase);
                             }
 
-                            winit::event::WindowEvent::MouseInput {
+                            WindowEvent::MouseInput {
                                 device_id,
                                 state,
                                 button,
@@ -224,7 +229,7 @@ where
                                 self.on_window_mouse_input(device_id, state, button);
                             }
 
-                            winit::event::WindowEvent::TouchpadPressure {
+                            WindowEvent::TouchpadPressure {
                                 device_id,
                                 pressure,
                                 stage,
@@ -232,7 +237,7 @@ where
                                 self.on_window_touchpad_pressure(device_id, pressure, stage);
                             }
 
-                            winit::event::WindowEvent::AxisMotion {
+                            WindowEvent::AxisMotion {
                                 device_id,
                                 axis,
                                 value,
@@ -240,57 +245,58 @@ where
                                 self.on_window_axis_motion(device_id, axis, value);
                             }
 
-                            winit::event::WindowEvent::Touch(touch) => {
+                            WindowEvent::Touch(touch) => {
                                 self.on_window_touch(touch);
                             }
 
                             // The window's scale factor has changed.
-                            winit::event::WindowEvent::ScaleFactorChanged {
+                            WindowEvent::ScaleFactorChanged {
                                 scale_factor,
                                 new_inner_size,
                             } => {
                                 self.on_window_scale_change(renderer, scale_factor, new_inner_size);
                             }
 
-                            winit::event::WindowEvent::ThemeChanged(theme) => {
+                            WindowEvent::ThemeChanged(theme) => {
                                 self.on_window_theme_change(theme);
                             }
+                            _ => {}
                         }
                     }
                 }
 
-                winit::event::Event::DeviceEvent {
+                Event::DeviceEvent {
                     device_id: _device_id,
                     event: ref _device_event,
                 } => {
                     // Currently we don't have to manage it
                 }
 
-                winit::event::Event::UserEvent(event) => {
+                Event::UserEvent(event) => {
                     self.on_user_event(&event);
                 }
 
-                winit::event::Event::Suspended => {
+                Event::Suspended => {
                     self.on_suspend();
                 }
 
-                winit::event::Event::Resumed => {
+                Event::Resumed => {
                     self.on_resume();
                 }
 
-                winit::event::Event::MainEventsCleared => {
+                Event::MainEventsCleared => {
                     self.on_redraw(renderer, control_flow);
                 }
 
-                winit::event::Event::RedrawRequested(window_id) => {
+                Event::RedrawRequested(window_id) => {
                     self.on_redraw_request(&window_id);
                 }
 
-                winit::event::Event::RedrawEventsCleared => {
+                Event::RedrawEventsCleared => {
                     self.on_redraw_clear();
                 }
 
-                winit::event::Event::LoopDestroyed => {
+                Event::LoopDestroyed => {
                     self.on_destroy();
                 }
             }
@@ -301,7 +307,7 @@ where
 
     //- Generic Events -------------------------------------------------------
 
-    fn on_new_events(&self, start_cause: winit::event::StartCause) {
+    fn on_new_events(&self, start_cause: StartCause) {
         let _use_default_behaviour = self.listener.on_new_events(start_cause);
     }
 
@@ -415,9 +421,9 @@ where
     fn on_window_keyboard_input(
         &self,
         control_flow: &mut winit::event_loop::ControlFlow,
-        device_id: winit::event::DeviceId,
+        device_id: DeviceId,
         renderer: &mut Renderer<PerspectiveCamera>,
-        input: winit::event::KeyboardInput,
+        input: KeyboardInput,
     ) {
         // First call a generic method to manage the key events
         let use_default_behaviour = self.listener.on_window_keyboard_input(
@@ -431,9 +437,9 @@ where
             // Check the camera controller
             let _ = renderer.process_camera_events(input);
 
-            if let winit::event::KeyboardInput {
-                state: winit::event::ElementState::Pressed,
-                virtual_keycode: Some(winit::event::VirtualKeyCode::Escape),
+            if let KeyboardInput {
+                state: ElementState::Pressed,
+                virtual_keycode: Some(VirtualKeyCode::Escape),
                 ..
             } = input
             {
@@ -442,62 +448,52 @@ where
         }
     }
 
-    fn on_window_modifiers_change(&self, state: winit::event::ModifiersState) {
+    fn on_window_modifiers_change(&self, state: ModifiersState) {
         let _use_default_behaviour = self.listener.on_window_modifiers_change(state);
     }
 
     fn on_window_cursor_move(
         &self,
-        device_id: winit::event::DeviceId,
+        device_id: DeviceId,
         position: winit::dpi::PhysicalPosition<f64>,
     ) {
         let _use_default_behaviour = self.listener.on_window_cursor_move(device_id, position);
     }
 
-    fn on_window_cursor_enter(&self, device_id: winit::event::DeviceId) {
+    fn on_window_cursor_enter(&self, device_id: DeviceId) {
         let _use_default_behaviour = self.listener.on_window_cursor_enter(device_id);
     }
 
-    fn on_window_cursor_left(&self, device_id: winit::event::DeviceId) {
+    fn on_window_cursor_left(&self, device_id: DeviceId) {
         let _use_default_behaviour = self.listener.on_window_cursor_left(device_id);
     }
 
     fn on_window_mouse_wheel(
         &self,
-        device_id: winit::event::DeviceId,
-        delta: winit::event::MouseScrollDelta,
-        phase: winit::event::TouchPhase,
+        device_id: DeviceId,
+        delta: MouseScrollDelta,
+        phase: TouchPhase,
     ) {
         let _use_default_behaviour = self.listener.on_window_mouse_wheel(device_id, delta, phase);
     }
 
-    fn on_window_mouse_input(
-        &self,
-        device_id: winit::event::DeviceId,
-        state: winit::event::ElementState,
-        button: winit::event::MouseButton,
-    ) {
+    fn on_window_mouse_input(&self, device_id: DeviceId, state: ElementState, button: MouseButton) {
         let _use_default_behaviour = self
             .listener
             .on_window_mouse_input(device_id, state, button);
     }
 
-    fn on_window_touchpad_pressure(
-        &self,
-        device_id: winit::event::DeviceId,
-        pressure: f32,
-        stage: i64,
-    ) {
+    fn on_window_touchpad_pressure(&self, device_id: DeviceId, pressure: f32, stage: i64) {
         let _use_default_behaviour = self
             .listener
             .on_window_touchpad_pressure(device_id, pressure, stage);
     }
 
-    fn on_window_axis_motion(&self, device_id: winit::event::DeviceId, axis: u32, value: f64) {
+    fn on_window_axis_motion(&self, device_id: DeviceId, axis: u32, value: f64) {
         let _use_default_behaviour = self.listener.on_window_axis_motion(device_id, axis, value);
     }
 
-    fn on_window_touch(&self, touch: winit::event::Touch) {
+    fn on_window_touch(&self, touch: Touch) {
         let _use_default_behaviour = self.listener.on_window_touch(touch);
     }
 

@@ -16,4 +16,4 @@ irid_renderer = { path = "../irid_renderer" }
 log = "0.4"
 thiserror = "1"
 wgpu = "0.13"
-winit = "0.26"
+winit = "0.27"

@@ -1,5 +1,6 @@
 //= USES =====================================================================
 
+use winit::window::CursorGrabMode;
 use winit::{
     dpi::{PhysicalPosition, PhysicalSize},
     error::{ExternalError, NotSupportedError, OsError},
@@ -10,9 +11,19 @@ use winit::{
 //= IRID WINDOW BUILDER ======================================================
 
 ///
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct IridWindowConfig {
     winit_builder: winit::window::WindowBuilder,
+    delayed_visibility: bool,
+}
+
+impl Default for IridWindowConfig {
+    fn default() -> Self {
+        Self {
+            winit_builder: Default::default(),
+            delayed_visibility: true,
+        }
+    }
 }
 
 impl IridWindowConfig {
@@ -34,67 +45,68 @@ impl IridWindowConfig {
     //- Setters --------------------------------------------------------------
 
     pub fn with_inner_size<S: Into<winit::dpi::Size>>(mut self, size: S) -> Self {
-        self.winit_builder.window.inner_size = Some(size.into());
+        self.winit_builder = self.winit_builder.with_inner_size(size.into());
         self
     }
 
     pub fn with_min_inner_size<S: Into<winit::dpi::Size>>(mut self, min_size: S) -> Self {
-        self.winit_builder.window.min_inner_size = Some(min_size.into());
+        self.winit_builder = self.winit_builder.with_min_inner_size(min_size.into());
         self
     }
 
     pub fn with_max_inner_size<S: Into<winit::dpi::Size>>(mut self, max_size: S) -> Self {
-        self.winit_builder.window.max_inner_size = Some(max_size.into());
+        self.winit_builder = self.winit_builder.with_max_inner_size(max_size.into());
         self
     }
 
     pub fn with_position<P: Into<winit::dpi::Position>>(mut self, position: P) -> Self {
-        self.winit_builder.window.position = Some(position.into());
+        self.winit_builder = self.winit_builder.with_position(position.into());
         self
     }
 
     pub fn with_resizable(mut self, resizable: bool) -> Self {
-        self.winit_builder.window.resizable = resizable;
+        self.winit_builder = self.winit_builder.with_resizable(resizable);
         self
     }
 
     pub fn with_title<T: Into<String>>(mut self, title: T) -> Self {
-        self.winit_builder.window.title = title.into();
+        self.winit_builder = self.winit_builder.with_title(title.into());
         self
     }
 
     pub fn with_fullscreen(mut self, fullscreen: Option<winit::window::Fullscreen>) -> Self {
-        self.winit_builder.window.fullscreen = fullscreen;
+        self.winit_builder = self.winit_builder.with_fullscreen(fullscreen);
         self
     }
 
     pub fn with_maximized(mut self, maximized: bool) -> Self {
-        self.winit_builder.window.maximized = maximized;
+        self.winit_builder = self.winit_builder.with_maximized(maximized);
         self
     }
 
     pub fn with_visible(mut self, visible: bool) -> Self {
-        self.winit_builder.window.visible = visible;
+        self.delayed_visibility = visible;
+        self.winit_builder = self.winit_builder.with_visible(visible);
         self
     }
 
     pub fn with_transparent(mut self, transparent: bool) -> Self {
-        self.winit_builder.window.transparent = transparent;
+        self.winit_builder = self.winit_builder.with_transparent(transparent);
         self
     }
 
     pub fn with_decorations(mut self, decorations: bool) -> Self {
-        self.winit_builder.window.decorations = decorations;
+        self.winit_builder = self.winit_builder.with_decorations(decorations);
         self
     }
 
     pub fn with_always_on_top(mut self, always_on_top: bool) -> Self {
-        self.winit_builder.window.always_on_top = always_on_top;
+        self.winit_builder = self.winit_builder.with_always_on_top(always_on_top);
         self
     }
 
     pub fn with_window_icon(mut self, window_icon: Option<winit::window::Icon>) -> Self {
-        self.winit_builder.window.window_icon = window_icon;
+        self.winit_builder = self.winit_builder.with_window_icon(window_icon);
         self
     }
 
@@ -104,12 +116,11 @@ impl IridWindowConfig {
         mut self,
         event_loop: &winit::event_loop::EventLoop<()>,
     ) -> Result<IridWindow, OsError> {
-        let delayed_visibility = Some(self.winit_builder.window.visible);
-        self.winit_builder.window.visible = false;
+        self.winit_builder = self.winit_builder.with_visible(false);
 
         Ok(IridWindow {
             winit_window: self.winit_builder.build(event_loop)?,
-            delayed_visibility,
+            delayed_visibility: self.delayed_visibility,
         })
     }
 }
@@ -119,7 +130,7 @@ impl IridWindowConfig {
 #[derive(Debug)]
 pub struct IridWindow {
     winit_window: winit::window::Window,
-    delayed_visibility: Option<bool>,
+    delayed_visibility: bool,
 }
 
 impl Default for IridWindow {
@@ -284,7 +295,7 @@ impl IridWindow {
     }
 
     #[inline]
-    pub fn set_cursor_grab(&self, grab: bool) -> Result<(), ExternalError> {
+    pub fn set_cursor_grab(&self, grab: CursorGrabMode) -> Result<(), ExternalError> {
         self.winit_window.set_cursor_grab(grab)
     }
 
@@ -327,9 +338,6 @@ impl IridWindow {
     }
 
     pub(crate) fn conclude_visibility_delay(&mut self) {
-        if self.delayed_visibility.is_some() {
-            self.set_visible(self.delayed_visibility.unwrap());
-            self.delayed_visibility = None;
-        }
+        self.set_visible(self.delayed_visibility);
     }
 }
