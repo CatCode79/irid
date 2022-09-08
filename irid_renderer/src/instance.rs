@@ -29,8 +29,9 @@ impl Instance {
 //= INSTANCE FOR SHADERS =====================================================
 
 /// This is the data that will go into the wgpu::Buffer.
-/// We keep these separate so that we can update the Instance as much as we want without needing
-/// to mess with quaternions. We only need to update the raw data before we draw.
+/// We keep these separate so that we can update the Instance as much
+/// as we want without needing to mess with quaternions.
+/// We only need to update the raw data before we draw.
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub(crate) struct InstanceRaw {
@@ -45,20 +46,22 @@ impl InstanceRaw {
         wgpu::VertexBufferLayout {
             array_stride: mem::size_of::<InstanceRaw>() as wgpu::BufferAddress,
             // We need to switch from using a step mode of Vertex to Instance.
-            // This means that our shaders will only change to use the next instance
-            // when the shader starts processing a new instance.
+            // This means that our shaders will only change to use the next
+            // instance when the shader starts processing a new instance.
             step_mode: wgpu::VertexStepMode::Instance,
             attributes: &[
                 wgpu::VertexAttribute {
                     offset: 0,
-                    // While our vertex shader only uses locations 0, and 1 now, in later tutorials
-                    // we'll be using 2, 3, and 4, for Vertex.
+                    // While our vertex shader only uses locations 0,
+                    // and 1 now, in later tutorials we'll be using 2, 3,
+                    // and 4, for Vertex.
                     // We'll start at slot 5 not conflict with them later.
                     shader_location: 5,
                     format: wgpu::VertexFormat::Float32x4,
                 },
-                // A mat4 takes up 4 vertex slots as it is technically 4 vec4s. We need to define
-                // a slot for each vec4. We'll have to reassemble the mat4 in the shader.
+                // A mat4 takes up 4 vertex slots as it is technically 4 vec4s.
+                // We need to define a slot for each vec4.
+                // We'll have to reassemble the mat4 in the shader.
                 wgpu::VertexAttribute {
                     offset: mem::size_of::<[f32; 4]>() as wgpu::BufferAddress,
                     shader_location: 6,

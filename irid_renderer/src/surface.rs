@@ -15,8 +15,8 @@ pub(crate) enum SurfaceError {
 
 //= SURFACE WRAPPER ==========================================================
 
-/// A Surface represents a platform-specific surface (e.g. a window) onto which rendered images
-/// may be presented.
+/// A Surface represents a platform-specific surface (e.g. a window) onto
+/// which rendered images may be presented.
 #[derive(Debug)]
 pub(crate) struct Surface {
     wgpu_surface: wgpu::Surface,
@@ -27,8 +27,8 @@ pub(crate) struct Surface {
 impl Surface {
     //- Constructors ---------------------------------------------------------
 
-    /// Create a new Surface using the window handle and retrieves an Adapter which matches
-    /// the created surface.
+    /// Create a new Surface using the window handle and retrieves an Adapter
+    /// which matches the created surface.
     pub(crate) fn new(
         backends: wgpu::Backends,
         window: &winit::window::Window,

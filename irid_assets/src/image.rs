@@ -1,7 +1,9 @@
 //= USES =====================================================================
 
-use std::convert::TryFrom;
-use std::num::{NonZeroU32, TryFromIntError};
+use std::{
+    convert::TryFrom,
+    num::{NonZeroU32, TryFromIntError},
+};
 
 use crate::{Image, ImageSize};
 
@@ -56,21 +58,23 @@ impl Image for DiffuseImage {
     }
 
     /// Open and decode a file to read, format will be guessed from path first
-    /// (like the [new](DiffuseImage::new) method) and then make a format guess
-    /// based on the content, replacing it on success.
+    /// (like the [new](DiffuseImage::new) method) and then make a format
+    /// guess based on the content, replacing it on success.
     ///
-    /// If the guess was unable to determine a format then the format from path is used.
+    /// If the guess was unable to determine a format then the format from
+    /// path is used.
     /// Returns Ok with the guess if no io error occurs.
     /// Additionally, replaces the current format if the guess was successful.
     ///
     /// # Errors
     ///
-    /// Returns an error if the underlying reader fails. The format is unchanged.
-    /// The error is a std::io::Error and not ImageError since the only error case is an error
-    /// when the underlying reader seeks.
+    /// Returns an error if the underlying reader fails.
+    /// The format is unchanged.
+    /// The error is a std::io::Error and not ImageError since the only error
+    /// case is an error when the underlying reader seeks.
     ///
-    /// **When an error occurs, the reader may not have been properly reset and it is potentially
-    /// hazardous to continue with more IO operations**.
+    /// **When an error occurs, the reader may not have been properly reset
+    /// and it is potentially hazardous to continue with more IO operations**.
     fn load_with_guessed_format<P: AsRef<std::path::Path>>(
         filepath: P,
     ) -> image_crate::ImageResult<Self> {

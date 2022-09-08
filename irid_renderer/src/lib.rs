@@ -1,13 +1,12 @@
 //= MODS =====================================================================
 
-pub(crate) mod camera;
-pub(crate) mod pipeline;
-pub(crate) mod renderer;
-
+mod camera;
 mod camera_bind;
 mod device;
 mod instance;
+mod pipeline;
 mod queue;
+mod renderer;
 mod shader;
 mod surface;
 mod texture_metadata;

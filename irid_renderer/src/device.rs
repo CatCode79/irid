@@ -11,7 +11,8 @@ use crate::queue::Queue;
 /// Open connection to a graphics and/or compute device.
 ///
 /// Responsible for the creation of most rendering and compute resources.
-/// These are then used in commands, which are submitted to a [`Queue`](wgpu::Queue).
+/// These are then used in commands, which are submitted
+/// to a [`Queue`](wgpu::Queue).
 ///
 /// A device may be requested from an adapter with
 /// [`Adapter::request_device`](Adapter::request_device).
@@ -118,7 +119,8 @@ impl Device {
         self.wgpu_device.create_bind_group(bind_group_desc)
     }
 
-    /// Creates a [ShaderModule](wgpu::ShaderModule) from either SPIR-V or WGSL source code.
+    /// Creates a [ShaderModule](wgpu::ShaderModule) from either SPIR-V
+    /// or WGSL source code.
     pub fn create_shader_module(
         &self,
         shader_module_desc: wgpu::ShaderModuleDescriptor<'_>,

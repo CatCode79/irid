@@ -1,11 +1,13 @@
 //= MODS =====================================================================
 
-pub(crate) mod application;
-pub(crate) mod listener;
-pub(crate) mod window;
+mod application;
+mod listener;
+mod window;
 
 //= USES =====================================================================
 
 pub use self::application::*;
 pub use self::listener::*;
 pub use self::window::*;
+
+//= TRAITS ===================================================================

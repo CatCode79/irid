@@ -90,7 +90,8 @@ impl Queue {
         let _ = self.wgpu_queue.submit(command_buffers);
     }
 
-    /// Gets the amount of nanoseconds each tick of a timestamp query represents.
+    /// Gets the amount of nanoseconds each tick of a timestamp query
+    /// represents.
     ///
     /// Returns zero if timestamp queries are unsupported.
     pub fn get_timestamp_period(&self) -> f32 {

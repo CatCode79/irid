@@ -1,9 +1,9 @@
 //= MODS =====================================================================
 
-pub(crate) mod image;
-pub(crate) mod model;
-pub(crate) mod texture;
-pub(crate) mod vertex;
+mod image;
+mod model;
+mod texture;
+mod vertex;
 
 //= USES =====================================================================
 

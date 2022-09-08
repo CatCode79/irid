@@ -195,8 +195,9 @@ impl TextureDepthMetadatas {
 
     //- Constructors ---------------------------------------------------------
 
-    /// Our depth texture needs to be the same size as our screen if we want things
-    /// to render correctly so we give to constructor windows_size value.
+    /// Our depth texture needs to be the same size as our screen
+    /// if we want things to render correctly so we give to constructor
+    /// windows_size value.
     pub(crate) fn new(device: &Device, window_size: winit::dpi::PhysicalSize<u32>) -> Self {
         let size = wgpu::Extent3d {
             width: window_size.width,
@@ -223,7 +224,8 @@ impl TextureDepthMetadatas {
 
         // We technically don't need a sampler for a depth texture,
         // but our Texture struct requires it.
-        // If we do decide to render our depth texture, we need to use CompareFunction::LessEqual.
+        // If we do decide to render our depth texture, we need to use
+        // CompareFunction::LessEqual.
         // This is due to how the samplerShadow and sampler2DShadow()
         // interacts with the texture() function in GLSL.
         let sampler = device.create_sampler(&wgpu::SamplerDescriptor {

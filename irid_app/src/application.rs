@@ -24,7 +24,7 @@ pub enum ApplicationError {
     },
 }
 
-//= APPLICATION BUILDER ======================================================
+//= APPLICATION CONFIG =======================================================
 
 /// Build a new [Application] with wanted values.
 #[derive(Clone, Debug, Default)]
@@ -61,26 +61,10 @@ where
 
     ///
     #[inline]
-    pub fn with_window_builder(mut self, window_config: IridWindowConfig) -> Self {
+    pub fn with_window_config(mut self, window_config: IridWindowConfig) -> Self {
         self.window_config = Some(window_config);
         self
     }
-
-    /*
-    ///
-    #[inline]
-    pub fn with_window(mut self, window: W) -> Self {
-        self.window = Some(window);
-        self
-    }
-
-    ///
-    #[inline]
-    pub fn with_event_loop(mut self, event_loop: winit::event_loop::EventLoop<()>) -> Self {
-        self.event_loop = Some(event_loop);
-        self
-    }
-    */
 
     ///
     #[inline]
@@ -107,7 +91,7 @@ where
 //= APPLICATION ==============================================================
 
 /// Manages the whole game setup and logic.
-#[derive(Debug)] // TODO: add Clone and Default traits, impossible because Renderer
+#[derive(Debug)]
 pub struct Application<'a, L: Listener, V: Vertex> {
     listener: L,
     window_config: IridWindowConfig,
@@ -126,19 +110,14 @@ where
     ///
     /// The event loop uses the winit
     /// [run_return](https://docs.rs/winit/0.25.0/winit/platform/run_return/trait.EventLoopExtRunReturn.html#tymethod.run_return)
-    /// method.
-    ///
-    /// I know I should use winit
-    /// [run](https://docs.rs/winit/0.25.0/winit/event_loop/struct.EventLoop.html#method.run)
-    /// method instead but all those static variables are a bore to handle.
-    ///
-    /// To remember that the resize is not managed perfectly with run_return.
+    /// method, which has some caveats.
     pub fn start(self) -> Result<(), ApplicationError> {
         let mut event_loop = winit::event_loop::EventLoop::new();
         let mut window = self.window_config.clone().build(&event_loop)?; // TODO: this clone probably will be hard to remove
 
-        // Now is a good time to make the window visible: after the renderer has been initialized,
-        // in this way we avoid a slight window's visible/invisible toggling effect
+        // Now is a good time to make the window visible: after the renderer
+        // has been initialized, in this way we avoid a slight window's
+        // visible/invisible toggling effect
         window.conclude_visibility_delay();
 
         let renderer = &mut self.renderer_config.build(window.expose_inner_window())?;

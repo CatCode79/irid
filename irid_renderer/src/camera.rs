@@ -1,12 +1,16 @@
 //= CONSTS ===================================================================
 
-/// The coordinate system in Wgpu is based on DirectX, and Metal's coordinate systems.
-/// That means that in normalized device coordinates the x axis and y axis are in the range
-/// of -1.0 to +1.0, and the z axis is 0.0 to +1.0.
-/// The cgmath crate (as well as most game math crates) are built for OpenGL's coordinate system.
-/// This matrix will scale and translate our scene from OpenGL's coordinate system to WGPU's.
-/// Note: We don't explicitly need the OPENGL_TO_WGPU_MATRIX, but models centered on (0, 0, 0) will
-/// be halfway inside the clipping area. This is only an issue if you aren't using a camera matrix.
+/// The coordinate system in Wgpu is based on DirectX, and Metal's coordinate
+/// systems.
+/// That means that in normalized device coordinates the x axis and y axis
+/// are in the range of -1.0 to +1.0, and the z axis is 0.0 to +1.0.
+/// The cgmath crate (as well as most game math crates) are built for OpenGL's
+/// coordinate system.
+/// This matrix will scale and translate our scene from OpenGL's coordinate
+/// system to WGPU's.
+/// Note: We don't explicitly need the OPENGL_TO_WGPU_MATRIX, but models
+/// centered on (0, 0, 0) will be halfway inside the clipping area.
+/// This is only an issue if you aren't using a camera matrix.
 #[rustfmt::skip]
 const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
     1.0, 0.0, 0.0, 0.0,
@@ -84,12 +88,15 @@ impl Camera for PerspectiveCamera {
     //- Camera Uniform Helpers -----------------------------------------------
 
     fn build_view_projection_matrix(&self) -> cgmath::Matrix4<f32> {
-        // The view matrix moves the world to be at the position and rotation of the camera.
-        // It's essentially an inverse of whatever the transform matrix of the camera would be.
+        // The view matrix moves the world to be at the position and rotation
+        // of the camera.
+        // It's essentially an inverse of whatever the transform matrix
+        // of the camera would be.
         let view = cgmath::Matrix4::look_at_rh(self.eye, self.target, self.up);
 
         // The proj matrix wraps the scene to give the effect of depth.
-        // Without this, objects up close would be the same size as objects far away.
+        // Without this, objects up close would be the same size as objects
+        // far away.
         let proj = cgmath::perspective(cgmath::Deg(self.fovy), self.aspect, self.znear, self.zfar);
 
         OPENGL_TO_WGPU_MATRIX * proj * view
@@ -209,7 +216,8 @@ impl CameraController {
         let forward_norm = forward.normalize();
         let forward_mag = forward.magnitude();
 
-        // Prevents glitching when camera gets too close to the center of the scene
+        // Prevents glitching when camera gets too close to the center
+        // of the scene
         if self.is_forward_pressed && forward_mag > self.speed {
             camera.add_to_eye(forward_norm * self.speed);
         }
@@ -224,8 +232,10 @@ impl CameraController {
         let forward_mag = forward.magnitude();
 
         if self.is_right_pressed {
-            // Rescale the distance between the target and eye so that it doesn't change.
-            // The eye therefore still lies on the circle made by the target and eye.
+            // Rescale the distance between the target and eye so that it
+            // doesn't change.
+            // The eye therefore still lies on the circle made by the target
+            // and eye.
             camera.set_eye(
                 camera.target() - (forward + right * self.speed).normalize() * forward_mag,
             );
