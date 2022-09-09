@@ -1,19 +1,30 @@
 //= USES =====================================================================
 
-use thiserror::Error;
+use std::{
+    error::Error,
+    fmt::{Display, Formatter},
+};
 
 use crate::{DiffuseImage, DiffuseImageSize, Image};
 
 //= TEXTURE ERRORS ===========================================================
 
-#[derive(Debug, Error)]
+#[derive(Debug)]
 pub enum TextureError {
-    #[error("Cannot load the image")]
     CannotLoad {
-        #[from]
         source: image_crate::error::ImageError,
     },
 }
+
+impl Display for TextureError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TextureError::CannotLoad { source } => writeln!(f, "Cannot load the image: {}", source),
+        }
+    }
+}
+
+impl Error for TextureError {}
 
 //= DIFFUSE TEXTURE ==========================================================
 
@@ -31,7 +42,8 @@ impl DiffuseTexture {
     pub fn load<P: AsRef<std::path::Path>>(filepath: P) -> Result<Self, TextureError> {
         Ok(Self {
             path: filepath.as_ref().to_path_buf(),
-            image: DiffuseImage::load(filepath)?,
+            image: DiffuseImage::load(filepath)
+                .map_err(|e| TextureError::CannotLoad { source: e })?,
         })
     }
 
@@ -40,7 +52,8 @@ impl DiffuseTexture {
     ) -> Result<Self, TextureError> {
         Ok(Self {
             path: filepath.as_ref().to_path_buf(),
-            image: DiffuseImage::load_with_guessed_format(filepath)?,
+            image: DiffuseImage::load_with_guessed_format(filepath)
+                .map_err(|e| TextureError::CannotLoad { source: e })?,
         })
     }
 

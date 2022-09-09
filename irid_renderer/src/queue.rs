@@ -1,7 +1,9 @@
 //= USES =====================================================================
 
+use std::error::Error;
+use std::fmt::{Display, Formatter};
+
 use irid_assets::{DiffuseTexture, Image, ImageSize};
-use thiserror::Error;
 
 use crate::camera::Camera;
 use crate::camera_bind::CameraBindGroup;
@@ -10,11 +12,24 @@ use crate::utils::log2;
 
 //= ERRORS ===================================================================
 
-#[derive(Debug, Error)]
+#[derive(Debug)]
 pub enum QueueError {
-    #[error("Impossible to enqueue None bytes, as rgba, from texture {{0}}")]
     RgbaTextureNoneBytes { path: std::path::PathBuf },
 }
+
+impl Display for QueueError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            QueueError::RgbaTextureNoneBytes { path } => writeln!(
+                f,
+                "Impossible to enqueue None bytes, as rgba, from texture {:?}",
+                path
+            ),
+        }
+    }
+}
+
+impl Error for QueueError {}
 
 //= QUEUE ====================================================================
 

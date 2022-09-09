@@ -13,6 +13,5 @@ publish = false
 bytemuck = { version = "1", features = ["derive"] }
 image_crate = { version = "0.24", package = "image"}
 #log = "0.4"
-thiserror = "1"
 #tobj = "3.2"
 wgpu = "0.13"

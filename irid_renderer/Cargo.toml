@@ -15,6 +15,5 @@ cgmath = "0.18"
 irid_assets = { path = "../irid_assets" }
 log = "0.4"
 pollster = "0.2"
-thiserror = "1"
 wgpu = "0.13"
 winit = "0.27"

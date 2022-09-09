@@ -1,11 +1,11 @@
 //= USES =====================================================================
 
-use std::{fmt::Debug, fs::read_to_string, path::Path};
+use std::fmt::{Display, Formatter};
+use std::{error::Error, fmt::Debug, fs::read_to_string, path::Path};
 
 use bytemuck::Pod;
 use irid_assets::DiffuseTexture;
 use irid_assets::{Index, Vertex};
-use thiserror::Error;
 
 use crate::{
     camera::Camera,
@@ -23,26 +23,32 @@ use crate::{
 //= ERRORS ===================================================================
 
 ///
-#[derive(Debug, Error)]
+#[derive(Debug)]
 pub enum RendererError {
-    #[error("unable to get a Surface or Adapter")]
     SurfaceAdapterRequest,
-    #[error("unable to get a Device")]
-    DeviceRequest {
-        #[from]
-        source: wgpu::RequestDeviceError,
-    },
-    #[error("unable to load the texture")]
-    LoadTexture {
-        #[from]
-        source: irid_assets::TextureError,
-    },
-    #[error("unable to enqueue the texture")]
-    WriteTexture {
-        #[from]
-        source: QueueError,
-    },
+    DeviceRequest { source: wgpu::RequestDeviceError },
+    LoadTexture { source: irid_assets::TextureError },
+    WriteTexture { source: QueueError },
 }
+
+impl Display for RendererError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RendererError::SurfaceAdapterRequest => write!(f, "Unable to get a Surface or Adapter"),
+            RendererError::DeviceRequest { source } => {
+                write!(f, "Unable to get a Device: {}", source)
+            }
+            RendererError::LoadTexture { source } => {
+                write!(f, "Unable to load the texture: {}", source)
+            }
+            RendererError::WriteTexture { source } => {
+                write!(f, "Unable to enqueue the texture: {}", source)
+            }
+        }
+    }
+}
+
+impl Error for RendererError {}
 
 //= CONSTS ===================================================================
 
@@ -273,7 +279,8 @@ where
         .map_err(|_| RendererError::SurfaceAdapterRequest)?;
 
         // TODO: better find a way to remove the limits.clone()
-        let (device, queue) = Device::new(&adapter, self.features, self.limits.clone())?;
+        let (device, queue) = Device::new(&adapter, self.features, self.limits.clone())
+            .map_err(|e| RendererError::DeviceRequest { source: e })?;
 
         surface.configure(&device);
 
@@ -399,10 +406,13 @@ where
         if self.texture_path.is_some() {
             // TODO: here we use unwrap because texture loading will probably not be done at this point
             //  and therefore it is useless to add a new type of error
-            queue.write_texture(
-                &texture_image_metadatas,
-                DiffuseTexture::load(self.texture_path.as_ref().unwrap())?,
-            )?
+            queue
+                .write_texture(
+                    &texture_image_metadatas,
+                    DiffuseTexture::load(self.texture_path.as_ref().unwrap())
+                        .map_err(|e| RendererError::LoadTexture { source: e })?,
+                )
+                .map_err(|e| RendererError::WriteTexture { source: e })?
         }
 
         //- Vertex and Index Buffers -----------------------------------------
