@@ -14,6 +14,5 @@ bytemuck = "1"
 irid_assets = { path = "../irid_assets" }
 irid_renderer = { path = "../irid_renderer" }
 log = "0.4"
-thiserror = "1"
 wgpu = "0.13"
 winit = "0.27"

@@ -1,11 +1,10 @@
 //= USES =====================================================================
 
-use std::{fmt::Debug, path::PathBuf};
+use std::fmt::{Display, Formatter};
+use std::{error::Error, fmt::Debug, path::PathBuf};
 
 use irid_assets::Vertex;
 use irid_renderer::{PerspectiveCamera, Renderer, RendererConfig, RendererError};
-use thiserror::Error;
-use winit::event::Event::NewEvents;
 use winit::event::{
     DeviceId, ElementState, Event, KeyboardInput, ModifiersState, MouseButton, MouseScrollDelta,
     StartCause, Touch, TouchPhase, VirtualKeyCode, WindowEvent,
@@ -15,19 +14,28 @@ use crate::{IridWindowConfig, Listener};
 
 //= ERRORS ===================================================================
 
-#[derive(Debug, Error)]
+#[derive(Debug)]
 pub enum ApplicationError {
-    #[error("the OS cannot perform the requested operation")]
-    WindowOsError {
-        #[from]
-        source: winit::error::OsError,
-    },
-    #[error("the Renderer cannot be built")]
-    RendererError {
-        #[from]
-        source: RendererError,
-    },
+    WindowOsError { source: winit::error::OsError },
+    RendererError { source: RendererError },
 }
+
+impl Display for ApplicationError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ApplicationError::WindowOsError { source } => write!(
+                f,
+                "The OS cannot perform the requested operation: {}",
+                source
+            ),
+            ApplicationError::RendererError { source } => {
+                write!(f, "The Renderer cannot be built: {}", source)
+            }
+        }
+    }
+}
+
+impl Error for ApplicationError {}
 
 //= APPLICATION CONFIG =======================================================
 
@@ -118,19 +126,26 @@ where
     /// method, which has some caveats.
     pub fn start(self) -> Result<(), ApplicationError> {
         let mut event_loop = winit::event_loop::EventLoop::new();
-        let mut window = self.window_config.clone().build(&event_loop)?; // TODO: this clone probably will be hard to remove
+        let mut window = self
+            .window_config
+            .clone() // TODO: this clone probably will be hard to remove
+            .build(&event_loop)
+            .map_err(|e| ApplicationError::WindowOsError { source: e })?;
 
         // Now is a good time to make the window visible: after the renderer
         // has been initialized, in this way we avoid a slight window's
         // visible/invisible toggling effect
         window.conclude_visibility_delay();
 
-        let renderer = &mut self.renderer_config.build(window.expose_inner_window())?;
+        let renderer = &mut self
+            .renderer_config
+            .build(window.expose_inner_window())
+            .map_err(|e| ApplicationError::RendererError { source: e })?;
 
         use winit::platform::run_return::EventLoopExtRunReturn;
         event_loop.run_return(move |event, _, control_flow| {
             match event {
-                NewEvents(start_cause) => {
+                Event::NewEvents(start_cause) => {
                     self.on_new_events(start_cause);
                 }
 

@@ -1,17 +1,30 @@
 //= USES =====================================================================
 
 use pollster::FutureExt;
-use thiserror::Error;
+use std::error::Error;
+use std::fmt::{Display, Formatter};
 
 use crate::device::Device;
 
 //= ERRORS ===================================================================
 
-#[derive(Debug, Error)]
+#[derive(Debug)]
 pub(crate) enum SurfaceError {
-    #[error("An adapter compatible with the given surface could not be obtained")]
     AdapterNotObtained,
 }
+
+impl Display for SurfaceError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SurfaceError::AdapterNotObtained => write!(
+                f,
+                "An adapter compatible with the given surface could not be obtained"
+            ),
+        }
+    }
+}
+
+impl Error for SurfaceError {}
 
 //= SURFACE WRAPPER ==========================================================
 
