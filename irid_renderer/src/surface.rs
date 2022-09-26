@@ -136,7 +136,6 @@ impl Surface {
 
 // Shows all the adapters information.
 fn enumerate_all_adapters(backends: wgpu::Backends, instance: &wgpu::Instance) {
-    let _ = instance.poll_all(true);
     let adapters = instance.enumerate_adapters(backends);
 
     let mut found = false;
