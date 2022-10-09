@@ -1,17 +1,18 @@
 [package]
 name = "lw04_buffers_indices"
-version = "0.0.13"
-authors = ["CatCode79 https://github.com/CatCode79"]
+version = "0.0.14"
+authors = ["CatCode79"]
 edition = "2021"
-rust-version = "1.63"
+rust-version = "1.64"
 description = "based on https://sotrh.github.io/learn-wgpu/beginner/tutorial4-buffer/"
 repository = "https://github.com/CatCode79/irid"
 license = "MIT OR Apache-2.0"
 publish = false
 
 [dependencies]
-env_logger = "0.9"
 irid = { path = "../../irid" }
+
+env_logger = "0.9"
 log = "0.4"
-wgpu = "0.13"
-winit = "0.26"
+wgpu = "0.14"
+winit = "0.27"

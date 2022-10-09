@@ -3,6 +3,7 @@
 use pollster::FutureExt;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
+use wgpu::CompositeAlphaMode;
 
 use crate::device::Device;
 
@@ -91,6 +92,7 @@ impl Surface {
             width: window_size.width,
             height: window_size.height,
             present_mode,
+            alpha_mode: CompositeAlphaMode::Auto,
         };
 
         let surface = Self {

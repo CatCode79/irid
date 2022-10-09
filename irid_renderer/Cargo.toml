@@ -1,19 +1,20 @@
 [package]
 name = "irid_renderer"
-version = "0.0.13"
-authors = ["CatCode79 https://github.com/CatCode79"]
+version = "0.0.14"
+authors = ["CatCode79"]
 edition = "2021"
-rust-version = "1.63"
+rust-version = "1.64"
 description = "Irid Game Framework Renderer"
 repository = "https://github.com/CatCode79/irid"
 license = "MIT OR Apache-2.0"
 publish = false
 
 [dependencies]
+irid_assets = { path = "../irid_assets" }
+
 bytemuck = { version = "1", features = ["derive"] }
 cgmath = "0.18"
-irid_assets = { path = "../irid_assets" }
 log = "0.4"
 pollster = "0.2"
-wgpu = "0.13"
+wgpu = "0.14"
 winit = "0.27"

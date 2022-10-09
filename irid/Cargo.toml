@@ -1,9 +1,9 @@
 [package]
 name = "irid"
-version = "0.0.13"
-authors = ["CatCode79 https://github.com/CatCode79"]
+version = "0.0.14"
+authors = ["CatCode79"]
 edition = "2021"
-rust-version = "1.63"
+rust-version = "1.64"
 description = "Irid Game Framework"
 repository = "https://github.com/CatCode79/irid"
 license = "MIT OR Apache-2.0"
