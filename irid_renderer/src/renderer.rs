@@ -320,7 +320,7 @@ where
             let path = std::env::current_dir()
                 .unwrap()
                 .as_path()
-                .join(&self.shader_path.as_ref().unwrap());
+                .join(self.shader_path.as_ref().unwrap());
             let content = match read_to_string(&path) {
                 Ok(content) => content,
                 Err(err) => panic!("Couldn't open {:?} file: {}", path, err),
