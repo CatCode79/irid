@@ -12,7 +12,7 @@ publish = false
 [dependencies]
 irid_assets = { path = "../irid_assets" }
 
-bytemuck = { version = "1", features = ["derive"] }
+bytemuck = { version = "1.12", features = ["derive"] }
 cgmath = "0.18"
 log = "0.4"
 pollster = "0.2"

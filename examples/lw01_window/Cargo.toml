@@ -12,6 +12,6 @@ publish = false
 [dependencies]
 irid = { path = "../../irid" }
 
-env_logger = "0.9"
+env_logger = "0.10"
 log = "0.4"
 winit = "0.27"
