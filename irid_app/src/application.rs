@@ -4,7 +4,7 @@ use std::fmt::{Display, Formatter};
 use std::{error::Error, fmt::Debug, path::PathBuf};
 
 use irid_assets::Vertex;
-use irid_renderer::{PerspectiveCamera, Renderer, RendererConfig, RendererError};
+use irid_render::{PerspectiveCamera, Renderer, RendererConfig, RendererError};
 use winit::event::{
     DeviceId, ElementState, Event, KeyboardInput, ModifiersState, MouseButton, MouseScrollDelta,
     StartCause, Touch, TouchPhase, VirtualKeyCode, WindowEvent,

@@ -1,5 +1,5 @@
 [package]
-name = "irid_renderer"
+name = "irid_render"
 version = "0.0.14"
 authors = ["CatCode79"]
 edition = "2021"

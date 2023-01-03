@@ -1,15 +1,12 @@
 [package]
-name = "irid"
+name = "irid_traits"
 version = "0.0.14"
 authors = ["CatCode79"]
 edition = "2021"
 rust-version = "1.66"
-description = "Irid Game Framework"
+description = "Irid Game Framework Renderer"
 repository = "https://github.com/CatCode79/irid"
 license = "MIT OR Apache-2.0"
 publish = false
 
 [dependencies]
-irid_app = { path = "../irid_app" }
-irid_assets = { path = "../irid_assets" }
-irid_render = { path = "../irid_render" }

@@ -11,7 +11,7 @@ publish = false
 
 [dependencies]
 irid_assets = { path = "../irid_assets" }
-irid_renderer = { path = "../irid_renderer" }
+irid_render = { path = "../irid_render" }
 
 bytemuck = "1.12"
 log = "0.4"
