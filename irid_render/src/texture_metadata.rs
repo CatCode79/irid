@@ -16,7 +16,7 @@ impl TextureImageMetadata {
     //- Constructors ---------------------------------------------------------
 
     ///
-    pub fn new(device: &Device, width: u32, height: u32) -> Self {
+    pub fn new(device: &Device, width: u32, height: u32, format: wgpu::TextureFormat) -> Self {
         let image_size = wgpu::Extent3d {
             width,
             height,
@@ -34,6 +34,7 @@ impl TextureImageMetadata {
             // TEXTURE_BINDING tells wgpu that we want to use this texture in shaders
             // COPY_DST means that we want to copy data to this texture
             usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+            view_formats: &[format],
         });
 
         let image_data_layout = wgpu::ImageDataLayout {
@@ -213,6 +214,7 @@ impl TextureDepthMetadatas {
             dimension: wgpu::TextureDimension::D2,
             format: Self::DEPTH_FORMAT,
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+            view_formats: &[],
         };
 
         let texture = device.create_texture(&desc);
@@ -236,7 +238,7 @@ impl TextureDepthMetadatas {
             min_filter: wgpu::FilterMode::Linear,
             mipmap_filter: wgpu::FilterMode::Nearest,
             compare: Some(wgpu::CompareFunction::LessEqual),
-            lod_min_clamp: -100.0,
+            lod_min_clamp: 0.0,
             lod_max_clamp: 100.0,
             ..Default::default()
         });

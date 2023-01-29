@@ -67,12 +67,6 @@ pub struct RendererConfig<'a, C: Camera, PS: AsRef<Path>, PT: AsRef<Path>, V: Ve
     // First tier support backends for the Instance request
     backends: wgpu::Backends,
 
-    // Options for the Adapter request
-    power_preference: wgpu::PowerPreference,
-    force_fallback_adapter: bool,
-
-    // Options for Swap Chain creation
-    preferred_format: Option<wgpu::TextureFormat>,
     // Fifo is "vsync on". Immediate is "vsync off".
     // Mailbox is a hybrid between the two (gpu doesn't block if running
     // faster than the display, but screen tearing doesn't happen).
@@ -100,10 +94,10 @@ where
 {
     fn default() -> Self {
         Self {
-            backends: wgpu::Backends::VULKAN | wgpu::Backends::DX12 | wgpu::Backends::METAL,
-            power_preference: wgpu::PowerPreference::HighPerformance,
-            force_fallback_adapter: false,
-            preferred_format: None,
+            backends: wgpu::Backends::DX12
+                | wgpu::Backends::VULKAN
+                | wgpu::Backends::METAL
+                | wgpu::Backends::GL,
             present_mode: wgpu::PresentMode::Fifo,
             features: wgpu::Features::empty(),
             limits: wgpu::Limits::downlevel_defaults(),
@@ -139,33 +133,6 @@ where
     pub fn with_backends(mut self, backends: wgpu::Backends) -> Self {
         self.backends = backends;
         self
-    }
-
-    ///
-    #[inline]
-    pub fn with_power_preference(mut self, power_preference: wgpu::PowerPreference) -> Self {
-        self.power_preference = power_preference;
-        self
-    }
-
-    ///
-    #[inline]
-    pub fn with_force_fallback_adapter(mut self, force_fallback_adapter: bool) -> Self {
-        self.force_fallback_adapter = force_fallback_adapter;
-        self
-    }
-
-    ///
-    #[inline]
-    pub fn with_preferred_format<F: Into<Option<wgpu::TextureFormat>>>(
-        /*mut*/ self,
-        _preferred_format: F,
-    ) -> Self {
-        unimplemented!(
-            "Search for wgpu::TextureFormat::Rgba8UnormSrgb on surface.rs file for more info"
-        );
-        //self.preferred_format = preferred_format.into();
-        //self
     }
 
     ///
@@ -268,15 +235,8 @@ where
 
         let window_size = window.inner_size();
 
-        let (surface, adapter) = Surface::new(
-            self.backends,
-            window,
-            self.power_preference,
-            self.force_fallback_adapter,
-            self.preferred_format,
-            self.present_mode,
-        )
-        .map_err(|_| RendererError::SurfaceAdapterRequest)?;
+        let (surface, adapter) = Surface::new(self.backends, window, self.present_mode)
+            .map_err(|_| RendererError::SurfaceAdapterRequest)?;
 
         // TODO: better find a way to remove the limits.clone()
         let (device, queue) = Device::new(&adapter, self.features, self.limits.clone())
@@ -298,7 +258,10 @@ where
         //- Texture Metadatas ------------------------------------------------
 
         let texture_image_metadatas = if self.texture_path.is_some() {
-            RendererConfig::<'a, C, PS, PT, V, I>::create_texture_image_metadatas(&device)
+            RendererConfig::<'a, C, PS, PT, V, I>::create_texture_image_metadatas(
+                &device,
+                surface.configuration().view_formats,
+            )
         } else {
             vec![]
         };
@@ -312,7 +275,11 @@ where
             vec![]
         };
 
-        let texture_depth_metadatas = TextureDepthMetadatas::new(&device, window_size);
+        let texture_depth_metadatas = TextureDepthMetadatas::new(
+            &device,
+            window_size,
+            //surface.configuration().view_formats[0],
+        );
 
         //- Pipeline ---------------------------------------------------------
 
@@ -355,7 +322,7 @@ where
             };
 
             let color_targets = [Some(wgpu::ColorTargetState {
-                format: surface.format(),
+                format: surface.capabilities().formats[0],
                 blend: Some(wgpu::BlendState {
                     color: wgpu::BlendComponent::REPLACE,
                     alpha: wgpu::BlendComponent::REPLACE,
@@ -471,7 +438,10 @@ where
     ///
     ///
     /// It can't cache zero sized textures.
-    pub fn create_texture_image_metadatas(device: &Device) -> Vec<Vec<TextureImageMetadata>> {
+    pub fn create_texture_image_metadatas(
+        device: &Device,
+        format: wgpu::TextureFormat,
+    ) -> Vec<Vec<TextureImageMetadata>> {
         let qty = log2(wgpu::Limits::downlevel_defaults().max_texture_dimension_2d as i32) as usize;
         let mut vec_w = Vec::<Vec<TextureImageMetadata>>::with_capacity(qty);
         for width in 0..qty {
@@ -481,6 +451,7 @@ where
                     device,
                     2_u32.pow(width as u32),
                     2_u32.pow(height as u32),
+                    format,
                 ));
             }
             vec_w.push(vec_h);

@@ -15,5 +15,5 @@ irid_render = { path = "../irid_render" }
 
 bytemuck = "1.12"
 log = "0.4"
-wgpu = "0.14"
+wgpu = "0.15"
 winit = "0.27"

@@ -3,7 +3,6 @@
 use pollster::FutureExt;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
-use wgpu::CompositeAlphaMode;
 
 use crate::device::Device;
 
@@ -11,12 +10,14 @@ use crate::device::Device;
 
 #[derive(Debug)]
 pub(crate) enum SurfaceError {
+    Creation(wgpu::CreateSurfaceError),
     AdapterNotObtained,
 }
 
 impl Display for SurfaceError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
+            SurfaceError::Creation(e) => write!(f, "{}", e),
             SurfaceError::AdapterNotObtained => write!(
                 f,
                 "An adapter compatible with the given surface could not be obtained"
@@ -34,7 +35,7 @@ impl Error for SurfaceError {}
 #[derive(Debug)]
 pub(crate) struct Surface {
     wgpu_surface: wgpu::Surface,
-    format: wgpu::TextureFormat,
+    capabilities: wgpu::SurfaceCapabilities,
     configuration: wgpu::SurfaceConfiguration,
 }
 
@@ -46,58 +47,68 @@ impl Surface {
     pub(crate) fn new(
         backends: wgpu::Backends,
         window: &winit::window::Window,
-        power_preference: wgpu::PowerPreference,
-        force_fallback_adapter: bool,
-        preferred_format: Option<wgpu::TextureFormat>,
         present_mode: wgpu::PresentMode,
     ) -> Result<(Self, wgpu::Adapter), SurfaceError> {
         // Context for all other wgpu objects
-        let wgpu_instance = wgpu::Instance::new(backends);
+        let wgpu_instance = {
+            let desc = wgpu::InstanceDescriptor {
+                backends,
+                ..Default::default()
+            };
+            wgpu::Instance::new(desc)
+        };
 
         // Handle to a presentable surface onto which rendered images
-        let wgpu_surface = unsafe { wgpu_instance.create_surface(window) };
+        let wgpu_surface = match unsafe { wgpu_instance.create_surface(window) } {
+            Ok(s) => Ok(s),
+            Err(e) => Err(SurfaceError::Creation(e)),
+        }?;
 
         // For debug purpose prints on console all the available adapters
         enumerate_all_adapters(backends, &wgpu_instance);
 
         let adapter = {
             let adapter_options = wgpu::RequestAdapterOptions {
-                power_preference,
-                force_fallback_adapter,
+                power_preference: wgpu::PowerPreference::HighPerformance,
+                force_fallback_adapter: false,
                 compatible_surface: Some(&wgpu_surface),
             };
 
-            let adapter_option =
+            let adapter =
                 async { wgpu_instance.request_adapter(&adapter_options).await }.block_on();
-
-            if let Some(a) = adapter_option {
+            if let Some(a) = adapter {
                 Ok(a)
             } else {
                 Err(SurfaceError::AdapterNotObtained)
             }
         }?;
-
         log::info!("Picked Adapter: {}", pprint_adapter_info(&adapter));
 
-        let format =
-            preferred_format.unwrap_or_else(|| wgpu_surface.get_supported_formats(&adapter)[0]);
-
-        log::info!("Preferred Texture Color Format: {:?}", format);
-
-        let window_size = window.inner_size();
-
-        let configuration = wgpu::SurfaceConfiguration {
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+        let capabilities = wgpu_surface.get_capabilities(&adapter);
+        let (format, view_formats) = get_formats(&capabilities);
+        log::info!(
+            "Picked Texture Color Format: {:?} from {:?}",
             format,
-            width: window_size.width,
-            height: window_size.height,
-            present_mode,
-            alpha_mode: CompositeAlphaMode::Auto,
+            view_formats
+        );
+
+        let configuration = {
+            let window_size = window.inner_size();
+
+            wgpu::SurfaceConfiguration {
+                usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+                format,
+                width: window_size.width,
+                height: window_size.height,
+                present_mode,
+                alpha_mode: wgpu::CompositeAlphaMode::Auto,
+                view_formats,
+            }
         };
 
         let surface = Self {
             wgpu_surface,
-            format,
+            capabilities,
             configuration,
         };
 
@@ -106,9 +117,14 @@ impl Surface {
 
     //- Getters --------------------------------------------------------------
 
-    /// Returns the optimal texture format to use with this Surface.
-    pub(crate) fn format(&self) -> wgpu::TextureFormat {
-        self.format
+    /// Returns the capabilities related to this Surface.
+    pub(crate) fn capabilities(&self) -> &wgpu::SurfaceCapabilities {
+        &self.capabilities
+    }
+
+    /// Returns the surface's configuration, useful to get format and view_formats.
+    pub(crate) fn configuration(&self) -> &wgpu::SurfaceConfiguration {
+        &self.configuration
     }
 
     // Swapchain -------------------------------------------------------------
@@ -154,6 +170,16 @@ fn enumerate_all_adapters(backends: wgpu::Backends, instance: &wgpu::Instance) {
     if !found {
         log::info!("No Adapter Found");
     }
+}
+
+fn get_formats(
+    capabilities: &wgpu::SurfaceCapabilities,
+) -> (wgpu::TextureFormat, Vec<wgpu::TextureFormat>) {
+    let format = capabilities.formats[0];
+    return match format {
+        wgpu::TextureFormat::Bgra8Unorm => (format, vec![wgpu::TextureFormat::Bgra8UnormSrgb]),
+        _ => todo!("so much formats!"),
+    };
 }
 
 // Wgpu adapter info pretty printing.
