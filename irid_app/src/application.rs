@@ -1,7 +1,10 @@
 //= USES =====================================================================
 
-use std::fmt::{Display, Formatter};
-use std::{error::Error, fmt::Debug, path::PathBuf};
+use std::{
+    error::Error,
+    fmt::{Debug, Display, Formatter},
+    path::PathBuf,
+};
 
 use irid_assets::Vertex;
 use irid_render::{PerspectiveCamera, Renderer, RendererConfig, RendererError};
@@ -37,17 +40,17 @@ impl Display for ApplicationError {
 
 impl Error for ApplicationError {}
 
-//= APPLICATION CONFIG =======================================================
+//= APPLICATION BUILDER ======================================================
 
 /// Build a new [Application] with wanted values.
 #[derive(Clone, Debug, Default)]
-pub struct ApplicationConfig<'a, L: Listener, V: Vertex> {
+pub struct ApplicationBuilder<'a, L: Listener, V: Vertex> {
     listener: L,
     window_config: Option<IridWindowConfig>,
     renderer_config: Option<RendererConfig<'a, PerspectiveCamera, &'a str, &'a str, V, u16>>,
 }
 
-impl<'a, L, V> ApplicationConfig<'a, L, V>
+impl<'a, L, V> ApplicationBuilder<'a, L, V>
 where
     L: Listener,
     V: Vertex + bytemuck::Pod,
@@ -338,8 +341,6 @@ where
         let _use_default_behaviour = self.listener.on_resume();
     }
 
-    // This method is probably one of the few that must always be inline.
-    #[inline(always)]
     fn on_redraw(
         &self,
         renderer: &mut Renderer<PerspectiveCamera>,

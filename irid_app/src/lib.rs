@@ -9,5 +9,3 @@ mod window;
 pub use self::application::*;
 pub use self::listener::*;
 pub use self::window::*;
-
-//= TRAITS ===================================================================
