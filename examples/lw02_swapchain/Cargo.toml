@@ -1,6 +1,6 @@
 [package]
 name = "lw02_swapchain"
-version = "0.0.14"
+version = "0.0.15"
 authors = ["CatCode79"]
 edition = "2021"
 rust-version = "1.64"
@@ -15,4 +15,4 @@ irid = { path = "../../irid" }
 env_logger = "0.10"
 log = "0.4"
 wgpu = "0.15"
-winit = "0.27"
+winit = "0.28"

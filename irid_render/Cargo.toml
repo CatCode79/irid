@@ -1,9 +1,9 @@
 [package]
 name = "irid_render"
-version = "0.0.14"
+version = "0.0.15"
 authors = ["CatCode79"]
 edition = "2021"
-rust-version = "1.66"
+rust-version = "1.67"
 description = "Irid Game Framework Renderer"
 repository = "https://github.com/CatCode79/irid"
 license = "MIT OR Apache-2.0"
@@ -17,4 +17,4 @@ cgmath = "0.18"
 log = "0.4"
 pollster = "0.2"
 wgpu = "0.15"
-winit = "0.27"
+winit = "0.28"
