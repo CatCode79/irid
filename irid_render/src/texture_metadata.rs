@@ -16,7 +16,12 @@ impl TextureImageMetadata {
     //- Constructors ---------------------------------------------------------
 
     ///
-    pub fn new(device: &Device, width: u32, height: u32, format: wgpu::TextureFormat) -> Self {
+    pub fn new(
+        device: &Device,
+        width: u32,
+        height: u32,
+        configuration: &wgpu::SurfaceConfiguration,
+    ) -> Self {
         let image_size = wgpu::Extent3d {
             width,
             height,
@@ -34,7 +39,7 @@ impl TextureImageMetadata {
             // TEXTURE_BINDING tells wgpu that we want to use this texture in shaders
             // COPY_DST means that we want to copy data to this texture
             usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
-            view_formats: &[format],
+            view_formats: configuration.view_formats.as_slice(),
         });
 
         let image_data_layout = wgpu::ImageDataLayout {

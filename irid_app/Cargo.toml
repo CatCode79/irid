@@ -15,5 +15,5 @@ irid_render = { path = "../irid_render" }
 
 bytemuck = "1.12"
 log = "0.4"
-wgpu = "0.15"
+wgpu = { git = "https://github.com/gfx-rs/wgpu", rev = "4ea3159" }
 winit = "0.28"

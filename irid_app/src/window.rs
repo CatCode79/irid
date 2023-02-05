@@ -1,11 +1,10 @@
 //= USES =====================================================================
 
-use winit::window::CursorGrabMode;
 use winit::{
     dpi::{PhysicalPosition, PhysicalSize},
     error::{ExternalError, NotSupportedError, OsError},
     monitor::MonitorHandle,
-    window::{CursorIcon, UserAttentionType, WindowId},
+    window::{CursorGrabMode, CursorIcon, UserAttentionType, WindowId},
 };
 
 //= IRID WINDOW BUILDER ======================================================
@@ -14,53 +13,40 @@ use winit::{
 #[derive(Clone, Debug)]
 pub struct IridWindowConfig {
     winit_builder: winit::window::WindowBuilder,
-    delayed_visibility: bool,
 }
 
 impl Default for IridWindowConfig {
     fn default() -> Self {
         Self {
             winit_builder: Default::default(),
-            delayed_visibility: true,
         }
     }
 }
 
 impl IridWindowConfig {
-    //- Constructors ---------------------------------------------------------
-
     pub fn new() -> Self {
-        IridWindowConfig::default()
-            /*.with_inner_size(winit::dpi::PhysicalSize {
-                width: 1980 / 2,
-                height: 720 / 2,
-            })
-            .with_min_inner_size(winit::dpi::PhysicalSize {
-                width: 1980 / 4,
-                height: 720 / 4,
-            })*/
-            .with_title("Irid Application")
+        IridWindowConfig::default().with_title("Irid Application")
     }
 
     //- Setters --------------------------------------------------------------
 
     pub fn with_inner_size<S: Into<winit::dpi::Size>>(mut self, size: S) -> Self {
-        self.winit_builder = self.winit_builder.with_inner_size(size.into());
+        self.winit_builder = self.winit_builder.with_inner_size(size);
         self
     }
 
     pub fn with_min_inner_size<S: Into<winit::dpi::Size>>(mut self, min_size: S) -> Self {
-        self.winit_builder = self.winit_builder.with_min_inner_size(min_size.into());
+        self.winit_builder = self.winit_builder.with_min_inner_size(min_size);
         self
     }
 
     pub fn with_max_inner_size<S: Into<winit::dpi::Size>>(mut self, max_size: S) -> Self {
-        self.winit_builder = self.winit_builder.with_max_inner_size(max_size.into());
+        self.winit_builder = self.winit_builder.with_max_inner_size(max_size);
         self
     }
 
     pub fn with_position<P: Into<winit::dpi::Position>>(mut self, position: P) -> Self {
-        self.winit_builder = self.winit_builder.with_position(position.into());
+        self.winit_builder = self.winit_builder.with_position(position);
         self
     }
 
@@ -70,7 +56,7 @@ impl IridWindowConfig {
     }
 
     pub fn with_title<T: Into<String>>(mut self, title: T) -> Self {
-        self.winit_builder = self.winit_builder.with_title(title.into());
+        self.winit_builder = self.winit_builder.with_title(title);
         self
     }
 
@@ -85,7 +71,6 @@ impl IridWindowConfig {
     }
 
     pub fn with_visible(mut self, visible: bool) -> Self {
-        self.delayed_visibility = visible;
         self.winit_builder = self.winit_builder.with_visible(visible);
         self
     }
@@ -100,11 +85,6 @@ impl IridWindowConfig {
         self
     }
 
-    pub fn with_always_on_top(mut self, always_on_top: bool) -> Self {
-        self.winit_builder = self.winit_builder.with_always_on_top(always_on_top);
-        self
-    }
-
     pub fn with_window_icon(mut self, window_icon: Option<winit::window::Icon>) -> Self {
         self.winit_builder = self.winit_builder.with_window_icon(window_icon);
         self
@@ -113,14 +93,11 @@ impl IridWindowConfig {
     //- Building -------------------------------------------------------------
 
     pub fn build(
-        mut self,
+        self,
         event_loop: &winit::event_loop::EventLoop<()>,
     ) -> Result<IridWindow, OsError> {
-        self.winit_builder = self.winit_builder.with_visible(false);
-
         Ok(IridWindow {
             winit_window: self.winit_builder.build(event_loop)?,
-            delayed_visibility: self.delayed_visibility,
         })
     }
 }
@@ -130,7 +107,6 @@ impl IridWindowConfig {
 #[derive(Debug)]
 pub struct IridWindow {
     winit_window: winit::window::Window,
-    delayed_visibility: bool,
 }
 
 impl Default for IridWindow {
@@ -143,8 +119,6 @@ impl Default for IridWindow {
 }
 
 impl IridWindow {
-    //- Base Window Functions ------------------------------------------------
-
     #[inline]
     pub fn new(event_loop: &winit::event_loop::EventLoop<()>) -> Result<IridWindow, OsError> {
         IridWindowConfig::new().build(event_loop)
@@ -255,11 +229,6 @@ impl IridWindow {
     }
 
     #[inline]
-    pub fn set_always_on_top(&self, always_on_top: bool) {
-        self.winit_window.set_always_on_top(always_on_top)
-    }
-
-    #[inline]
     pub fn set_window_icon(&self, window_icon: Option<winit::window::Icon>) {
         self.winit_window.set_window_icon(window_icon)
     }
@@ -269,10 +238,10 @@ impl IridWindow {
         self.winit_window.set_ime_position(position)
     }
 
-    /*#[inline]
+    #[inline]
     pub fn focus_window(&self) {
         self.winit_window.focus_window()
-    }*/
+    }
 
     #[inline]
     pub fn request_user_attention(&self, request_type: Option<UserAttentionType>) {
@@ -316,14 +285,10 @@ impl IridWindow {
         self.winit_window.current_monitor()
     }
 
-    /*
     #[inline]
-    pub fn available_monitors(&self) -> Box<(dyn Iterator<Item=winit::monitor::MonitorHandle> + 'static)> {
-        self.winit_window.window.available_monitors()
-            .into_iter()
-            .map(|inner| MonitorHandle { inner })
+    pub fn available_monitors(&self) -> impl Iterator<Item = MonitorHandle> {
+        self.winit_window.available_monitors()
     }
-     */
 
     #[inline]
     pub fn primary_monitor(&self) -> Option<MonitorHandle> {
@@ -335,9 +300,5 @@ impl IridWindow {
     #[inline]
     pub fn expose_inner_window(&self) -> &winit::window::Window {
         &self.winit_window
-    }
-
-    pub(crate) fn conclude_visibility_delay(&mut self) {
-        self.set_visible(self.delayed_visibility);
     }
 }

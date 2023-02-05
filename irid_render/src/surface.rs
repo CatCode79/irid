@@ -1,32 +1,11 @@
 //= USES =====================================================================
 
-use pollster::FutureExt;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 
+use pollster::FutureExt;
+
 use crate::device::Device;
-
-//= ERRORS ===================================================================
-
-#[derive(Debug)]
-pub(crate) enum SurfaceError {
-    Creation(wgpu::CreateSurfaceError),
-    AdapterNotObtained,
-}
-
-impl Display for SurfaceError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            SurfaceError::Creation(e) => write!(f, "{}", e),
-            SurfaceError::AdapterNotObtained => write!(
-                f,
-                "An adapter compatible with the given surface could not be obtained"
-            ),
-        }
-    }
-}
-
-impl Error for SurfaceError {}
 
 //= SURFACE WRAPPER ==========================================================
 
@@ -89,7 +68,7 @@ impl Surface {
         log::info!(
             "Picked Texture Color Format: {:?} from {:?}",
             format,
-            view_formats
+            capabilities.formats
         );
 
         let configuration = {
@@ -118,6 +97,7 @@ impl Surface {
     //- Getters --------------------------------------------------------------
 
     /// Returns the capabilities related to this Surface.
+    #[allow(unused)]
     pub(crate) fn capabilities(&self) -> &wgpu::SurfaceCapabilities {
         &self.capabilities
     }
@@ -175,11 +155,7 @@ fn enumerate_all_adapters(backends: wgpu::Backends, instance: &wgpu::Instance) {
 fn get_formats(
     capabilities: &wgpu::SurfaceCapabilities,
 ) -> (wgpu::TextureFormat, Vec<wgpu::TextureFormat>) {
-    let format = capabilities.formats[0];
-    return match format {
-        wgpu::TextureFormat::Bgra8Unorm => (format, vec![wgpu::TextureFormat::Bgra8UnormSrgb]),
-        _ => todo!("so much formats!"),
-    };
+    (capabilities.formats[0], vec![])
 }
 
 // Wgpu adapter info pretty printing.
@@ -188,3 +164,25 @@ fn pprint_adapter_info(adapter: &wgpu::Adapter) -> String {
         .replace("AdapterInfo { name: ", "")
         .replace(" }", "")
 }
+
+//= ERRORS ===================================================================
+
+#[derive(Debug)]
+pub(crate) enum SurfaceError {
+    Creation(wgpu::CreateSurfaceError),
+    AdapterNotObtained,
+}
+
+impl Display for SurfaceError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SurfaceError::Creation(e) => write!(f, "{}", e),
+            SurfaceError::AdapterNotObtained => write!(
+                f,
+                "An adapter compatible with the given surface could not be obtained"
+            ),
+        }
+    }
+}
+
+impl Error for SurfaceError {}

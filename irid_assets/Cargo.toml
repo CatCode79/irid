@@ -14,4 +14,4 @@ bytemuck = { version = "1.12", features = ["derive"] }
 image_crate = { version = "0.24", package = "image" }
 #log = "0.4"
 #tobj = "3.2"
-wgpu = "0.15"
+wgpu = { git = "https://github.com/gfx-rs/wgpu", rev = "4ea3159" }

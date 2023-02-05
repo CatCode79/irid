@@ -260,7 +260,7 @@ where
         let texture_image_metadatas = if self.texture_path.is_some() {
             RendererConfig::<'a, C, PS, PT, V, I>::create_texture_image_metadatas(
                 &device,
-                surface.configuration().view_formats,
+                surface.configuration(),
             )
         } else {
             vec![]
@@ -278,7 +278,6 @@ where
         let texture_depth_metadatas = TextureDepthMetadatas::new(
             &device,
             window_size,
-            //surface.configuration().view_formats[0],
         );
 
         //- Pipeline ---------------------------------------------------------
@@ -322,7 +321,7 @@ where
             };
 
             let color_targets = [Some(wgpu::ColorTargetState {
-                format: surface.capabilities().formats[0],
+                format: surface.configuration().format,
                 blend: Some(wgpu::BlendState {
                     color: wgpu::BlendComponent::REPLACE,
                     alpha: wgpu::BlendComponent::REPLACE,
@@ -440,7 +439,7 @@ where
     /// It can't cache zero sized textures.
     pub fn create_texture_image_metadatas(
         device: &Device,
-        format: wgpu::TextureFormat,
+        configuration: &wgpu::SurfaceConfiguration,
     ) -> Vec<Vec<TextureImageMetadata>> {
         let qty = log2(wgpu::Limits::downlevel_defaults().max_texture_dimension_2d as i32) as usize;
         let mut vec_w = Vec::<Vec<TextureImageMetadata>>::with_capacity(qty);
@@ -451,7 +450,7 @@ where
                     device,
                     2_u32.pow(width as u32),
                     2_u32.pow(height as u32),
-                    format,
+                    configuration,
                 ));
             }
             vec_w.push(vec_h);
