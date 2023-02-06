@@ -13,15 +13,15 @@ use winit::event::{
     StartCause, Touch, TouchPhase, VirtualKeyCode, WindowEvent,
 };
 
-use crate::{IridWindowConfig, Listener};
+use crate::{Listener, WindowConfig};
 
 //= APPLICATION BUILDER ======================================================
 
 /// Build a new [Application] with wanted values.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct ApplicationBuilder<'a, L: Listener, V: Vertex> {
     listener: L,
-    window_config: Option<IridWindowConfig>,
+    window_config: Option<WindowConfig>,
     renderer_config: Option<RendererConfig<'a, PerspectiveCamera, &'a str, &'a str, V, u16>>,
 }
 
@@ -52,7 +52,7 @@ where
 
     ///
     #[inline]
-    pub fn with_window_config(mut self, window_config: IridWindowConfig) -> Self {
+    pub fn with_window_config(mut self, window_config: WindowConfig) -> Self {
         self.window_config = Some(window_config);
         self
     }
@@ -73,7 +73,7 @@ where
     pub fn build(self) -> Application<'a, L, V> {
         Application {
             listener: self.listener,
-            window_config: self.window_config.unwrap_or_else(IridWindowConfig::new),
+            window_config: self.window_config.unwrap_or_else(WindowConfig::new),
             renderer_config: self.renderer_config.unwrap_or_else(RendererConfig::new),
         }
     }
@@ -85,7 +85,7 @@ where
 #[derive(Debug)]
 pub struct Application<'a, L: Listener, V: Vertex> {
     listener: L,
-    window_config: IridWindowConfig,
+    window_config: WindowConfig,
     renderer_config: RendererConfig<'a, PerspectiveCamera, &'a str, &'a str, V, u16>,
 }
 
@@ -112,7 +112,7 @@ where
 
         let renderer = &mut self
             .renderer_config
-            .build(window.expose_inner_window())
+            .build(&window)
             .map_err(|e| ApplicationError::RendererError { source: e })?;
 
         use winit::platform::run_return::EventLoopExtRunReturn;

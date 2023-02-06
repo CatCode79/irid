@@ -2,10 +2,11 @@
 
 mod application;
 mod listener;
-mod window;
 
-//= USES =====================================================================
+//= RE-EXPORTS ===============================================================
 
 pub use self::application::*;
 pub use self::listener::*;
-pub use self::window::*;
+
+pub type Window = winit::window::Window;
+pub type WindowConfig = winit::window::WindowBuilder;
