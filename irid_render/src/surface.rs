@@ -3,7 +3,7 @@
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 
-use pollster::FutureExt;
+use pollster::FutureExt as _;
 
 use crate::device::Device;
 
@@ -14,13 +14,10 @@ use crate::device::Device;
 #[derive(Debug)]
 pub(crate) struct Surface {
     wgpu_surface: wgpu::Surface,
-    capabilities: wgpu::SurfaceCapabilities,
     configuration: wgpu::SurfaceConfiguration,
 }
 
 impl Surface {
-    //- Constructors ---------------------------------------------------------
-
     /// Create a new Surface using the window handle and retrieves an Adapter
     /// which matches the created surface.
     pub(crate) fn new(
@@ -87,7 +84,6 @@ impl Surface {
 
         let surface = Self {
             wgpu_surface,
-            capabilities,
             configuration,
         };
 
@@ -95,12 +91,6 @@ impl Surface {
     }
 
     //- Getters --------------------------------------------------------------
-
-    /// Returns the capabilities related to this Surface.
-    #[allow(unused)]
-    pub(crate) fn capabilities(&self) -> &wgpu::SurfaceCapabilities {
-        &self.capabilities
-    }
 
     /// Returns the surface's configuration, useful to get format and view_formats.
     pub(crate) fn configuration(&self) -> &wgpu::SurfaceConfiguration {
