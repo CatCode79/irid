@@ -116,7 +116,7 @@ where
             .map_err(|e| ApplicationError::RendererError { source: e })?;
 
         use winit::platform::run_return::EventLoopExtRunReturn;
-        event_loop.run_return(move |event, _, control_flow| {
+        event_loop.run_return(|event, _, control_flow| {
             match event {
                 Event::NewEvents(start_cause) => {
                     self.on_new_events(start_cause);
