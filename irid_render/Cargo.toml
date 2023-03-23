@@ -15,6 +15,6 @@ irid_assets = { path = "../irid_assets" }
 bytemuck = { version = "1.12", features = ["derive"] }
 cgmath = "0.18"
 log = "0.4"
-pollster = "0.2"
+pollster = "0.3"
 wgpu = { git = "https://github.com/gfx-rs/wgpu", rev = "4ea3159" }
 winit = "0.28"
