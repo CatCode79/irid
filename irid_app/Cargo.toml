@@ -1,9 +1,9 @@
 [package]
 name = "irid_app"
-version = "0.0.15"
+version = "0.0.16"
 authors = ["CatCode79"]
 edition = "2021"
-rust-version = "1.67"
+rust-version = "1.68"
 description = "Irid Game Framework Application"
 repository = "https://github.com/CatCode79/irid"
 license = "MIT OR Apache-2.0"
@@ -15,5 +15,5 @@ irid_render = { path = "../irid_render" }
 
 bytemuck = "1.12"
 log = "0.4"
-wgpu = { git = "https://github.com/gfx-rs/wgpu", rev = "4ea3159" }
+wgpu = "0.16"
 winit = "0.28"

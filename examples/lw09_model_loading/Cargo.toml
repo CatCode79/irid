@@ -1,6 +1,6 @@
 [package]
 name = "lw09_model_loading"
-version = "0.0.15"
+version = "0.0.16"
 authors = ["CatCode79"]
 edition = "2021"
 rust-version = "1.64"
@@ -14,7 +14,7 @@ irid = { path = "../../irid" }
 
 env_logger = "0.10"
 log = "0.4"
-wgpu = { git = "https://github.com/gfx-rs/wgpu", rev = "4ea3159" }
+wgpu = "0.16"
 winit = "0.28"
 
 [build-dependencies]

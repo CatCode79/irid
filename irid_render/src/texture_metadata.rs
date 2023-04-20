@@ -44,8 +44,8 @@ impl TextureImageMetadata {
 
         let image_data_layout = wgpu::ImageDataLayout {
             offset: 0,
-            bytes_per_row: std::num::NonZeroU32::new(width * 4),
-            rows_per_image: std::num::NonZeroU32::new(height),
+            bytes_per_row: Some(width * 4),
+            rows_per_image: Some(height),
         };
 
         Self {
