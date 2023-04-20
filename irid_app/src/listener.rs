@@ -50,7 +50,9 @@ pub trait Listener {
     ///
     /// Programs that draw graphics continuously, like most games, can render
     /// here unconditionally for simplicity.
-    fn on_redraw(&self) -> bool;
+    fn on_redraw(&self) -> bool {
+        true
+    }
 
     /// Emitted after `on_redraw_begin` when a window should be redrawn.
     ///

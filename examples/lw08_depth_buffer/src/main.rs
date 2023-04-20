@@ -1,6 +1,6 @@
 //= USES ===========================================================================================
 
-use irid::{ApplicationConfig, Listener, PerspectiveCamera, RendererConfig};
+use irid::{ApplicationBuilder, Listener, PerspectiveCamera, RendererConfig};
 use irid_assets::TextCoordsVertex;
 use irid_renderer_interface::Camera;
 
@@ -9,9 +9,6 @@ use irid_renderer_interface::Camera;
 struct GameListener {}
 
 impl Listener for GameListener {
-    fn on_redraw(&self) -> bool {
-        true
-    }
 }
 
 //= MAIN ===========================================================================================
@@ -50,7 +47,7 @@ fn main() {
         .with_indices(indices)
         .with_camera(camera);
 
-    let application = ApplicationConfig::new(listener)
+    let application = ApplicationBuilder::new(listener)
         .with_renderer_config(renderer_config)
         .build();
 

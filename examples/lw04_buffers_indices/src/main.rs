@@ -1,15 +1,12 @@
 //= USES ===========================================================================================
 
-use irid::{ApplicationConfig, ColorVertex, Listener, RendererConfig};
+use irid::{ApplicationBuilder, ColorVertex, Listener, RendererConfig};
 
 //= GAME LOGIC =====================================================================================
 
 struct GameListener {}
 
 impl Listener for GameListener {
-    fn on_redraw(&self) -> bool {
-        true
-    }
 }
 
 //= MAIN ===========================================================================================
@@ -46,7 +43,7 @@ fn main() {
         .with_vertices(vertices)
         .with_indices(indices);
 
-    let application = ApplicationConfig::new(listener)
+    let application = ApplicationBuilder::new(listener)
         .with_renderer_config(renderer_config)
         .build();
 
